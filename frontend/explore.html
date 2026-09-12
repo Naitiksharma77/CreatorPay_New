@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Explore Friends | CreatorPay</title>
+
+    <link
+        rel="stylesheet"
+        href="explore_styles.css"
+    >
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="logo">
+            CreatorPay
+        </div>
+
+        <nav>
+            <a href="explore.html">
+                Explore
+            </a>
+
+            <a href="creator_home.html">
+                Home
+            </a>
+        </nav>
+    </header>
+
+
+    <main class="explore-container">
+
+        <section class="hero-section">
+            <p class="small-heading">
+                DISCOVER CONNECTIONS
+            </p>
+
+            <h1>
+                Find someone new to be friends with
+            </h1>
+
+            <p class="hero-description">
+                Explore profiles, learn about people,
+                and pay to be a friend.
+            </p>
+        </section>
+
+
+        <section class="friends-section">
+
+            <div class="section-heading">
+                <h2>
+                    Explore Friends
+                </h2>
+
+                <span id="creatorCount">
+                    0 friends
+                </span>
+            </div>
+
+
+            <div
+                id="creatorList"
+                class="creator-grid"
+            >
+                <div class="loading-state">
+                    Loading friends...
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="explore_app.js"></script>
+
+</body>
+</html>

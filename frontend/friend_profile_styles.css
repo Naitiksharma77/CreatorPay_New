@@ -1,0 +1,235 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #ffffff;
+    color: #172554;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* HEADER */
+
+.site-header {
+    width: 100%;
+    padding: 22px 7%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #dbeafe;
+    background: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #2563eb;
+}
+
+.site-header nav {
+    display: flex;
+    gap: 28px;
+}
+
+.site-header nav a {
+    font-size: 14px;
+    color: #64748b;
+    transition: 0.2s;
+}
+
+.site-header nav a:hover {
+    color: #2563eb;
+}
+
+/* PROFILE CONTAINER */
+
+.profile-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 7%;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 35px;
+    color: #2563eb;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.back-link:hover {
+    color: #1d4ed8;
+}
+
+/* PROFILE CARD */
+
+.profile-card {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.profile-image-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #eff6ff;
+}
+
+.profile-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* PROFILE INFORMATION */
+
+.profile-info .eyebrow {
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+}
+
+.profile-info h1 {
+    font-size: clamp(38px, 5vw, 65px);
+    line-height: 1;
+    letter-spacing: -2px;
+    color: #172554;
+}
+
+.profile-category {
+    margin-top: 15px;
+    color: #64748b;
+    font-size: 15px;
+}
+
+.profile-bio {
+    margin-top: 25px;
+    color: #64748b;
+    font-size: 17px;
+    max-width: 520px;
+}
+
+/* PRICE */
+
+.price-box {
+    margin-top: 30px;
+    padding: 22px;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    background: #eff6ff;
+}
+
+.price-label {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.price {
+    display: block;
+    margin-top: 5px;
+    color: #2563eb;
+    font-size: 32px;
+    font-weight: 800;
+}
+
+/* PAYMENT BUTTON */
+
+.pay-button {
+    display: inline-block;
+    margin-top: 25px;
+    padding: 16px 28px;
+    border: none;
+    border-radius: 9px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.pay-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+.pay-button:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* STATES */
+
+.loading-state,
+.error-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #64748b;
+}
+
+.error-state h2 {
+    color: #172554;
+    margin-bottom: 10px;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .site-header {
+        padding: 18px 5%;
+    }
+
+    .site-header nav {
+        gap: 15px;
+    }
+
+    .site-header nav a {
+        font-size: 12px;
+    }
+
+    .profile-container {
+        padding: 50px 5%;
+    }
+
+    .profile-card {
+        grid-template-columns: 1fr;
+        gap: 35px;
+    }
+
+    .profile-image-wrapper {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .profile-info h1 {
+        letter-spacing: -1px;
+    }
+
+    .profile-bio {
+        font-size: 15px;
+    }
+}

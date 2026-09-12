@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CreatorPay Admin</title>
+
+    <link rel="stylesheet" href="admin_creator_styles.css">
+</head>
+
+<body>
+
+    <header class="admin-header">
+
+        <div class="admin-brand">
+            CreatorPay
+            <span>Admin</span>
+        </div>
+
+        <div class="admin-header-right">
+            <span>Admin Dashboard</span>
+        </div>
+
+    </header>
+
+
+    <main class="admin-container">
+
+        <div class="page-top">
+
+            <div>
+                <p class="eyebrow">MANAGEMENT</p>
+                <h1>Creators</h1>
+                <p class="page-description">
+                    Add, edit and manage creators listed on your platform.
+                </p>
+            </div>
+
+            <button id="addCreatorButton" class="primary-button">
+                + Add Creator
+            </button>
+
+        </div>
+
+
+        <section class="creator-management">
+
+            <div class="management-header">
+
+                <h2>All Creators</h2>
+
+                <span id="creatorCount">
+                    0 creators
+                </span>
+
+            </div>
+
+
+            <div id="creatorList" class="creator-list">
+
+                <div class="empty-state">
+                    <h3>No creators yet</h3>
+                    <p>
+                        Add your first creator to get started.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Add Creator Modal -->
+
+    <div id="creatorModal" class="modal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+                    <p class="eyebrow">CREATOR</p>
+                    <h2>Add Creator</h2>
+                </div>
+
+                <button id="closeModalButton" class="close-button">
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="creatorForm">
+
+                <div class="form-group">
+                    <label for="creatorName">
+                        Creator Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="creatorName"
+                        placeholder="Enter creator name"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="creatorCategory">
+                        Category
+                    </label>
+
+                    <input
+                        type="text"
+                        id="creatorCategory"
+                        placeholder="e.g. Fashion & Lifestyle"
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="creatorBio">
+                        Bio
+                    </label>
+
+                    <textarea
+                        id="creatorBio"
+                        placeholder="Write a short creator bio"
+                        rows="4"
+                    ></textarea>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="creatorPrice">
+                        Collaboration Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="creatorPrice"
+                        placeholder="Enter price in INR"
+                        min="1"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="creatorInstagram">
+                        Instagram URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="creatorInstagram"
+                        placeholder="https://instagram.com/username"
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="creatorImage">
+                        Profile Photo
+                    </label>
+
+                    <input
+                        type="file"
+                        id="creatorImage"
+                        accept="image/*"
+                    >
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="save-button"
+                >
+                    Save Creator
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Edit Creator Modal -->
+
+<div id="editCreatorModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <div>
+                <p class="eyebrow">CREATOR</p>
+                <h2>Edit Creator</h2>
+            </div>
+
+            <button
+                id="closeEditModalButton"
+                class="close-button"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="editCreatorForm">
+
+            <input
+                type="hidden"
+                id="editCreatorId"
+            >
+
+
+            <div class="form-group">
+
+                <label for="editCreatorName">
+                    Creator Name
+                </label>
+
+                <input
+                    type="text"
+                    id="editCreatorName"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="editCreatorCategory">
+                    Category
+                </label>
+
+                <input
+                    type="text"
+                    id="editCreatorCategory"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="editCreatorBio">
+                    Bio
+                </label>
+
+                <textarea
+                    id="editCreatorBio"
+                    rows="4"
+                ></textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="editCreatorPrice">
+                    Collaboration Price
+                </label>
+
+                <input
+                    type="number"
+                    id="editCreatorPrice"
+                    min="1"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+  <label for="editProfileImage">Change Profile Photo</label>
+  <input
+    type="file"
+    id="editProfileImage"
+    accept="image/*"
+  />
+</div>
+
+            <div class="form-group">
+
+                <label for="editCreatorInstagram">
+                    Instagram URL
+                </label>
+
+                <input
+                    type="url"
+                    id="editCreatorInstagram"
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="save-button"
+            >
+                Update Creator
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <script src="admin_creator_app.js"></script>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Payment Successful | CreatorPay</title>
+
+    <link rel="stylesheet" href="payment_success_styles.css">
+</head>
+
+<body>
+
+    <main class="success-container">
+
+        <div class="success-card">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <p class="eyebrow">
+                PAYMENT SUCCESSFUL
+            </p>
+
+            <h1>
+                Thank you!
+            </h1>
+
+            <p class="success-message">
+                Your payment has been completed successfully.
+            </p>
+
+            <div class="success-note">
+
+                <p>
+                    You selected:
+                    <strong id="creatorName">
+                        Friend
+                    </strong>
+                </p>
+
+                <p>
+                    Amount:
+                    <strong id="paymentAmount">
+                        ₹0
+                    </strong>
+                </p>
+
+            </div>
+
+            <a
+                href="explore.html"
+                class="home-button"
+            >
+                Back to Explore
+            </a>
+
+            <a
+                href="creator_home.html"
+                class="secondary-link"
+            >
+                Go to Home
+            </a>
+
+        </div>
+
+    </main>
+
+    <script>
+
+        const savedPayment =
+            localStorage.getItem("creatorpay_payment");
+
+        if (savedPayment) {
+
+            const paymentDetails =
+                JSON.parse(savedPayment);
+
+            document.getElementById(
+                "creatorName"
+            ).textContent =
+                paymentDetails.creatorName;
+
+            document.getElementById(
+                "paymentAmount"
+            ).textContent =
+                "₹" +
+                Number(
+                    paymentDetails.amount
+                ).toLocaleString("en-IN");
+
+        }
+
+    </script>
+
+</body>
+</html>
