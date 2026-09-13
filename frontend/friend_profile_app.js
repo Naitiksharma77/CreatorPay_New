@@ -4,7 +4,7 @@ const API_URL = "https://creatorpay-backend.onrender.com";
   यह Razorpay TEST KEY ID है.
   Secret Key कभी भी frontend में नहीं डालनी है.
 */
-const RAZORPAY_KEY_ID = "rzp_test_TaCe4v0K7lrPcq";
+const RAZORPAY_KEY_ID = "rzp_live_TbMnvmib0JVGT3";
 
 const profileContent =
     document.getElementById("profileContent");
