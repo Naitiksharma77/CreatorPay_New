@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pricing | CreatorPay</title>
+
+    <link rel="stylesheet" href="creator_styles.css">
+
+    <style>
+        .pricing-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 80px 7%;
+        }
+
+        .pricing-page h1 {
+            font-size: clamp(38px, 6vw, 64px);
+            line-height: 1.05;
+            letter-spacing: -2px;
+            color: #172554;
+            margin-bottom: 25px;
+        }
+
+        .pricing-page h2 {
+            font-size: 25px;
+            margin-top: 38px;
+            margin-bottom: 14px;
+            color: #172554;
+        }
+
+        .pricing-page p {
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin-top: 35px;
+        }
+
+        .pricing-card {
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 25px;
+            background: #ffffff;
+        }
+
+        .pricing-card h3 {
+            color: #172554;
+            font-size: 21px;
+            margin-bottom: 12px;
+        }
+
+        .pricing-card .price {
+            color: #2563eb;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .pricing-card p {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .pricing-note {
+            margin-top: 30px;
+            padding: 20px;
+            border-left: 4px solid #2563eb;
+            background: #eff6ff;
+            border-radius: 8px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 35px;
+            color: #2563eb;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .pricing-page {
+                padding: 55px 5%;
+            }
+
+            .pricing-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="top-header">
+
+        <div class="brand">
+            CreatorPay
+        </div>
+
+        <nav>
+            <a href="creator_home.html">Home</a>
+            <a href="explore.html">Creators</a>
+        </nav>
+
+    </header>
+
+
+    <main class="pricing-page">
+
+        <p class="eyebrow">CLEAR AND TRANSPARENT PRICING</p>
+
+        <h1>
+            Simple pricing for creator interactions.
+        </h1>
+
+        <p>
+            CreatorPay allows users to explore creator profiles and
+            review the price displayed for each available profile before
+            continuing to payment.
+        </p>
+
+        <h2>How pricing works</h2>
+
+        <p>
+            Each creator profile may have a different price. The applicable
+            amount is displayed on the creator profile before payment.
+            Users should review the final amount carefully before completing
+            a transaction.
+        </p>
+
+
+        <div class="pricing-cards">
+
+            <div class="pricing-card">
+
+                <h3>Creator Profiles</h3>
+
+                <div class="price">
+                    Variable
+                </div>
+
+                <p>
+                    Pricing depends on the creator profile and the service
+                    or interaction selected by the user.
+                </p>
+
+            </div>
+
+
+            <div class="pricing-card">
+
+                <h3>Payment</h3>
+
+                <div class="price">
+                    Secure
+                </div>
+
+                <p>
+                    Payments are processed through our supported payment
+                    gateway, Razorpay.
+                </p>
+
+            </div>
+
+
+            <div class="pricing-card">
+
+                <h3>Final Amount</h3>
+
+                <div class="price">
+                    Before Pay
+                </div>
+
+                <p>
+                    The final payable amount is shown to the user before
+                    the payment process is completed.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="pricing-note">
+
+            <p>
+                <strong>Important:</strong>
+                Prices may vary between creator profiles. Please check
+                the selected profile and final payment amount before
+                making a payment.
+            </p>
+
+        </div>
+
+
+        <h2>Payment information</h2>
+
+        <p>
+            CreatorPay does not ask users to share their UPI PIN, OTP,
+            card PIN or banking password. Users should complete payments
+            only through the official payment checkout displayed on the
+            website.
+        </p>
+
+        <p>
+            For refund-related questions, please read our
+            <a href="refund.html" style="color: #2563eb;">
+                Refund & Cancellation Policy
+            </a>.
+        </p>
+
+        <a href="creator_home.html" class="back-link">
+            ← Back to CreatorPay
+        </a>
+
+    </main>
+
+
+    <footer class="site-footer">
+
+        <p>
+            © 2026 CreatorPay. All rights reserved.
+        </p>
+
+        <div class="footer-links">
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact Us</a>
+            <a href="pricing.html">Pricing</a>
+            <a href="terms.html">Terms & Conditions</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="refund.html">Refund & Cancellation</a>
+        </div>
+
+    </footer>
+
+</body>
+</html>

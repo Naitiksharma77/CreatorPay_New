@@ -12,58 +12,89 @@
 <body>
 
     <header class="top-header">
-        <div class="brand">CreatorPay</div>
+
+        <div class="brand">
+            CreatorPay
+        </div>
 
         <nav>
             <a href="#creators">Creators</a>
             <a href="#how-it-works">How it works</a>
         </nav>
+
     </header>
 
 
     <main>
 
+        <!-- Hero Section -->
         <section class="hero-section">
+
             <div class="hero-content">
 
-                <p class="eyebrow">DISCOVER NEW CONNECTIONS</p>
+                <p class="eyebrow">
+                    DISCOVER NEW CONNECTIONS
+                </p>
 
                 <h1>
                     Find someone new to
-<span>be friends with.</span>
+                    <span>be friends with.</span>
                 </h1>
 
                 <p class="hero-description">
-                   Explore profiles, learn about people,
-and pay to be a friend.
+                    Explore profiles, learn about people,
+                    and pay to be a friend.
                 </p>
 
-                <a href="explore.html" class="primary-button">
-    Explore friends
-</a>
+                <a
+                    href="explore.html"
+                    class="primary-button"
+                >
+                    Explore friends
+                </a>
 
             </div>
+
         </section>
 
 
-        <section class="creators-section" id="creators">
+        <!-- Creators Section -->
+        <section
+            class="creators-section"
+            id="creators"
+        >
 
             <div class="section-heading">
-                <p class="eyebrow">OUR FRIENDS</p>
 
-<h2>Meet new people</h2>
+                <p class="eyebrow">
+                    OUR FRIENDS
+                </p>
 
-<p>
-    Explore profiles and choose someone you would like to be friends with.
-</p>
+                <h2>
+                    Meet new people
+                </h2>
+
+                <p>
+                    Explore profiles and choose someone you would like
+                    to be friends with.
+                </p>
+
+                <p>
                     Choose a creator and continue with a secure payment.
                 </p>
+
             </div>
 
 
             <div class="creator-grid">
 
-                <article class="creator-card">
+                <!-- Creator Card 1 -->
+                <article
+                    class="creator-card"
+                    onclick="window.location.href='explore.html'"
+                    role="button"
+                    tabindex="0"
+                >
 
                     <div class="creator-photo-placeholder">
                         Creator Photo
@@ -71,7 +102,9 @@ and pay to be a friend.
 
                     <div class="creator-info">
 
-                        <h3>Creator Name</h3>
+                        <h3>
+                            Creator Name
+                        </h3>
 
                         <p class="creator-category">
                             Fashion & Lifestyle
@@ -80,11 +113,20 @@ and pay to be a friend.
                         <div class="creator-bottom">
 
                             <div>
-                                <small>Starting from</small>
-                                <strong>₹499</strong>
+                                <small>
+                                    Starting from
+                                </small>
+
+                                <strong>
+                                    ₹499
+                                </strong>
                             </div>
 
-                            <button class="pay-button">
+                            <button
+                                type="button"
+                                class="pay-button"
+                                onclick="event.stopPropagation(); window.location.href='explore.html'"
+                            >
                                 View profile
                             </button>
 
@@ -95,7 +137,13 @@ and pay to be a friend.
                 </article>
 
 
-                <article class="creator-card">
+                <!-- Creator Card 2 -->
+                <article
+                    class="creator-card"
+                    onclick="window.location.href='explore.html'"
+                    role="button"
+                    tabindex="0"
+                >
 
                     <div class="creator-photo-placeholder">
                         Creator Photo
@@ -103,7 +151,9 @@ and pay to be a friend.
 
                     <div class="creator-info">
 
-                        <h3>Creator Name</h3>
+                        <h3>
+                            Creator Name
+                        </h3>
 
                         <p class="creator-category">
                             Beauty & Lifestyle
@@ -112,11 +162,20 @@ and pay to be a friend.
                         <div class="creator-bottom">
 
                             <div>
-                                <small>Starting from</small>
-                                <strong>₹799</strong>
+                                <small>
+                                    Starting from
+                                </small>
+
+                                <strong>
+                                    ₹799
+                                </strong>
                             </div>
 
-                            <button class="pay-button">
+                            <button
+                                type="button"
+                                class="pay-button"
+                                onclick="event.stopPropagation(); window.location.href='explore.html'"
+                            >
                                 View profile
                             </button>
 
@@ -131,33 +190,73 @@ and pay to be a friend.
         </section>
 
 
-        <section class="how-section" id="how-it-works">
+        <!-- How It Works Section -->
+        <section
+            class="how-section"
+            id="how-it-works"
+        >
 
             <div class="section-heading">
 
-                <p class="eyebrow">SIMPLE PROCESS</p>
+                <p class="eyebrow">
+                    SIMPLE PROCESS
+                </p>
 
-                <h2>How it works</h2>
+                <h2>
+                    How it works
+                </h2>
 
             </div>
 
+
             <div class="step">
-    <span>01</span>
-    <h3>Choose a friend</h3>
-    <p>Explore profiles and choose someone you like.</p>
-</div>
 
-<div class="step">
-    <span>02</span>
-    <h3>Review the price</h3>
-    <p>See the amount set for that profile.</p>
-</div>
+                <span>
+                    01
+                </span>
 
-<div class="step">
-    <span>03</span>
-    <h3>Make payment</h3>
-    <p>Pay securely through Razorpay.</p>
-</div>
+                <h3>
+                    Choose a friend
+                </h3>
+
+                <p>
+                    Explore profiles and choose someone you like.
+                </p>
+
+            </div>
+
+
+            <div class="step">
+
+                <span>
+                    02
+                </span>
+
+                <h3>
+                    Review the price
+                </h3>
+
+                <p>
+                    See the amount set for that profile.
+                </p>
+
+            </div>
+
+
+            <div class="step">
+
+                <span>
+                    03
+                </span>
+
+                <h3>
+                    Make payment
+                </h3>
+
+                <p>
+                    Pay securely through Razorpay.
+                </p>
+
             </div>
 
         </section>
@@ -165,8 +264,41 @@ and pay to be a friend.
     </main>
 
 
+    <!-- Footer -->
     <footer class="site-footer">
-        <p>© 2026 CreatorPay. All rights reserved.</p>
+
+        <p>
+            © 2026 CreatorPay. All rights reserved.
+        </p>
+
+        <div class="footer-links">
+
+            <a href="about.html">
+                About Us
+            </a>
+
+            <a href="contact.html">
+                Contact Us
+            </a>
+
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <a href="refund.html">
+                Refund & Cancellation
+            </a>
+
+        </div>
+
     </footer>
 
 
