@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Pricing | CreatorPay</title>
 
-    <link rel="stylesheet" href="creator_styles.css">
+    <link
+        rel="stylesheet"
+        href="creator_styles.css"
+    >
 
     <style>
+
         .pricing-page {
             max-width: 1000px;
             margin: 0 auto;
@@ -49,6 +59,14 @@
             border-radius: 16px;
             padding: 25px;
             background: #ffffff;
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(20, 40, 80, 0.08);
         }
 
         .pricing-card h3 {
@@ -59,7 +77,7 @@
 
         .pricing-card .price {
             color: #2563eb;
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 800;
             margin-bottom: 12px;
         }
@@ -84,17 +102,30 @@
             font-weight: 700;
         }
 
+        .back-link:hover {
+            color: #1d4ed8;
+        }
+
         @media (max-width: 768px) {
+
             .pricing-page {
                 padding: 55px 5%;
+            }
+
+            .pricing-page h1 {
+                letter-spacing: -1px;
             }
 
             .pricing-cards {
                 grid-template-columns: 1fr;
             }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
@@ -105,8 +136,15 @@
         </div>
 
         <nav>
-            <a href="creator_home.html">Home</a>
-            <a href="explore.html">Creators</a>
+
+            <a href="creator_home.html">
+                Home
+            </a>
+
+            <a href="explore.html">
+                Explore Mentors
+            </a>
+
         </nav>
 
     </header>
@@ -114,25 +152,41 @@
 
     <main class="pricing-page">
 
-        <p class="eyebrow">CLEAR AND TRANSPARENT PRICING</p>
+        <p class="eyebrow">
+            SIMPLE AND TRANSPARENT EDUCATIONAL PRICING
+        </p>
 
         <h1>
-            Simple pricing for creator interactions.
+            Learn from experienced mentors with clear session pricing.
         </h1>
 
         <p>
-            CreatorPay allows users to explore creator profiles and
-            review the price displayed for each available profile before
-            continuing to payment.
+            CreatorPay helps users discover mentors and educators,
+            explore their profiles and select educational guidance
+            sessions according to their learning requirements.
         </p>
 
-        <h2>How pricing works</h2>
+        <p>
+            Each mentor may offer different types of sessions.
+            The applicable session price is displayed before the
+            user proceeds to payment.
+        </p>
+
+
+        <h2>
+            How educational pricing works
+        </h2>
 
         <p>
-            Each creator profile may have a different price. The applicable
-            amount is displayed on the creator profile before payment.
-            Users should review the final amount carefully before completing
-            a transaction.
+            Session prices may vary depending on the mentor,
+            session duration, subject, learning topic and type of
+            educational guidance offered.
+        </p>
+
+        <p>
+            Users should review the selected mentor profile,
+            session details and final payable amount before
+            completing the payment.
         </p>
 
 
@@ -140,15 +194,18 @@
 
             <div class="pricing-card">
 
-                <h3>Creator Profiles</h3>
+                <h3>
+                    Mentor Sessions
+                </h3>
 
                 <div class="price">
                     Variable
                 </div>
 
                 <p>
-                    Pricing depends on the creator profile and the service
-                    or interaction selected by the user.
+                    Educational session prices may vary depending
+                    on the mentor, subject and type of learning
+                    guidance selected.
                 </p>
 
             </div>
@@ -156,15 +213,18 @@
 
             <div class="pricing-card">
 
-                <h3>Payment</h3>
+                <h3>
+                    Learning Guidance
+                </h3>
 
                 <div class="price">
-                    Secure
+                    Session Based
                 </div>
 
                 <p>
-                    Payments are processed through our supported payment
-                    gateway, Razorpay.
+                    Sessions may include subject guidance,
+                    doubt discussion, study planning, career
+                    awareness or general educational support.
                 </p>
 
             </div>
@@ -172,15 +232,17 @@
 
             <div class="pricing-card">
 
-                <h3>Final Amount</h3>
+                <h3>
+                    Final Payment
+                </h3>
 
                 <div class="price">
                     Before Pay
                 </div>
 
                 <p>
-                    The final payable amount is shown to the user before
-                    the payment process is completed.
+                    The final session amount is shown to the
+                    user before the payment process is completed.
                 </p>
 
             </div>
@@ -192,31 +254,72 @@
 
             <p>
                 <strong>Important:</strong>
-                Prices may vary between creator profiles. Please check
-                the selected profile and final payment amount before
-                making a payment.
+                Prices may differ between mentors and educational
+                sessions. Please carefully check the selected
+                mentor profile, session details and final payment
+                amount before completing a transaction.
             </p>
 
         </div>
 
 
-        <h2>Payment information</h2>
+        <h2>
+            Payment Information
+        </h2>
 
         <p>
-            CreatorPay does not ask users to share their UPI PIN, OTP,
-            card PIN or banking password. Users should complete payments
-            only through the official payment checkout displayed on the
-            website.
+            Payments on CreatorPay are processed through the
+            supported Razorpay payment gateway.
         </p>
 
         <p>
-            For refund-related questions, please read our
-            <a href="refund.html" style="color: #2563eb;">
+            CreatorPay does not ask users to share their UPI PIN,
+            OTP, card PIN or banking password. Complete payments
+            only through the official payment checkout displayed
+            on the website.
+        </p>
+
+
+        <h2>
+            Educational Service Information
+        </h2>
+
+        <p>
+            CreatorPay provides access to educational profiles
+            and paid learning-support sessions. The exact service
+            available to a user depends on the selected mentor
+            and the session details shown on the platform.
+        </p>
+
+        <p>
+            Educational sessions are intended for learning,
+            guidance and knowledge-sharing purposes. Participation
+            in a session does not guarantee examination results,
+            admission, employment, certification or any particular
+            academic outcome.
+        </p>
+
+
+        <h2>
+            Refund and Cancellation
+        </h2>
+
+        <p>
+            For refund and cancellation-related information,
+            please read our
+            <a
+                href="refund.html"
+                style="color: #2563eb;"
+            >
                 Refund & Cancellation Policy
             </a>.
         </p>
 
-        <a href="creator_home.html" class="back-link">
+
+        <a
+            href="creator_home.html"
+            class="back-link"
+        >
             ← Back to CreatorPay
         </a>
 
@@ -230,15 +333,35 @@
         </p>
 
         <div class="footer-links">
-            <a href="about.html">About Us</a>
-            <a href="contact.html">Contact Us</a>
-            <a href="pricing.html">Pricing</a>
-            <a href="terms.html">Terms & Conditions</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refund.html">Refund & Cancellation</a>
+
+            <a href="about.html">
+                About Us
+            </a>
+
+            <a href="contact.html">
+                Contact Us
+            </a>
+
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <a href="refund.html">
+                Refund & Cancellation
+            </a>
+
         </div>
 
     </footer>
 
 </body>
+
 </html>

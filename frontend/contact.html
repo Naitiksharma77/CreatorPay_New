@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Contact Us | CreatorPay</title>
 
-    <link rel="stylesheet" href="creator_styles.css">
+    <link
+        rel="stylesheet"
+        href="creator_styles.css"
+    >
 
     <style>
+
         .contact-page {
             max-width: 900px;
             margin: 0 auto;
@@ -45,16 +55,24 @@
 
         .contact-item {
             border: 1px solid #dbeafe;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 22px;
             background: #ffffff;
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .contact-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(20, 40, 80, 0.08);
         }
 
         .contact-item strong {
             display: block;
             color: #172554;
             font-size: 16px;
-            margin-bottom: 6px;
+            margin-bottom: 7px;
         }
 
         .contact-item a {
@@ -75,17 +93,30 @@
             font-weight: 700;
         }
 
+        .back-link:hover {
+            color: #1d4ed8;
+        }
+
         @media (max-width: 768px) {
+
             .contact-page {
                 padding: 55px 5%;
             }
 
-            .contact-item {
-                padding: 17px;
+            .contact-page h1 {
+                letter-spacing: -1px;
             }
+
+            .contact-item {
+                padding: 18px;
+            }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
@@ -96,8 +127,15 @@
         </div>
 
         <nav>
-            <a href="creator_home.html">Home</a>
-            <a href="explore.html">Creators</a>
+
+            <a href="creator_home.html">
+                Home
+            </a>
+
+            <a href="explore.html">
+                Mentors
+            </a>
+
         </nav>
 
     </header>
@@ -105,23 +143,34 @@
 
     <main class="contact-page">
 
-        <p class="eyebrow">GET IN TOUCH</p>
+        <p class="eyebrow">
+            GET IN TOUCH
+        </p>
 
         <h1>
             Contact CreatorPay
         </h1>
 
         <p>
-            If you have any questions about our platform, creator profiles,
-            pricing, payments or support, you can contact us using the
-            details below.
+            Have a question about our mentors, educators, educational
+            guidance sessions, subject experts, pricing, payments or
+            support? You can contact us using the details below.
         </p>
 
-        <h2>Customer support</h2>
+
+        <h2>
+            Educational Support
+        </h2>
 
         <p>
-            Our support team is available during the following hours.
-            We aim to respond to customer queries as soon as possible.
+            Our support team can help with questions related to mentor
+            profiles, educational sessions, booking details, payment
+            status, cancellations and general platform support.
+        </p>
+
+        <p>
+            We aim to respond to customer queries as soon as possible
+            during the support hours mentioned below.
         </p>
 
 
@@ -129,7 +178,9 @@
 
             <div class="contact-item">
 
-                <strong>Phone Number</strong>
+                <strong>
+                    Phone Number
+                </strong>
 
                 <a href="tel:7828071265">
                     7828071265
@@ -140,7 +191,9 @@
 
             <div class="contact-item">
 
-                <strong>Email Address</strong>
+                <strong>
+                    Email Address
+                </strong>
 
                 <a href="mailto:viveksharma577666@gmail.com">
                     viveksharma577666@gmail.com
@@ -151,7 +204,9 @@
 
             <div class="contact-item">
 
-                <strong>Business Address</strong>
+                <strong>
+                    Business Address
+                </strong>
 
                 <span>
                     Bina, Madhya Pradesh, India - 470113
@@ -162,7 +217,9 @@
 
             <div class="contact-item">
 
-                <strong>Support Hours</strong>
+                <strong>
+                    Support Hours
+                </strong>
 
                 <span>
                     Every day: 6:00 AM to 9:00 PM
@@ -173,22 +230,63 @@
         </div>
 
 
-        <h2>Payment-related support</h2>
+        <h2>
+            Mentor and Session Support
+        </h2>
 
         <p>
-            For payment-related questions, please include your payment
-            date, registered email address and payment reference number
-            whenever available. Do not share your UPI PIN, OTP, card PIN
-            or password with anyone.
+            If you have a question about a mentor, educator, subject expert
+            or educational guidance session, please include the mentor's
+            name and the relevant booking details whenever available.
         </p>
 
         <p>
-            For refund or cancellation-related questions, please review
-            our Refund & Cancellation Policy before contacting support.
+            For session-related issues, please mention the scheduled date,
+            session time and the problem you are facing so that our support
+            team can review your request properly.
         </p>
 
 
-        <a href="creator_home.html" class="back-link">
+        <h2>
+            Payment-related Support
+        </h2>
+
+        <p>
+            For payment-related questions, please include your payment date,
+            registered email address, payment amount and payment reference
+            number whenever available.
+        </p>
+
+        <p>
+            Never share your UPI PIN, OTP, card PIN, password or Razorpay
+            secret information with anyone.
+        </p>
+
+        <p>
+            For refund or cancellation-related questions, please review our
+            <a href="refund.html">
+                Refund & Cancellation Policy
+            </a>
+            before contacting support.
+        </p>
+
+
+        <h2>
+            Important Information
+        </h2>
+
+        <p>
+            CreatorPay provides educational guidance and knowledge-sharing
+            services. Educational sessions do not guarantee examination
+            results, academic marks, admission, employment, certification
+            or any particular outcome.
+        </p>
+
+
+        <a
+            href="creator_home.html"
+            class="back-link"
+        >
             ← Back to CreatorPay
         </a>
 
@@ -202,15 +300,35 @@
         </p>
 
         <div class="footer-links">
-            <a href="about.html">About Us</a>
-            <a href="contact.html">Contact Us</a>
-            <a href="pricing.html">Pricing</a>
-            <a href="terms.html">Terms & Conditions</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refund.html">Refund & Cancellation</a>
+
+            <a href="about.html">
+                About Us
+            </a>
+
+            <a href="contact.html">
+                Contact Us
+            </a>
+
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <a href="refund.html">
+                Refund & Cancellation
+            </a>
+
         </div>
 
     </footer>
 
 </body>
+
 </html>

@@ -1,25 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Friend Profile | CreatorPay</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="friend_profile_styles.css">
+    <title>Mentor Details | CreatorPay</title>
+
+    <link
+        rel="stylesheet"
+        href="friend_profile_styles.css"
+    >
+
 </head>
 
 <body>
 
     <header class="site-header">
 
-        <a href="creator_home.html" class="logo">
+        <a
+            href="creator_home.html"
+            class="logo"
+        >
             CreatorPay
         </a>
 
         <nav>
-            <a href="explore.html">Explore</a>
-            <a href="creator_home.html">Home</a>
+
+            <a href="explore.html">
+                Explore Mentors
+            </a>
+
+            <a href="creator_home.html">
+                Home
+            </a>
+
         </nav>
 
     </header>
@@ -27,23 +47,34 @@
 
     <main class="profile-container">
 
-        <a href="explore.html" class="back-link">
-            ← Back to Explore
+        <a
+            href="explore.html"
+            class="back-link"
+        >
+            ← Back to Mentors
         </a>
 
 
         <div id="profileContent">
 
             <div class="loading-state">
-                Loading profile...
+                Loading mentor details...
             </div>
 
         </div>
 
     </main>
 
+
+    <!-- Razorpay checkout - keep unchanged -->
+
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+
+    <!-- Existing profile and payment logic - keep unchanged -->
+
     <script src="friend_profile_app.js"></script>
 
 </body>
+
 </html>

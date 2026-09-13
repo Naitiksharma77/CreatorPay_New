@@ -1,420 +1,610 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Refund & Cancellation Policy | CreatorPay</title>
+    <title>Refund & Cancellation Policy | CreatorPay</title>
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f7f9fc;
-      color: #202124;
-      line-height: 1.7;
-    }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f7f9fc;
+            color: #202124;
+            line-height: 1.7;
+        }
 
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 20px 7%;
-    }
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px 7%;
+        }
 
-    .logo {
-      font-size: 26px;
-      font-weight: 800;
-      color: #2563eb;
-      text-decoration: none;
-    }
+        .header-inner {
+            max-width: 1100px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+        }
 
-    main {
-      max-width: 950px;
-      margin: 45px auto;
-      padding: 0 22px;
-    }
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            color: #2563eb;
+            text-decoration: none;
+        }
 
-    .policy-card {
-      background: #ffffff;
-      padding: 42px;
-      border-radius: 16px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-    }
+        nav {
+            display: flex;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
 
-    h1 {
-      font-size: 34px;
-      margin-bottom: 12px;
-      color: #111827;
-    }
+        nav a {
+            color: #475569;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
 
-    h2 {
-      font-size: 22px;
-      margin-top: 30px;
-      margin-bottom: 10px;
-      color: #111827;
-    }
+        nav a:hover {
+            color: #2563eb;
+        }
 
-    p {
-      margin-bottom: 14px;
-      color: #4b5563;
-    }
+        main {
+            max-width: 950px;
+            margin: 45px auto;
+            padding: 0 22px;
+        }
 
-    ul {
-      margin: 10px 0 18px 22px;
-      color: #4b5563;
-    }
+        .policy-card {
+            background: #ffffff;
+            padding: 42px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
 
-    li {
-      margin-bottom: 8px;
-    }
+        .eyebrow {
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
 
-    .updated {
-      color: #6b7280;
-      font-size: 14px;
-      margin-bottom: 28px;
-    }
+        h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 12px;
+            color: #111827;
+        }
 
-    .notice {
-      background: #eff6ff;
-      border-left: 4px solid #2563eb;
-      padding: 16px;
-      border-radius: 8px;
-      margin: 20px 0;
-      color: #1e40af;
-    }
+        h2 {
+            font-size: 22px;
+            margin-top: 32px;
+            margin-bottom: 10px;
+            color: #111827;
+        }
 
-    a {
-      color: #2563eb;
-      text-decoration: none;
-    }
+        p {
+            margin-bottom: 14px;
+            color: #4b5563;
+        }
 
-    a:hover {
-      text-decoration: underline;
-    }
+        ul {
+            margin: 10px 0 18px 22px;
+            color: #4b5563;
+        }
 
-    footer {
-      background: #111827;
-      color: #d1d5db;
-      padding: 30px 7%;
-      margin-top: 50px;
-    }
+        li {
+            margin-bottom: 8px;
+        }
 
-    .footer-inner {
-      max-width: 1100px;
-      margin: auto;
-      display: flex;
-      justify-content: space-between;
-      gap: 25px;
-      flex-wrap: wrap;
-    }
+        .updated {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
 
-    .footer-brand {
-      font-size: 22px;
-      font-weight: 800;
-      color: #ffffff;
-      margin-bottom: 8px;
-    }
+        .notice {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 18px;
+            border-radius: 8px;
+            margin: 22px 0;
+            color: #1e40af;
+        }
 
-    .footer-text {
-      max-width: 450px;
-      font-size: 14px;
-      color: #9ca3af;
-    }
+        .notice p {
+            color: #1e40af;
+            margin-bottom: 0;
+        }
 
-    .footer-links {
-      display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
 
-    .footer-links a {
-      color: #d1d5db;
-      font-size: 14px;
-    }
+        a:hover {
+            text-decoration: underline;
+        }
 
-    .footer-bottom {
-      max-width: 1100px;
-      margin: 25px auto 0;
-      padding-top: 18px;
-      border-top: 1px solid #374151;
-      font-size: 13px;
-      color: #9ca3af;
-    }
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            font-weight: 700;
+        }
 
-    @media (max-width: 600px) {
-      .policy-card {
-        padding: 25px 20px;
-      }
+        footer {
+            background: #111827;
+            color: #d1d5db;
+            padding: 35px 7%;
+            margin-top: 50px;
+        }
 
-      h1 {
-        font-size: 28px;
-      }
+        .footer-inner {
+            max-width: 1100px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
 
-      h2 {
-        font-size: 20px;
-      }
+        .footer-brand {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
 
-      .footer-inner {
-        flex-direction: column;
-      }
-    }
-  </style>
+        .footer-text {
+            max-width: 450px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .footer-links a {
+            color: #d1d5db;
+            font-size: 14px;
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 25px auto 0;
+            padding-top: 18px;
+            border-top: 1px solid #374151;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 600px) {
+            .header-inner {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .policy-card {
+                padding: 28px 20px;
+            }
+
+            h1 {
+                font-size: 30px;
+                letter-spacing: -0.5px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-  <header>
-    <a href="index.html" class="logo">CreatorPay</a>
-  </header>
+    <header>
+        <div class="header-inner">
 
-  <main>
-    <div class="policy-card">
+            <a href="creator_home.html" class="logo">
+                CreatorPay
+            </a>
 
-      <h1>Refund & Cancellation Policy</h1>
+            <nav>
+                <a href="creator_home.html">Home</a>
+                <a href="explore.html">Mentors</a>
+                <a href="contact.html">Contact</a>
+            </nav>
 
-      <p class="updated">
-        Last updated: September 2026
-      </p>
+        </div>
+    </header>
 
-      <p>
-        At CreatorPay, we aim to provide a smooth and reliable experience
-        for users who purchase paid interactions, content, or other services
-        offered by creators listed on our platform.
-      </p>
 
-      <div class="notice">
-        Please read this policy carefully before making a payment.
-        By completing a payment, you agree to the terms mentioned below.
-      </div>
+    <main>
 
-      <h2>1. Nature of the Service</h2>
+        <div class="policy-card">
 
-      <p>
-        CreatorPay may provide access to paid creator interactions,
-        digital content, mentorship, community access, or other
-        creator-related services.
-      </p>
+            <p class="eyebrow">
+                CREATORPAY POLICY
+            </p>
 
-      <p>
-        The exact service and price will be displayed before the payment
-        is completed.
-      </p>
+            <h1>
+                Refund & Cancellation Policy
+            </h1>
 
-      <h2>2. Refund Eligibility</h2>
+            <p class="updated">
+                Last updated: September 2026
+            </p>
 
-      <p>
-        A refund may be considered in the following situations:
-      </p>
+            <p>
+                At CreatorPay, we aim to provide a clear and reliable
+                experience for users who book educational guidance,
+                mentoring sessions, subject guidance or other learning
+                services offered through our platform.
+            </p>
 
-      <ul>
-        <li>
-          The payment was deducted but the order or service was not created.
-        </li>
+            <div class="notice">
+                <p>
+                    <strong>Please read this policy carefully before making
+                    a payment.</strong>
+                    By completing a payment, you agree to the applicable
+                    terms described below.
+                </p>
+            </div>
 
-        <li>
-          The same payment was accidentally completed more than once.
-        </li>
 
-        <li>
-          CreatorPay is unable to provide the purchased service.
-        </li>
+            <h2>1. Nature of the Educational Service</h2>
 
-        <li>
-          A creator cancels the service before it begins and a refund is
-          approved by CreatorPay.
-        </li>
+            <p>
+                CreatorPay may provide access to educational guidance,
+                mentoring sessions, doubt-solving discussions, subject
+                guidance, skill-development sessions, career guidance or
+                other clearly described learning services.
+            </p>
 
-        <li>
-          A technical issue prevents the user from receiving the purchased
-          service.
-        </li>
-      </ul>
+            <p>
+                The exact service, session details, mentor information and
+                price should be displayed before the payment is completed.
+            </p>
 
-      <h2>3. Non-Refundable Situations</h2>
+            <p>
+                Educational guidance is provided for learning and
+                informational purposes. CreatorPay does not guarantee
+                examination results, academic marks, admission, employment,
+                certification or any particular educational outcome.
+            </p>
 
-      <p>
-        A refund may not be available in the following situations:
-      </p>
 
-      <ul>
-        <li>
-          The service has already been provided or the interaction has started.
-        </li>
+            <h2>2. Refund Eligibility</h2>
 
-        <li>
-          The user changes their mind after the service has been delivered.
-        </li>
+            <p>
+                A refund may be considered in the following situations:
+            </p>
 
-        <li>
-          The user provides incorrect information or an incorrect contact
-          detail.
-        </li>
+            <ul>
+                <li>
+                    Payment was deducted but the booking or service was not created.
+                </li>
 
-        <li>
-          The user does not respond or is unavailable at the agreed time.
-        </li>
+                <li>
+                    The same payment was accidentally completed more than once.
+                </li>
 
-        <li>
-          The user violates the platform rules or the applicable service terms.
-        </li>
+                <li>
+                    CreatorPay is unable to provide the purchased educational
+                    service or mentoring session.
+                </li>
 
-        <li>
-          The issue is caused by the user's device, internet connection,
-          or payment-bank delay.
-        </li>
-      </ul>
+                <li>
+                    The scheduled session is cancelled by the mentor or
+                    service provider before it begins.
+                </li>
 
-      <h2>4. Cancellation Requests</h2>
+                <li>
+                    A technical issue prevents the user from accessing or
+                    receiving the purchased service.
+                </li>
 
-      <p>
-        Cancellation requests should be submitted as soon as possible
-        before the purchased service begins.
-      </p>
+                <li>
+                    The mentor or educator does not provide the service
+                    within the clearly agreed time without a reasonable
+                    alternative arrangement.
+                </li>
 
-      <p>
-        Cancellation approval depends on the nature of the service,
-        whether the creator has started providing the service, and
-        the circumstances of the request.
-      </p>
+                <li>
+                    A refund is required under applicable law or payment
+                    provider rules.
+                </li>
+            </ul>
 
-      <h2>5. Failed or Pending Payments</h2>
 
-      <p>
-        If money has been deducted from your bank account but the payment
-        status shows failed or pending, please contact us with the payment
-        details.
-      </p>
+            <h2>3. Situations Where a Refund May Not Be Available</h2>
 
-      <p>
-        We will check the payment status with the payment gateway.
-        If the payment was not successfully received by CreatorPay,
-        the amount may be automatically reversed by the payment provider
-        or handled according to the provider's settlement process.
-      </p>
+            <p>
+                A refund may not be available in the following situations:
+            </p>
 
-      <h2>6. Refund Processing</h2>
+            <ul>
+                <li>
+                    The purchased educational service has already been provided.
+                </li>
 
-      <p>
-        Once a refund is approved, it will generally be processed through
-        the original payment method used by the customer.
-      </p>
+                <li>
+                    The mentoring session or educational interaction has
+                    already started.
+                </li>
 
-      <p>
-        The time taken for the amount to appear in the customer's bank
-        account or payment wallet may depend on the payment gateway,
-        bank, card issuer, or UPI provider.
-      </p>
+                <li>
+                    The user changes their mind after the service has been delivered.
+                </li>
 
-      <h2>7. How to Request a Refund</h2>
+                <li>
+                    The user provides incorrect contact, booking or scheduling
+                    information.
+                </li>
 
-      <p>
-        To request a refund or report a payment issue, please contact us
-        with the following details:
-      </p>
+                <li>
+                    The user does not attend the scheduled session or does
+                    not respond at the agreed time.
+                </li>
 
-      <ul>
-        <li>Customer name</li>
-        <li>Registered email address</li>
-        <li>Payment date</li>
-        <li>Payment amount</li>
-        <li>Payment ID or transaction reference</li>
-        <li>Reason for the refund request</li>
-      </ul>
+                <li>
+                    The user does not complete the required steps needed to
+                    attend or access the session.
+                </li>
 
-      <p>
-        You can contact us using the details below:
-      </p>
+                <li>
+                    The user violates applicable platform or service rules.
+                </li>
 
-      <p>
-        <strong>Email:</strong>
-        <a href="mailto:support@creatorpay.in">
-          support@creatorpay.in
-        </a>
-      </p>
+                <li>
+                    The issue is caused by the user's device or internet
+                    connection, unless otherwise required by law.
+                </li>
 
-      <p>
-        <strong>Phone:</strong>
-        +91 93018 74352
-      </p>
+                <li>
+                    The user requests a refund only because the educational
+                    outcome did not meet their personal expectations.
+                </li>
+            </ul>
 
-      <h2>8. Fraudulent or Unauthorized Transactions</h2>
 
-      <p>
-        If you believe that a payment was made without your authorization,
-        please contact your bank or payment provider immediately and also
-        inform us using our support email.
-      </p>
+            <h2>4. Cancellation Requests</h2>
 
-      <p>
-        We may request transaction information to investigate the issue.
-      </p>
+            <p>
+                Cancellation requests should be submitted as soon as possible
+                before the scheduled educational service or mentoring session
+                begins.
+            </p>
 
-      <h2>9. Changes to This Policy</h2>
+            <p>
+                Cancellation approval may depend on the nature of the service,
+                whether the service has already started, the timing of the
+                request, the mentor's availability and applicable legal
+                requirements.
+            </p>
 
-      <p>
-        CreatorPay may update this Refund & Cancellation Policy when
-        necessary. Any changes will be published on this page with an
-        updated date.
-      </p>
+            <p>
+                If a session is cancelled by the mentor or by CreatorPay,
+                the user may be offered a rescheduled session or a refund,
+                depending on the circumstances.
+            </p>
 
-      <h2>10. Contact Information</h2>
 
-      <p>
-        <strong>Business Name:</strong> CreatorPay
-      </p>
+            <h2>5. Rescheduling of Educational Sessions</h2>
 
-      <p>
-        <strong>Address:</strong>
-        Katghora, Chhattisgarh, India
-      </p>
+            <p>
+                If a mentor or educator is unable to attend a scheduled
+                session, CreatorPay may coordinate a suitable alternative
+                time where possible.
+            </p>
 
-      <p>
-        <strong>Email:</strong>
-        <a href="mailto:support@creatorpay.in">
-          support@creatorpay.in
-        </a>
-      </p>
+            <p>
+                Users should contact support as soon as possible if they need
+                to request a change in the scheduled session time. Approval
+                of rescheduling will depend on mentor availability and the
+                nature of the purchased service.
+            </p>
 
-      <p>
-        <strong>Phone:</strong>
-        +91 93018 74352
-      </p>
 
-    </div>
-  </main>
+            <h2>6. Failed or Pending Payments</h2>
 
-  <footer>
-    <div class="footer-inner">
+            <p>
+                If money has been deducted from your bank account but the
+                payment status shows failed or pending, please contact us
+                with the payment details.
+            </p>
 
-      <div>
-        <div class="footer-brand">CreatorPay</div>
+            <p>
+                We may check the payment status with Razorpay or the relevant
+                payment provider. If the payment was not successfully received,
+                the amount may be reversed or handled according to the payment
+                provider's process.
+            </p>
 
-        <p class="footer-text">
-          CreatorPay helps users discover creators and access
-          creator-related paid services through a simple platform.
-        </p>
-      </div>
 
-      <div class="footer-links">
-        <a href="index.html">Home</a>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="refund.html">Refund Policy</a>
-        <a href="terms.html">Terms & Conditions</a>
-        <a href="contact.html">Contact Us</a>
-      </div>
+            <h2>7. Refund Processing</h2>
 
-    </div>
+            <p>
+                Once a refund is approved, it will generally be processed
+                through the original payment method used by the customer.
+            </p>
 
-    <div class="footer-bottom">
-      © 2026 CreatorPay. All rights reserved.
-    </div>
-  </footer>
+            <p>
+                The time taken for the amount to appear in the customer's
+                bank account, card or payment wallet may depend on the
+                payment gateway, bank, card issuer or UPI provider.
+            </p>
+
+            <p>
+                CreatorPay will provide available refund or transaction
+                information when required for support or payment tracking.
+            </p>
+
+
+            <h2>8. How to Request a Refund</h2>
+
+            <p>
+                To request a refund or report a payment issue, please provide
+                the following details:
+            </p>
+
+            <ul>
+                <li>Customer name</li>
+                <li>Registered email address</li>
+                <li>Payment date</li>
+                <li>Payment amount</li>
+                <li>Payment ID or transaction reference</li>
+                <li>Name of the mentor or educator</li>
+                <li>Booked educational service or session details</li>
+                <li>Reason for the refund request</li>
+            </ul>
+
+            <p>
+                Please contact us using the official contact details below.
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                <a href="mailto:support@creatorpay.in">
+                    support@creatorpay.in
+                </a>
+            </p>
+
+            <p>
+                <strong>Phone:</strong>
+                +91 93018 74352
+            </p>
+
+
+            <h2>9. Fraudulent or Unauthorized Transactions</h2>
+
+            <p>
+                If you believe that a payment was made without your
+                authorization, contact your bank or payment provider
+                immediately.
+            </p>
+
+            <p>
+                You should also inform CreatorPay through our support email.
+                We may request transaction information to investigate the issue.
+            </p>
+
+
+            <h2>10. Disputes Related to Educational Services</h2>
+
+            <p>
+                If you are dissatisfied with an educational service, mentoring
+                session or guidance interaction, please contact CreatorPay
+                support with the relevant booking and payment details.
+            </p>
+
+            <p>
+                We will review the matter based on the service description,
+                booking information, communication records and applicable
+                policy.
+            </p>
+
+            <p>
+                Any decision will be made subject to applicable law and the
+                specific facts of the case.
+            </p>
+
+
+            <h2>11. Changes to This Policy</h2>
+
+            <p>
+                CreatorPay may update this Refund & Cancellation Policy when
+                necessary. Any changes will be published on this page with
+                an updated date.
+            </p>
+
+
+            <h2>12. Contact Information</h2>
+
+            <p>
+                <strong>Business Name:</strong>
+                CreatorPay
+            </p>
+
+            <p>
+                <strong>Address:</strong>
+                Katghora, Chhattisgarh, India
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                <a href="mailto:support@creatorpay.in">
+                    support@creatorpay.in
+                </a>
+            </p>
+
+            <p>
+                <strong>Phone:</strong>
+                +91 93018 74352
+            </p>
+
+            <a href="creator_home.html" class="back-link">
+                ← Back to CreatorPay
+            </a>
+
+        </div>
+
+    </main>
+
+
+    <footer>
+
+        <div class="footer-inner">
+
+            <div>
+                <div class="footer-brand">
+                    CreatorPay
+                </div>
+
+                <p class="footer-text">
+                    CreatorPay helps users discover mentors, educators and
+                    subject experts and access clearly described educational
+                    guidance and knowledge-sharing services through a simple
+                    platform.
+                </p>
+            </div>
+
+            <div class="footer-links">
+                <a href="creator_home.html">Home</a>
+                <a href="explore.html">Mentors</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+                <a href="terms.html">Terms & Conditions</a>
+                <a href="contact.html">Contact Us</a>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 CreatorPay. All rights reserved.
+        </div>
+
+    </footer>
 
 </body>
 </html>
