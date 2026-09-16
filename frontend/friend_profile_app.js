@@ -38,6 +38,7 @@ async function loadProfile() {
         }
 
         selectedCreator = creator;
+
         displayProfile(creator);
 
     } catch (error) {
@@ -61,11 +62,11 @@ function displayProfile(creator) {
 
     const category =
         creator.category ||
-        "Knowledge Sharing";
+        "Personal Guidance";
 
     const bio =
         creator.bio ||
-        "Explore this profile and learn from this person's experience.";
+        "Connect with this person for a personal conversation and guidance.";
 
     const price = Number(creator.price).toLocaleString("en-IN");
 
@@ -99,13 +100,15 @@ function displayProfile(creator) {
                 </p>
 
                 <div class="price-box">
+
                     <span class="price-label">
-                        Conversation and knowledge-sharing session
+                        Personal conversation session
                     </span>
 
                     <span class="price">
                         ₹${price}
                     </span>
+
                 </div>
 
                 <button
@@ -127,7 +130,10 @@ function displayProfile(creator) {
 
     document
         .getElementById("payButton")
-        .addEventListener("click", startRazorpayPayment);
+        .addEventListener(
+            "click",
+            startRazorpayPayment
+        );
 }
 
 
@@ -158,9 +164,11 @@ async function startRazorpayPayment() {
             `${API_URL}/api/create-order`,
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
                     creatorId: selectedCreator.id
                 })
@@ -189,10 +197,10 @@ async function startRazorpayPayment() {
 
             currency: result.order.currency || "INR",
 
-            name: "CreatorPay",
+            name: "FriendConnect",
 
             description:
-                `Session with ${selectedCreator.name}`,
+                `Personal session with ${selectedCreator.name}`,
 
             order_id: result.order.id,
 
@@ -212,6 +220,7 @@ async function startRazorpayPayment() {
 
             notes: {
                 creatorId: selectedCreator.id,
+
                 creatorName: selectedCreator.name
             },
 
@@ -226,7 +235,8 @@ async function startRazorpayPayment() {
             }
         };
 
-        const razorpayCheckout = new Razorpay(options);
+        const razorpayCheckout =
+            new Razorpay(options);
 
         razorpayCheckout.on(
             "payment.failed",
@@ -248,7 +258,10 @@ async function startRazorpayPayment() {
         razorpayCheckout.open();
 
     } catch (error) {
-        console.error("Razorpay error:", error);
+        console.error(
+            "Razorpay error:",
+            error
+        );
 
         alert(
             error.message ||
@@ -265,14 +278,17 @@ async function startRazorpayPayment() {
 // ===============================
 
 function resetPayButton() {
-    const payButton = document.getElementById("payButton");
+    const payButton =
+        document.getElementById("payButton");
 
     if (!payButton) {
         return;
     }
 
     payButton.disabled = false;
-    payButton.textContent = "Pay via Razorpay";
+
+    payButton.textContent =
+        "Pay via Razorpay";
 }
 
 
@@ -283,6 +299,7 @@ function resetPayButton() {
 function showError(message) {
     profileContent.innerHTML = `
         <div class="error-state">
+
             <h2>
                 Something went wrong
             </h2>
@@ -290,6 +307,7 @@ function showError(message) {
             <p>
                 ${escapeHTML(message)}
             </p>
+
         </div>
     `;
 }

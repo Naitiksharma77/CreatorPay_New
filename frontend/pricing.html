@@ -20,7 +20,7 @@
     <style>
 
         .pricing-page {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 80px 7%;
         }
@@ -35,7 +35,7 @@
 
         .pricing-page h2 {
             font-size: 25px;
-            margin-top: 38px;
+            margin-top: 42px;
             margin-bottom: 14px;
             color: #172554;
         }
@@ -95,6 +95,75 @@
             border-radius: 8px;
         }
 
+        .creator-pricing-section {
+            margin-top: 55px;
+        }
+
+        .creator-pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-top: 28px;
+        }
+
+        .creator-price-card {
+            border: 1px solid #dbeafe;
+            border-radius: 18px;
+            padding: 24px;
+            background: #ffffff;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.04);
+        }
+
+        .creator-price-card h3 {
+            color: #172554;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .creator-category {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .creator-bio {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 65px;
+        }
+
+        .creator-amount {
+            color: #2563eb;
+            font-size: 30px;
+            font-weight: 800;
+            margin: 18px 0;
+        }
+
+        .creator-view-button {
+            display: inline-block;
+            width: 100%;
+            padding: 13px 18px;
+            border-radius: 10px;
+            background: #2563eb;
+            color: #ffffff;
+            text-align: center;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .creator-view-button:hover {
+            background: #1d4ed8;
+        }
+
+        .pricing-status {
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #64748b;
+            margin-top: 25px;
+        }
+
         .back-link {
             display: inline-block;
             margin-top: 35px;
@@ -106,7 +175,16 @@
             color: #1d4ed8;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
+
+            .pricing-cards,
+            .creator-pricing-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+        }
+
+        @media (max-width: 600px) {
 
             .pricing-page {
                 padding: 55px 5%;
@@ -116,7 +194,8 @@
                 letter-spacing: -1px;
             }
 
-            .pricing-cards {
+            .pricing-cards,
+            .creator-pricing-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -250,6 +329,32 @@
         </div>
 
 
+        <section class="creator-pricing-section">
+
+            <h2>
+                Current Mentor Pricing
+            </h2>
+
+            <p>
+                Browse the available mentors and view the price
+                set for their educational sessions.
+            </p>
+
+            <div
+                id="creatorPricingStatus"
+                class="pricing-status"
+            >
+                Loading mentor pricing...
+            </div>
+
+            <div
+                id="creatorPricingGrid"
+                class="creator-pricing-grid"
+            ></div>
+
+        </section>
+
+
         <div class="pricing-note">
 
             <p>
@@ -361,6 +466,9 @@
         </div>
 
     </footer>
+
+
+    <script src="pricing_app.js"></script>
 
 </body>
 

@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -10,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Contact Us | CreatorPay</title>
+    <title>Contact Us | FriendConnect</title>
 
     <link
         rel="stylesheet"
@@ -18,122 +17,183 @@
     >
 
     <style>
+        .contact-section {
+            padding: 90px 0;
+            background: #f8fbff;
+        }
 
-        .contact-page {
-            max-width: 900px;
+        .contact-container {
+            width: min(1050px, 90%);
             margin: 0 auto;
-            padding: 80px 7%;
         }
 
-        .contact-page h1 {
-            font-size: clamp(38px, 6vw, 64px);
-            line-height: 1.05;
+        .contact-heading {
+            max-width: 700px;
+            margin: 0 auto 45px;
+            text-align: center;
+        }
+
+        .contact-heading h1 {
+            margin-bottom: 16px;
+            color: #172554;
+            font-size: clamp(36px, 5vw, 58px);
+            font-weight: 900;
+            line-height: 1.1;
             letter-spacing: -2px;
-            color: #172554;
-            margin-bottom: 25px;
         }
 
-        .contact-page h2 {
-            font-size: 25px;
-            margin-top: 38px;
-            margin-bottom: 12px;
-            color: #172554;
-        }
-
-        .contact-page p {
+        .contact-heading p {
             color: #64748b;
             font-size: 16px;
             line-height: 1.8;
-            margin-bottom: 16px;
         }
 
-        .contact-details {
-            margin-top: 35px;
+        .contact-grid {
             display: grid;
-            gap: 18px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
         }
 
-        .contact-item {
+        .contact-card {
+            padding: 30px 25px;
             border: 1px solid #dbeafe;
-            border-radius: 16px;
-            padding: 22px;
+            border-radius: 22px;
             background: #ffffff;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(30, 64, 175, 0.06);
             transition:
-                transform 0.2s ease,
-                box-shadow 0.2s ease;
+                transform 0.25s ease,
+                box-shadow 0.25s ease;
         }
 
-        .contact-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(20, 40, 80, 0.08);
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 45px rgba(30, 64, 175, 0.12);
         }
 
-        .contact-item strong {
-            display: block;
+        .contact-icon {
+            width: 60px;
+            height: 60px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 20px;
+            border-radius: 18px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 27px;
+        }
+
+        .contact-card h2 {
+            margin-bottom: 12px;
             color: #172554;
-            font-size: 16px;
-            margin-bottom: 7px;
+            font-size: 21px;
+            font-weight: 900;
         }
 
-        .contact-item a {
-            color: #2563eb;
-            font-size: 16px;
-            word-break: break-word;
-        }
-
-        .contact-item span {
+        .contact-card p {
             color: #64748b;
-            font-size: 16px;
+            font-size: 14px;
+            line-height: 1.8;
         }
 
-        .back-link {
+        .contact-card a {
             display: inline-block;
-            margin-top: 35px;
+            margin-top: 8px;
             color: #2563eb;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
         }
 
-        .back-link:hover {
-            color: #1d4ed8;
+        .contact-card a:hover {
+            text-decoration: underline;
         }
 
-        @media (max-width: 768px) {
+        .contact-note {
+            max-width: 800px;
+            margin: 35px auto 0;
+            padding: 25px;
+            border: 1px solid #bfdbfe;
+            border-radius: 18px;
+            background: #eff6ff;
+            text-align: center;
+        }
 
-            .contact-page {
-                padding: 55px 5%;
+        .contact-note h2 {
+            margin-bottom: 10px;
+            color: #1e3a8a;
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .contact-note p {
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 800px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
             }
 
-            .contact-page h1 {
+            .contact-card {
+                max-width: 500px;
+                width: 100%;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .contact-section {
+                padding: 60px 0;
+            }
+
+            .contact-heading h1 {
+                font-size: 38px;
                 letter-spacing: -1px;
             }
 
-            .contact-item {
-                padding: 18px;
+            .contact-heading p {
+                font-size: 14px;
             }
 
+            .contact-card {
+                padding: 27px 22px;
+            }
         }
-
     </style>
-
 </head>
-
 
 <body>
 
+    <!-- HEADER -->
+
     <header class="top-header">
 
-        <div class="brand">
-            CreatorPay
-        </div>
+        <a
+            href="creator_home.html"
+            class="brand"
+        >
+            FriendConnect
+        </a>
 
-        <nav>
+        <nav class="main-nav">
 
             <a href="creator_home.html">
                 Home
             </a>
 
             <a href="explore.html">
-                Mentors
+                Explore
+            </a>
+
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="about.html">
+                About
             </a>
 
         </nav>
@@ -141,188 +201,156 @@
     </header>
 
 
-    <main class="contact-page">
+    <!-- CONTACT SECTION -->
 
-        <p class="eyebrow">
-            GET IN TOUCH
-        </p>
+    <main class="contact-section">
 
-        <h1>
-            Contact CreatorPay
-        </h1>
+        <div class="contact-container">
 
-        <p>
-            Have a question about our mentors, educators, educational
-            guidance sessions, subject experts, pricing, payments or
-            support? You can contact us using the details below.
-        </p>
+            <div class="contact-heading">
 
+                <p class="eyebrow">
+                    FRIENDCONNECT SUPPORT
+                </p>
 
-        <h2>
-            Educational Support
-        </h2>
+                <h1>
+                    Contact Us
+                </h1>
 
-        <p>
-            Our support team can help with questions related to mentor
-            profiles, educational sessions, booking details, payment
-            status, cancellations and general platform support.
-        </p>
-
-        <p>
-            We aim to respond to customer queries as soon as possible
-            during the support hours mentioned below.
-        </p>
-
-
-        <div class="contact-details">
-
-            <div class="contact-item">
-
-                <strong>
-                    Phone Number
-                </strong>
-
-                <a href="tel:7828071265">
-                    7828071265
-                </a>
+                <p>
+                    Have a question about FriendConnect, payments,
+                    creator services, or refunds? Our support team
+                    is here to help.
+                </p>
 
             </div>
 
 
-            <div class="contact-item">
+            <div class="contact-grid">
 
-                <strong>
-                    Email Address
-                </strong>
+                <!-- PHONE -->
 
-                <a href="mailto:viveksharma577666@gmail.com">
-                    viveksharma577666@gmail.com
-                </a>
+                <div class="contact-card">
+
+                    <div class="contact-icon">
+                        ☎
+                    </div>
+
+                    <h2>
+                        Customer Support
+                    </h2>
+
+                    <p>
+                        For general questions, payment concerns,
+                        and service-related support.
+                    </p>
+
+                    <a href="tel:+919232558724">
+                        +91-92325 58724
+                    </a>
+
+                </div>
+
+
+                <!-- EMAIL -->
+
+                <div class="contact-card">
+
+                    <div class="contact-icon">
+                        ✉
+                    </div>
+
+                    <h2>
+                        Email Support
+                    </h2>
+
+                    <p>
+                        Send us your question or transaction-related
+                        concern by email.
+                    </p>
+
+                    <a href="mailto:viveksharma577666@gmail.com">
+                        viveksharma577666@gmail.com
+                    </a>
+
+                </div>
+
+
+                <!-- LOCATION -->
+
+                <div class="contact-card">
+
+                    <div class="contact-icon">
+                        📍
+                    </div>
+
+                    <h2>
+                        Business Location
+                    </h2>
+
+                    <p>
+                        Bina, Madhya Pradesh
+                        <br>
+                        470113, India
+                    </p>
+
+                </div>
 
             </div>
 
 
-            <div class="contact-item">
+            <div class="contact-note">
 
-                <strong>
-                    Business Address
-                </strong>
+                <h2>
+                    Payment Support
+                </h2>
 
-                <span>
-                    Bina, Madhya Pradesh, India - 470113
-                </span>
+                <p>
+                    If your payment was deducted but the service was
+                    not confirmed, please contact us with your payment
+                    reference number or transaction ID.
+                </p>
 
-            </div>
-
-
-            <div class="contact-item">
-
-                <strong>
-                    Support Hours
-                </strong>
-
-                <span>
-                    Every day: 6:00 AM to 9:00 PM
-                </span>
+                <p>
+                    Never share your OTP, UPI PIN, card PIN, CVV,
+                    or banking password with anyone.
+                </p>
 
             </div>
 
         </div>
 
-
-        <h2>
-            Mentor and Session Support
-        </h2>
-
-        <p>
-            If you have a question about a mentor, educator, subject expert
-            or educational guidance session, please include the mentor's
-            name and the relevant booking details whenever available.
-        </p>
-
-        <p>
-            For session-related issues, please mention the scheduled date,
-            session time and the problem you are facing so that our support
-            team can review your request properly.
-        </p>
-
-
-        <h2>
-            Payment-related Support
-        </h2>
-
-        <p>
-            For payment-related questions, please include your payment date,
-            registered email address, payment amount and payment reference
-            number whenever available.
-        </p>
-
-        <p>
-            Never share your UPI PIN, OTP, card PIN, password or Razorpay
-            secret information with anyone.
-        </p>
-
-        <p>
-            For refund or cancellation-related questions, please review our
-            <a href="refund.html">
-                Refund & Cancellation Policy
-            </a>
-            before contacting support.
-        </p>
-
-
-        <h2>
-            Important Information
-        </h2>
-
-        <p>
-            CreatorPay provides educational guidance and knowledge-sharing
-            services. Educational sessions do not guarantee examination
-            results, academic marks, admission, employment, certification
-            or any particular outcome.
-        </p>
-
-
-        <a
-            href="creator_home.html"
-            class="back-link"
-        >
-            ← Back to CreatorPay
-        </a>
-
     </main>
 
+
+    <!-- FOOTER -->
 
     <footer class="site-footer">
 
         <p>
-            © 2026 CreatorPay. All rights reserved.
+            © 2026 FriendConnect. All rights reserved.
         </p>
 
         <div class="footer-links">
 
             <a href="about.html">
-                About Us
+                About
             </a>
 
             <a href="contact.html">
-                Contact Us
-            </a>
-
-            <a href="pricing.html">
-                Pricing
-            </a>
-
-            <a href="terms.html">
-                Terms & Conditions
+                Contact
             </a>
 
             <a href="privacy.html">
                 Privacy Policy
             </a>
 
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
             <a href="refund.html">
-                Refund & Cancellation
+                Refund Policy
             </a>
 
         </div>

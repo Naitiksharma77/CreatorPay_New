@@ -1,88 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Privacy Policy | CreatorPay</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="creator_styles.css">
+    <title>Privacy Policy | FriendConnect</title>
+
+    <link
+        rel="stylesheet"
+        href="creator_styles.css"
+    >
 
     <style>
-        .policy-page {
-            max-width: 950px;
+        .legal-section {
+            padding: 90px 0;
+            background: #f8fbff;
+        }
+
+        .legal-container {
+            width: min(900px, 90%);
             margin: 0 auto;
-            padding: 80px 7%;
+            padding: 45px;
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-radius: 24px;
+            box-shadow: 0 15px 45px rgba(30, 64, 175, 0.06);
         }
 
-        .policy-page h1 {
-            font-size: clamp(38px, 6vw, 64px);
-            line-height: 1.05;
-            letter-spacing: -2px;
-            color: #172554;
-            margin-bottom: 25px;
-        }
-
-        .policy-page h2 {
-            font-size: 25px;
-            margin-top: 38px;
+        .legal-container h1 {
             margin-bottom: 12px;
             color: #172554;
+            font-size: clamp(34px, 5vw, 52px);
+            font-weight: 900;
+            line-height: 1.1;
         }
 
-        .policy-page p {
+        .legal-date {
+            margin-bottom: 35px;
             color: #64748b;
-            font-size: 16px;
-            line-height: 1.8;
-            margin-bottom: 16px;
+            font-size: 14px;
         }
 
-        .policy-page ul {
-            padding-left: 22px;
-            color: #64748b;
-            line-height: 1.8;
-        }
-
-        .policy-page li {
-            margin-bottom: 8px;
-        }
-
-        .policy-page a {
-            color: #2563eb;
-            font-weight: 600;
-        }
-
-        .policy-note {
-            padding: 20px;
-            margin-top: 30px;
-            border-left: 4px solid #2563eb;
-            background: #eff6ff;
-            border-radius: 10px;
-        }
-
-        .policy-note p {
-            margin-bottom: 0;
-        }
-
-        .back-link {
-            display: inline-block;
+        .legal-container h2 {
             margin-top: 35px;
-            color: #2563eb;
-            font-weight: 700;
-            text-decoration: none;
+            margin-bottom: 12px;
+            color: #1e3a8a;
+            font-size: 23px;
+            font-weight: 900;
         }
 
-        .back-link:hover {
-            text-decoration: underline;
+        .legal-container p {
+            margin-bottom: 14px;
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.85;
         }
 
-        @media (max-width: 768px) {
-            .policy-page {
-                padding: 55px 5%;
+        .legal-container ul {
+            margin: 12px 0 18px 22px;
+            color: #475569;
+        }
+
+        .legal-container li {
+            margin-bottom: 9px;
+            line-height: 1.8;
+        }
+
+        .legal-contact-box {
+            margin-top: 25px;
+            padding: 22px;
+            border-radius: 16px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .legal-contact-box p {
+            margin-bottom: 7px;
+        }
+
+        .legal-contact-box strong {
+            color: #1e3a8a;
+        }
+
+        @media (max-width: 650px) {
+            .legal-section {
+                padding: 55px 0;
             }
 
-            .policy-page h1 {
-                letter-spacing: -1px;
+            .legal-container {
+                width: 90%;
+                padding: 25px;
+                border-radius: 18px;
+            }
+
+            .legal-container h2 {
+                font-size: 21px;
+            }
+
+            .legal-container p,
+            .legal-container li {
+                font-size: 14px;
             }
         }
     </style>
@@ -90,282 +112,370 @@
 
 <body>
 
+    <!-- HEADER -->
+
     <header class="top-header">
 
-        <div class="brand">
-            CreatorPay
-        </div>
+        <a
+            href="creator_home.html"
+            class="brand"
+        >
+            FriendConnect
+        </a>
 
-        <nav>
-            <a href="creator_home.html">Home</a>
-            <a href="explore.html">Mentors</a>
-            <a href="contact.html">Contact</a>
+        <nav class="main-nav">
+
+            <a href="creator_home.html">
+                Home
+            </a>
+
+            <a href="explore.html">
+                Explore
+            </a>
+
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="contact.html">
+                Contact
+            </a>
+
         </nav>
 
     </header>
 
 
-    <main class="policy-page">
+    <!-- PRIVACY POLICY -->
 
-        <p class="eyebrow">CREATORPAY PRIVACY</p>
+    <main class="legal-section">
 
-        <h1>
-            Privacy Policy
-        </h1>
+        <div class="legal-container">
 
-        <p>
-            This Privacy Policy explains how CreatorPay collects, uses,
-            stores and protects information when you visit or use our
-            educational platform, mentor profiles and knowledge-sharing
-            services.
-        </p>
-
-        <p>
-            By using CreatorPay, you acknowledge that you have read and
-            understood this Privacy Policy.
-        </p>
-
-
-        <h2>1. Information We Collect</h2>
-
-        <p>
-            Depending on how you use CreatorPay, we may collect or receive
-            the following information:
-        </p>
-
-        <ul>
-            <li>Name or profile information provided by you.</li>
-            <li>Email address and contact information.</li>
-            <li>Information submitted through support or contact forms.</li>
-            <li>Details about the mentor, educator or educational service you select.</li>
-            <li>Payment reference details and transaction status.</li>
-            <li>Technical information such as browser, device and usage data.</li>
-            <li>Information required to provide educational support or respond to your request.</li>
-        </ul>
-
-
-        <h2>2. Payment Information</h2>
-
-        <p>
-            Payments on CreatorPay may be processed through Razorpay or
-            another supported payment service provider.
-        </p>
-
-        <p>
-            CreatorPay does not ask you to share your UPI PIN, OTP,
-            card PIN, CVV, banking password or other confidential banking
-            credentials with us.
-        </p>
-
-        <p>
-            The payment provider may process payment information according
-            to its own privacy policy and terms. CreatorPay may receive
-            limited information such as payment status, transaction ID,
-            order ID and other details needed to confirm or support a payment
-            for an educational service.
-        </p>
-
-
-        <h2>3. How We Use Information</h2>
-
-        <p>
-            We may use collected information for the following purposes:
-        </p>
-
-        <ul>
-            <li>To operate and maintain the CreatorPay educational platform.</li>
-            <li>To display mentor, educator and subject expert profiles.</li>
-            <li>To display educational services and knowledge-sharing information.</li>
-            <li>To process and verify payments.</li>
-            <li>To provide educational and platform-related support.</li>
-            <li>To respond to questions, requests or complaints.</li>
-            <li>To prevent fraud, misuse and security problems.</li>
-            <li>To improve website performance and user experience.</li>
-            <li>To maintain business and transaction records.</li>
-            <li>To comply with applicable legal requirements.</li>
-        </ul>
-
-
-        <h2>4. Sharing of Information</h2>
-
-        <p>
-            We may share limited information with trusted service providers
-            who help us operate the website, process payments, provide hosting,
-            maintain security or provide customer support.
-        </p>
-
-        <p>
-            Where necessary for a selected educational service, limited
-            information may be shared with the relevant mentor, educator or
-            service provider to help process or deliver the requested service.
-        </p>
-
-        <p>
-            We may also disclose information when required by law, legal
-            process, government request or when necessary to protect the
-            rights, safety and security of CreatorPay, our users or others.
-        </p>
-
-        <p>
-            We do not sell personal information to third parties.
-        </p>
-
-
-        <h2>5. Cookies and Technical Information</h2>
-
-        <p>
-            CreatorPay or its service providers may use cookies or similar
-            technologies to maintain website functionality, understand
-            website usage and improve performance.
-        </p>
-
-        <p>
-            You may be able to control cookies through your browser settings.
-            Disabling certain cookies may affect some website features.
-        </p>
-
-
-        <h2>6. Data Security</h2>
-
-        <p>
-            We take reasonable steps to protect information against
-            unauthorized access, misuse, alteration or disclosure.
-            However, no internet transmission or storage system can be
-            guaranteed to be completely secure.
-        </p>
-
-
-        <h2>7. Data Retention</h2>
-
-        <p>
-            We retain information only for as long as reasonably necessary
-            for the purposes described in this Privacy Policy, including
-            educational service support, payment support, business records,
-            dispute resolution, security and legal compliance.
-        </p>
-
-
-        <h2>8. Third-Party Services</h2>
-
-        <p>
-            CreatorPay may use or link to third-party services, including
-            payment gateways, hosting providers, database providers and
-            other technical services.
-        </p>
-
-        <p>
-            These third-party services may have their own terms and privacy
-            policies. We recommend reviewing their policies before using
-            those services.
-        </p>
-
-
-        <h2>9. Children and Minors</h2>
-
-        <p>
-            CreatorPay is an educational platform. Users who are not legally
-            permitted to use paid online services must not make payments or
-            use paid services without the permission and supervision of a
-            parent or legal guardian, wherever required by applicable law.
-        </p>
-
-        <p>
-            If you believe that a minor has provided personal information
-            improperly, please contact us so that we can review the issue.
-        </p>
-
-
-        <h2>10. Your Privacy Choices</h2>
-
-        <p>
-            You may contact us to ask questions about the information we may
-            hold about you, request correction of inaccurate information or
-            raise a privacy-related concern.
-        </p>
-
-        <p>
-            Requests may be subject to reasonable verification and applicable
-            legal requirements.
-        </p>
-
-
-        <h2>11. Changes to This Privacy Policy</h2>
-
-        <p>
-            We may update this Privacy Policy from time to time.
-            Any updated version will be published on this page with a revised
-            effective date where appropriate.
-        </p>
-
-
-        <h2>12. Contact Us</h2>
-
-        <p>
-            For privacy-related questions or requests, contact us:
-        </p>
-
-        <p>
-            <strong>Email:</strong>
-            <a href="mailto:viveksharma577666@gmail.com">
-                viveksharma577666@gmail.com
-            </a>
-        </p>
-
-        <p>
-            <strong>Phone:</strong>
-            <a href="tel:7828071265">
-                7828071265
-            </a>
-        </p>
-
-        <p>
-            <strong>Address:</strong>
-            Bina, Madhya Pradesh, India - 470113
-        </p>
-
-        <p>
-            <strong>Support Hours:</strong>
-            Every day, 6:00 AM to 9:00 PM
-        </p>
-
-
-        <div class="policy-note">
-
-            <p>
-                <strong>Important:</strong>
-                This Privacy Policy is a general website draft.
-                Before publishing it, make sure it accurately matches
-                your actual data collection, database storage, payment
-                processing, mentor communication, support process and
-                business practices.
+            <p class="eyebrow">
+                FRIENDCONNECT LEGAL
             </p>
 
+            <h1>
+                Privacy Policy
+            </h1>
+
+            <p class="legal-date">
+                Effective Date: 16 September 2026
+            </p>
+
+
+            <p>
+                Welcome to FriendConnect. This Privacy Policy explains
+                how FriendConnect collects, uses, protects, and handles
+                information when you visit or use our website and services.
+            </p>
+
+            <p>
+                By using FriendConnect, you agree to the practices
+                described in this Privacy Policy.
+            </p>
+
+
+            <h2>
+                1. Information We Collect
+            </h2>
+
+            <p>
+                Depending on how you use FriendConnect, we may collect
+                the following information:
+            </p>
+
+            <ul>
+                <li>
+                    Name or display name.
+                </li>
+
+                <li>
+                    Email address and contact information.
+                </li>
+
+                <li>
+                    Information provided while contacting us.
+                </li>
+
+                <li>
+                    Creator profile information, biography, category,
+                    profile photo, and service price.
+                </li>
+
+                <li>
+                    Payment-related information necessary to confirm
+                    a transaction.
+                </li>
+
+                <li>
+                    Basic technical information such as browser type,
+                    device information, and website usage data.
+                </li>
+            </ul>
+
+
+            <h2>
+                2. Payment Information
+            </h2>
+
+            <p>
+                Payments on FriendConnect may be processed through
+                Razorpay or another authorized payment service provider.
+            </p>
+
+            <p>
+                Payment service providers may collect and process
+                payment information according to their own privacy
+                policies and terms.
+            </p>
+
+            <p>
+                FriendConnect does not directly request or store your
+                complete card number, UPI PIN, banking password, or
+                other sensitive payment credentials.
+            </p>
+
+
+            <h2>
+                3. How We Use Information
+            </h2>
+
+            <p>
+                We may use collected information for the following purposes:
+            </p>
+
+            <ul>
+                <li>
+                    To provide and operate FriendConnect services.
+                </li>
+
+                <li>
+                    To display creator profiles and service information.
+                </li>
+
+                <li>
+                    To process or confirm payments.
+                </li>
+
+                <li>
+                    To respond to customer support requests.
+                </li>
+
+                <li>
+                    To improve website performance and user experience.
+                </li>
+
+                <li>
+                    To prevent fraud, misuse, or unauthorized activity.
+                </li>
+
+                <li>
+                    To comply with applicable legal requirements.
+                </li>
+            </ul>
+
+
+            <h2>
+                4. Information Sharing
+            </h2>
+
+            <p>
+                We do not sell or rent your personal information.
+            </p>
+
+            <p>
+                We may share limited information with trusted service
+                providers when necessary to operate FriendConnect,
+                process payments, provide hosting, maintain security,
+                or comply with legal obligations.
+            </p>
+
+
+            <h2>
+                5. Creator Profile Information
+            </h2>
+
+            <p>
+                Information intentionally added to a public creator
+                profile, such as display name, biography, category,
+                profile photo, and service price, may be visible to
+                website visitors.
+            </p>
+
+            <p>
+                Users should not submit private, confidential, or
+                sensitive information in publicly visible profile fields.
+            </p>
+
+
+            <h2>
+                6. Cookies and Technical Data
+            </h2>
+
+            <p>
+                FriendConnect may use cookies or similar technologies
+                to maintain website functionality, improve performance,
+                understand usage, and provide a better user experience.
+            </p>
+
+            <p>
+                You may control cookies through your browser settings.
+                Disabling certain cookies may affect some website features.
+            </p>
+
+
+            <h2>
+                7. Data Security
+            </h2>
+
+            <p>
+                We take reasonable technical and organizational measures
+                to protect information against unauthorized access,
+                misuse, alteration, or disclosure.
+            </p>
+
+            <p>
+                However, no internet-based service can guarantee
+                complete security.
+            </p>
+
+
+            <h2>
+                8. Data Retention
+            </h2>
+
+            <p>
+                We retain information only for as long as reasonably
+                necessary to provide services, maintain business records,
+                resolve disputes, prevent misuse, or comply with legal
+                obligations.
+            </p>
+
+
+            <h2>
+                9. Third-Party Services
+            </h2>
+
+            <p>
+                FriendConnect may use third-party services such as
+                payment processors, hosting providers, analytics tools,
+                or communication services.
+            </p>
+
+            <p>
+                These third parties may process information according
+                to their own terms and privacy policies.
+            </p>
+
+
+            <h2>
+                10. Children's Privacy
+            </h2>
+
+            <p>
+                FriendConnect is not intended for children under the
+                age required by applicable law. We do not knowingly
+                collect personal information from children without
+                appropriate legal authorization.
+            </p>
+
+
+            <h2>
+                11. Your Rights
+            </h2>
+
+            <p>
+                Subject to applicable law, you may contact us to request
+                access, correction, or deletion of personal information
+                that we hold about you.
+            </p>
+
+            <p>
+                We may need to verify your request before taking action.
+            </p>
+
+
+            <h2>
+                12. Changes to This Privacy Policy
+            </h2>
+
+            <p>
+                We may update this Privacy Policy from time to time.
+                Any updated version will be posted on this page with
+                a revised effective date.
+            </p>
+
+
+            <h2>
+                13. Contact Us
+            </h2>
+
+            <p>
+                If you have questions, concerns, or requests regarding
+                this Privacy Policy, you can contact FriendConnect using
+                the details below.
+            </p>
+
+            <div class="legal-contact-box">
+
+                <p>
+                    <strong>Customer Support Number:</strong>
+                    +91-92325 58724
+                </p>
+
+                <p>
+                    <strong>Email:</strong>
+                    viveksharma577666@gmail.com
+                </p>
+
+                <p>
+                    <strong>Business Location:</strong>
+                    Bina, Madhya Pradesh - 470113, India
+                </p>
+
+            </div>
+
         </div>
-
-
-        <a href="creator_home.html" class="back-link">
-            ← Back to CreatorPay
-        </a>
 
     </main>
 
 
+    <!-- FOOTER -->
+
     <footer class="site-footer">
 
         <p>
-            © 2026 CreatorPay. All rights reserved.
+            © 2026 FriendConnect. All rights reserved.
         </p>
 
         <div class="footer-links">
-            <a href="about.html">About Us</a>
-            <a href="contact.html">Contact Us</a>
-            <a href="pricing.html">Pricing</a>
-            <a href="terms.html">Terms & Conditions</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refund.html">Refund & Cancellation</a>
+
+            <a href="about.html">
+                About
+            </a>
+
+            <a href="contact.html">
+                Contact
+            </a>
+
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
+            <a href="refund.html">
+                Refund Policy
+            </a>
+
         </div>
 
     </footer>
 
 </body>
+
 </html>

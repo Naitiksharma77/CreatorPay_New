@@ -1,220 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Refund & Cancellation Policy | CreatorPay</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Refund Policy | FriendConnect</title>
+
+    <link
+        rel="stylesheet"
+        href="creator_styles.css"
+    >
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .legal-section {
+            padding: 90px 0;
+            background: #f8fbff;
         }
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f7f9fc;
-            color: #202124;
-            line-height: 1.7;
-        }
+        .legal-container {
+            width: min(900px, 90%);
+            margin: 0 auto;
+            padding: 45px;
 
-        header {
             background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 20px 7%;
+            border: 1px solid #dbeafe;
+            border-radius: 24px;
+
+            box-shadow: 0 15px 45px rgba(30, 64, 175, 0.06);
         }
 
-        .header-inner {
-            max-width: 1100px;
-            margin: auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 25px;
-        }
-
-        .logo {
-            font-size: 26px;
-            font-weight: 800;
-            color: #2563eb;
-            text-decoration: none;
-        }
-
-        nav {
-            display: flex;
-            gap: 22px;
-            flex-wrap: wrap;
-        }
-
-        nav a {
-            color: #475569;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        nav a:hover {
-            color: #2563eb;
-        }
-
-        main {
-            max-width: 950px;
-            margin: 45px auto;
-            padding: 0 22px;
-        }
-
-        .policy-card {
-            background: #ffffff;
-            padding: 42px;
-            border-radius: 18px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-        }
-
-        .eyebrow {
-            color: #2563eb;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
+        .legal-container h1 {
             margin-bottom: 12px;
-        }
 
-        h1 {
-            font-size: clamp(32px, 5vw, 48px);
+            color: #172554;
+            font-size: clamp(34px, 5vw, 52px);
+            font-weight: 900;
             line-height: 1.1;
-            letter-spacing: -1.5px;
+        }
+
+        .legal-date {
+            margin-bottom: 35px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .legal-container h2 {
+            margin-top: 35px;
             margin-bottom: 12px;
-            color: #111827;
+
+            color: #1e3a8a;
+            font-size: 23px;
+            font-weight: 900;
         }
 
-        h2 {
-            font-size: 22px;
-            margin-top: 32px;
-            margin-bottom: 10px;
-            color: #111827;
-        }
-
-        p {
+        .legal-container p {
             margin-bottom: 14px;
-            color: #4b5563;
+
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.85;
         }
 
-        ul {
-            margin: 10px 0 18px 22px;
-            color: #4b5563;
+        .legal-container ul {
+            margin: 12px 0 18px 22px;
+            color: #475569;
         }
 
-        li {
-            margin-bottom: 8px;
+        .legal-container li {
+            margin-bottom: 9px;
+            line-height: 1.8;
         }
 
-        .updated {
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 28px;
-        }
+        .legal-contact-box {
+            margin-top: 25px;
+            padding: 22px;
 
-        .notice {
+            border: 1px solid #bfdbfe;
+            border-radius: 16px;
             background: #eff6ff;
-            border-left: 4px solid #2563eb;
-            padding: 18px;
-            border-radius: 8px;
-            margin: 22px 0;
-            color: #1e40af;
         }
 
-        .notice p {
-            color: #1e40af;
-            margin-bottom: 0;
+        .legal-contact-box p {
+            margin-bottom: 7px;
         }
 
-        a {
-            color: #2563eb;
-            text-decoration: none;
+        .legal-contact-box strong {
+            color: #1e3a8a;
         }
 
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-top: 30px;
-            font-weight: 700;
-        }
-
-        footer {
-            background: #111827;
-            color: #d1d5db;
-            padding: 35px 7%;
-            margin-top: 50px;
-        }
-
-        .footer-inner {
-            max-width: 1100px;
-            margin: auto;
-            display: flex;
-            justify-content: space-between;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-
-        .footer-brand {
-            font-size: 22px;
-            font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .footer-text {
-            max-width: 450px;
-            font-size: 14px;
-            color: #9ca3af;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 18px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .footer-links a {
-            color: #d1d5db;
-            font-size: 14px;
-        }
-
-        .footer-bottom {
-            max-width: 1100px;
-            margin: 25px auto 0;
-            padding-top: 18px;
-            border-top: 1px solid #374151;
-            font-size: 13px;
-            color: #9ca3af;
-        }
-
-        @media (max-width: 600px) {
-            .header-inner {
-                align-items: flex-start;
-                flex-direction: column;
+        @media (max-width: 650px) {
+            .legal-section {
+                padding: 55px 0;
             }
 
-            .policy-card {
-                padding: 28px 20px;
+            .legal-container {
+                width: 90%;
+                padding: 25px;
+                border-radius: 18px;
             }
 
-            h1 {
-                font-size: 30px;
-                letter-spacing: -0.5px;
+            .legal-container h2 {
+                font-size: 21px;
             }
 
-            h2 {
-                font-size: 20px;
-            }
-
-            .footer-inner {
-                flex-direction: column;
+            .legal-container p,
+            .legal-container li {
+                font-size: 14px;
             }
         }
     </style>
@@ -222,122 +118,126 @@
 
 <body>
 
-    <header>
-        <div class="header-inner">
+    <!-- HEADER -->
 
-            <a href="creator_home.html" class="logo">
-                CreatorPay
+    <header class="top-header">
+
+        <a
+            href="creator_home.html"
+            class="brand"
+        >
+            FriendConnect
+        </a>
+
+        <nav class="main-nav">
+
+            <a href="creator_home.html">
+                Home
             </a>
 
-            <nav>
-                <a href="creator_home.html">Home</a>
-                <a href="explore.html">Mentors</a>
-                <a href="contact.html">Contact</a>
-            </nav>
+            <a href="explore.html">
+                Explore
+            </a>
 
-        </div>
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="contact.html">
+                Contact
+            </a>
+
+        </nav>
+
     </header>
 
 
-    <main>
+    <!-- REFUND POLICY -->
 
-        <div class="policy-card">
+    <main class="legal-section">
+
+        <div class="legal-container">
 
             <p class="eyebrow">
-                CREATORPAY POLICY
+                FRIENDCONNECT LEGAL
             </p>
 
             <h1>
-                Refund & Cancellation Policy
+                Refund Policy
             </h1>
 
-            <p class="updated">
-                Last updated: September 2026
-            </p>
-
-            <p>
-                At CreatorPay, we aim to provide a clear and reliable
-                experience for users who book educational guidance,
-                mentoring sessions, subject guidance or other learning
-                services offered through our platform.
-            </p>
-
-            <div class="notice">
-                <p>
-                    <strong>Please read this policy carefully before making
-                    a payment.</strong>
-                    By completing a payment, you agree to the applicable
-                    terms described below.
-                </p>
-            </div>
-
-
-            <h2>1. Nature of the Educational Service</h2>
-
-            <p>
-                CreatorPay may provide access to educational guidance,
-                mentoring sessions, doubt-solving discussions, subject
-                guidance, skill-development sessions, career guidance or
-                other clearly described learning services.
-            </p>
-
-            <p>
-                The exact service, session details, mentor information and
-                price should be displayed before the payment is completed.
-            </p>
-
-            <p>
-                Educational guidance is provided for learning and
-                informational purposes. CreatorPay does not guarantee
-                examination results, academic marks, admission, employment,
-                certification or any particular educational outcome.
+            <p class="legal-date">
+                Effective Date: 16 September 2026
             </p>
 
 
-            <h2>2. Refund Eligibility</h2>
+            <p>
+                This Refund Policy explains the conditions under which
+                a refund may be requested for payments made through
+                FriendConnect.
+            </p>
 
             <p>
-                A refund may be considered in the following situations:
+                By making a payment on FriendConnect, you acknowledge
+                and agree to this Refund Policy.
+            </p>
+
+
+            <h2>
+                1. Payment Processing
+            </h2>
+
+            <p>
+                Payments made through FriendConnect may be processed
+                by Razorpay or another authorized payment service provider.
+            </p>
+
+            <p>
+                Once a payment is completed, the transaction may be
+                subject to verification and processing by the payment
+                service provider.
+            </p>
+
+
+            <h2>
+                2. When a Refund May Be Considered
+            </h2>
+
+            <p>
+                A refund request may be considered in situations such as:
             </p>
 
             <ul>
                 <li>
-                    Payment was deducted but the booking or service was not created.
+                    The payment was deducted but the transaction was
+                    not successfully confirmed.
                 </li>
 
                 <li>
-                    The same payment was accidentally completed more than once.
+                    The same payment was accidentally completed more
+                    than once for the same service.
                 </li>
 
                 <li>
-                    CreatorPay is unable to provide the purchased educational
-                    service or mentoring session.
+                    A paid service was not delivered due to a technical
+                    issue caused by FriendConnect.
                 </li>
 
                 <li>
-                    The scheduled session is cancelled by the mentor or
-                    service provider before it begins.
+                    A payment was made incorrectly and the issue is
+                    verified by our support team.
                 </li>
 
                 <li>
-                    A technical issue prevents the user from accessing or
-                    receiving the purchased service.
-                </li>
-
-                <li>
-                    The mentor or educator does not provide the service
-                    within the clearly agreed time without a reasonable
-                    alternative arrangement.
-                </li>
-
-                <li>
-                    A refund is required under applicable law or payment
-                    provider rules.
+                    A refund is required under applicable law or the
+                    applicable payment service provider's rules.
                 </li>
             </ul>
 
 
-            <h2>3. Situations Where a Refund May Not Be Available</h2>
+            <h2>
+                3. Non-Refundable Situations
+            </h2>
 
             <p>
                 A refund may not be available in the following situations:
@@ -345,266 +245,220 @@
 
             <ul>
                 <li>
-                    The purchased educational service has already been provided.
+                    The user changes their mind after receiving or using
+                    the service.
                 </li>
 
                 <li>
-                    The mentoring session or educational interaction has
-                    already started.
+                    The user provides incorrect information that prevents
+                    the service from being delivered.
                 </li>
 
                 <li>
-                    The user changes their mind after the service has been delivered.
+                    The service was delivered as described by the creator.
                 </li>
 
                 <li>
-                    The user provides incorrect contact, booking or scheduling
-                    information.
+                    The request is based only on dissatisfaction with
+                    a creator's personal opinion, style, or content.
                 </li>
 
                 <li>
-                    The user does not attend the scheduled session or does
-                    not respond at the agreed time.
-                </li>
-
-                <li>
-                    The user does not complete the required steps needed to
-                    attend or access the session.
-                </li>
-
-                <li>
-                    The user violates applicable platform or service rules.
-                </li>
-
-                <li>
-                    The issue is caused by the user's device or internet
-                    connection, unless otherwise required by law.
-                </li>
-
-                <li>
-                    The user requests a refund only because the educational
-                    outcome did not meet their personal expectations.
+                    The payment issue is caused by the user's bank,
+                    payment application, network, or payment provider,
+                    unless otherwise required by law.
                 </li>
             </ul>
 
 
-            <h2>4. Cancellation Requests</h2>
+            <h2>
+                4. How to Request a Refund
+            </h2>
 
             <p>
-                Cancellation requests should be submitted as soon as possible
-                before the scheduled educational service or mentoring session
-                begins.
+                To request a refund, contact FriendConnect customer
+                support using the contact details provided below.
             </p>
 
             <p>
-                Cancellation approval may depend on the nature of the service,
-                whether the service has already started, the timing of the
-                request, the mentor's availability and applicable legal
-                requirements.
-            </p>
-
-            <p>
-                If a session is cancelled by the mentor or by CreatorPay,
-                the user may be offered a rescheduled session or a refund,
-                depending on the circumstances.
-            </p>
-
-
-            <h2>5. Rescheduling of Educational Sessions</h2>
-
-            <p>
-                If a mentor or educator is unable to attend a scheduled
-                session, CreatorPay may coordinate a suitable alternative
-                time where possible.
-            </p>
-
-            <p>
-                Users should contact support as soon as possible if they need
-                to request a change in the scheduled session time. Approval
-                of rescheduling will depend on mentor availability and the
-                nature of the purchased service.
-            </p>
-
-
-            <h2>6. Failed or Pending Payments</h2>
-
-            <p>
-                If money has been deducted from your bank account but the
-                payment status shows failed or pending, please contact us
-                with the payment details.
-            </p>
-
-            <p>
-                We may check the payment status with Razorpay or the relevant
-                payment provider. If the payment was not successfully received,
-                the amount may be reversed or handled according to the payment
-                provider's process.
-            </p>
-
-
-            <h2>7. Refund Processing</h2>
-
-            <p>
-                Once a refund is approved, it will generally be processed
-                through the original payment method used by the customer.
-            </p>
-
-            <p>
-                The time taken for the amount to appear in the customer's
-                bank account, card or payment wallet may depend on the
-                payment gateway, bank, card issuer or UPI provider.
-            </p>
-
-            <p>
-                CreatorPay will provide available refund or transaction
-                information when required for support or payment tracking.
-            </p>
-
-
-            <h2>8. How to Request a Refund</h2>
-
-            <p>
-                To request a refund or report a payment issue, please provide
-                the following details:
+                Your request should include:
             </p>
 
             <ul>
-                <li>Customer name</li>
-                <li>Registered email address</li>
-                <li>Payment date</li>
-                <li>Payment amount</li>
-                <li>Payment ID or transaction reference</li>
-                <li>Name of the mentor or educator</li>
-                <li>Booked educational service or session details</li>
-                <li>Reason for the refund request</li>
+                <li>
+                    Name used during the transaction.
+                </li>
+
+                <li>
+                    Email address or contact number.
+                </li>
+
+                <li>
+                    Transaction ID or payment reference number.
+                </li>
+
+                <li>
+                    Date and amount of the payment.
+                </li>
+
+                <li>
+                    A clear explanation of the refund request.
+                </li>
             </ul>
 
             <p>
-                Please contact us using the official contact details below.
+                Do not share your UPI PIN, card PIN, banking password,
+                CVV, OTP, or other sensitive payment credentials with
+                FriendConnect or anyone claiming to provide support.
+            </p>
+
+
+            <h2>
+                5. Refund Review Process
+            </h2>
+
+            <p>
+                Every refund request may be reviewed individually.
+                We may verify the transaction details, payment status,
+                service status, and other relevant information before
+                making a decision.
             </p>
 
             <p>
-                <strong>Email:</strong>
-                <a href="mailto:support@creatorpay.in">
-                    support@creatorpay.in
-                </a>
+                Additional information may be requested when necessary
+                to verify the request.
+            </p>
+
+
+            <h2>
+                6. Refund Processing Time
+            </h2>
+
+            <p>
+                If a refund is approved, it will generally be initiated
+                through the original payment method or the applicable
+                payment service provider.
             </p>
 
             <p>
-                <strong>Phone:</strong>
-                +91 93018 74352
+                The time taken for the refunded amount to appear in
+                your bank account or payment account may depend on
+                your bank, card issuer, UPI application, or payment
+                service provider.
             </p>
 
 
-            <h2>9. Fraudulent or Unauthorized Transactions</h2>
+            <h2>
+                7. Failed or Pending Payments
+            </h2>
 
             <p>
-                If you believe that a payment was made without your
-                authorization, contact your bank or payment provider
-                immediately.
-            </p>
-
-            <p>
-                You should also inform CreatorPay through our support email.
-                We may request transaction information to investigate the issue.
-            </p>
-
-
-            <h2>10. Disputes Related to Educational Services</h2>
-
-            <p>
-                If you are dissatisfied with an educational service, mentoring
-                session or guidance interaction, please contact CreatorPay
-                support with the relevant booking and payment details.
+                If your bank account is debited but the payment status
+                on FriendConnect is failed, pending, or not confirmed,
+                please contact customer support with your transaction
+                details.
             </p>
 
             <p>
-                We will review the matter based on the service description,
-                booking information, communication records and applicable
-                policy.
+                We will check the payment status and guide you according
+                to the result received from the payment service provider.
+            </p>
+
+
+            <h2>
+                8. Chargebacks and Disputes
+            </h2>
+
+            <p>
+                If you believe a transaction is unauthorized or incorrect,
+                please contact us as soon as possible.
             </p>
 
             <p>
-                Any decision will be made subject to applicable law and the
-                specific facts of the case.
+                We may cooperate with the payment service provider,
+                bank, or relevant authority to investigate payment
+                disputes and resolve them according to applicable rules.
             </p>
 
 
-            <h2>11. Changes to This Policy</h2>
+            <h2>
+                9. Changes to This Refund Policy
+            </h2>
 
             <p>
-                CreatorPay may update this Refund & Cancellation Policy when
-                necessary. Any changes will be published on this page with
-                an updated date.
+                FriendConnect may update this Refund Policy from time
+                to time. Any updated version will be posted on this page
+                with a revised effective date.
             </p>
 
 
-            <h2>12. Contact Information</h2>
+            <h2>
+                10. Contact Us
+            </h2>
 
             <p>
-                <strong>Business Name:</strong>
-                CreatorPay
+                For refund requests, payment concerns, or transaction
+                issues, contact FriendConnect using the details below.
             </p>
 
-            <p>
-                <strong>Address:</strong>
-                Katghora, Chhattisgarh, India
-            </p>
+            <div class="legal-contact-box">
 
-            <p>
-                <strong>Email:</strong>
-                <a href="mailto:support@creatorpay.in">
-                    support@creatorpay.in
-                </a>
-            </p>
+                <p>
+                    <strong>Customer Support Number:</strong>
+                    +91-92325 58724
+                </p>
 
-            <p>
-                <strong>Phone:</strong>
-                +91 93018 74352
-            </p>
+                <p>
+                    <strong>Email:</strong>
+                    viveksharma577666@gmail.com
+                </p>
 
-            <a href="creator_home.html" class="back-link">
-                ← Back to CreatorPay
-            </a>
+                <p>
+                    <strong>Business Location:</strong>
+                    Bina, Madhya Pradesh - 470113, India
+                </p>
+
+            </div>
 
         </div>
 
     </main>
 
 
-    <footer>
+    <!-- FOOTER -->
 
-        <div class="footer-inner">
+    <footer class="site-footer">
 
-            <div>
-                <div class="footer-brand">
-                    CreatorPay
-                </div>
+        <p>
+            © 2026 FriendConnect. All rights reserved.
+        </p>
 
-                <p class="footer-text">
-                    CreatorPay helps users discover mentors, educators and
-                    subject experts and access clearly described educational
-                    guidance and knowledge-sharing services through a simple
-                    platform.
-                </p>
-            </div>
+        <div class="footer-links">
 
-            <div class="footer-links">
-                <a href="creator_home.html">Home</a>
-                <a href="explore.html">Mentors</a>
-                <a href="privacy.html">Privacy Policy</a>
-                <a href="refund.html">Refund Policy</a>
-                <a href="terms.html">Terms & Conditions</a>
-                <a href="contact.html">Contact Us</a>
-            </div>
+            <a href="about.html">
+                About
+            </a>
 
-        </div>
+            <a href="contact.html">
+                Contact
+            </a>
 
-        <div class="footer-bottom">
-            © 2026 CreatorPay. All rights reserved.
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
+            <a href="refund.html">
+                Refund Policy
+            </a>
+
         </div>
 
     </footer>
 
 </body>
+
 </html>

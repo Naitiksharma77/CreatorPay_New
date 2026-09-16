@@ -1,75 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>About Us | CreatorPay</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="creator_styles.css">
+    <title>About Us | FriendConnect</title>
+
+    <link
+        rel="stylesheet"
+        href="creator_styles.css"
+    >
 
     <style>
-        .policy-page {
-            max-width: 950px;
+        .about-section {
+            padding: 90px 0;
+            background: #f8fbff;
+        }
+
+        .about-container {
+            width: min(1050px, 90%);
             margin: 0 auto;
-            padding: 80px 7%;
         }
 
-        .policy-page h1 {
-            font-size: clamp(38px, 6vw, 64px);
-            line-height: 1.05;
+        .about-heading {
+            max-width: 760px;
+            margin: 0 auto 50px;
+            text-align: center;
+        }
+
+        .about-heading h1 {
+            margin-bottom: 18px;
+            color: #172554;
+            font-size: clamp(38px, 5vw, 62px);
+            font-weight: 900;
+            line-height: 1.08;
             letter-spacing: -2px;
-            color: #172554;
-            margin-bottom: 25px;
         }
 
-        .policy-page h2 {
-            font-size: 25px;
-            margin-top: 38px;
-            margin-bottom: 12px;
-            color: #172554;
-        }
-
-        .policy-page p {
+        .about-heading p:not(.eyebrow) {
             color: #64748b;
             font-size: 16px;
-            line-height: 1.8;
-            margin-bottom: 16px;
+            line-height: 1.85;
         }
 
-        .policy-page ul {
-            padding-left: 22px;
-            color: #64748b;
-            line-height: 1.8;
+        .about-main-card {
+            padding: 45px;
+            border: 1px solid #dbeafe;
+            border-radius: 25px;
+            background: #ffffff;
+            box-shadow: 0 18px 50px rgba(30, 64, 175, 0.07);
         }
 
-        .policy-page li {
-            margin-bottom: 8px;
+        .about-main-card h2 {
+            margin-bottom: 15px;
+            color: #172554;
+            font-size: 30px;
+            font-weight: 900;
         }
 
-        .policy-page a {
-            color: #2563eb;
-            font-weight: 600;
+        .about-main-card p {
+            margin-bottom: 18px;
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.9;
         }
 
-        .about-note {
-            padding: 20px;
+        .about-values {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
             margin-top: 25px;
-            border-left: 4px solid #2563eb;
+        }
+
+        .about-value-card {
+            padding: 28px 24px;
+            border: 1px solid #dbeafe;
+            border-radius: 20px;
+            background: #ffffff;
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        .about-value-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(30, 64, 175, 0.09);
+        }
+
+        .about-value-icon {
+            width: 55px;
+            height: 55px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 18px;
+            border-radius: 16px;
             background: #eff6ff;
-            border-radius: 8px;
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-top: 30px;
             color: #2563eb;
-            font-weight: 700;
+            font-size: 25px;
         }
 
-        @media (max-width: 768px) {
-            .policy-page {
-                padding: 55px 5%;
+        .about-value-card h3 {
+            margin-bottom: 10px;
+            color: #172554;
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .about-value-card p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .about-highlight {
+            margin-top: 30px;
+            padding: 30px;
+            border: 1px solid #bfdbfe;
+            border-radius: 20px;
+            background: #eff6ff;
+            text-align: center;
+        }
+
+        .about-highlight h2 {
+            margin-bottom: 12px;
+            color: #1e3a8a;
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .about-highlight p {
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 800px) {
+            .about-values {
+                grid-template-columns: 1fr;
+            }
+
+            .about-value-card {
+                max-width: 520px;
+                width: 100%;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .about-section {
+                padding: 60px 0;
+            }
+
+            .about-main-card {
+                padding: 27px;
+                border-radius: 19px;
+            }
+
+            .about-main-card h2 {
+                font-size: 26px;
+            }
+
+            .about-main-card p,
+            .about-highlight p {
+                font-size: 14px;
+            }
+
+            .about-heading h1 {
+                font-size: 39px;
+                letter-spacing: -1px;
+            }
+
+            .about-heading p:not(.eyebrow) {
+                font-size: 14px;
+            }
+
+            .about-highlight {
+                padding: 25px;
+            }
+
+            .about-highlight h2 {
+                font-size: 23px;
             }
         }
     </style>
@@ -77,190 +192,215 @@
 
 <body>
 
+    <!-- HEADER -->
+
     <header class="top-header">
 
-        <div class="brand">
-            CreatorPay
-        </div>
+        <a
+            href="creator_home.html"
+            class="brand"
+        >
+            FriendConnect
+        </a>
 
-        <nav>
-            <a href="creator_home.html">Home</a>
-            <a href="explore.html">Mentors</a>
-            <a href="contact.html">Contact</a>
+        <nav class="main-nav">
+
+            <a href="creator_home.html">
+                Home
+            </a>
+
+            <a href="explore.html">
+                Explore
+            </a>
+
+            <a href="pricing.html">
+                Pricing
+            </a>
+
+            <a href="contact.html">
+                Contact
+            </a>
+
         </nav>
 
     </header>
 
 
-    <main class="policy-page">
+    <!-- ABOUT SECTION -->
 
-        <p class="eyebrow">ABOUT CREATORPAY</p>
+    <main class="about-section">
 
-        <h1>
-            Learn from mentors. Grow your knowledge. Build your future.
-        </h1>
+        <div class="about-container">
 
-        <p>
-            CreatorPay is an online educational platform that helps learners
-            discover educators, mentors and subject experts for educational
-            guidance, mentoring sessions and knowledge-sharing services.
-        </p>
+            <div class="about-heading">
 
-        <p>
-            Our goal is to make it easier for learners to find suitable
-            mentors, understand available educational services, review pricing
-            and request guidance through a simple online platform.
-        </p>
+                <p class="eyebrow">
+                    ABOUT FRIENDCONNECT
+                </p>
 
+                <h1>
+                    Connect with people who inspire you.
+                </h1>
 
-        <h2>What We Do</h2>
+                <p>
+                    FriendConnect is a platform designed to help users
+                    discover creators, explore their profiles, and
+                    connect with them through available services.
+                </p>
 
-        <p>
-            CreatorPay provides an online space where learners can:
-        </p>
-
-        <ul>
-            <li>Explore educator, mentor and subject expert profiles.</li>
-            <li>View mentor information, categories and educational expertise.</li>
-            <li>Review available mentoring or educational services.</li>
-            <li>Check session details and applicable pricing.</li>
-            <li>Request educational guidance or knowledge-sharing sessions.</li>
-            <li>Make payments through the supported payment gateway.</li>
-            <li>Contact our support team for platform-related questions.</li>
-        </ul>
+            </div>
 
 
-        <h2>Our Educational Platform</h2>
+            <div class="about-main-card">
 
-        <p>
-            CreatorPay is designed to connect learners with people who offer
-            educational knowledge, practical guidance and mentoring support.
-        </p>
+                <h2>
+                    Our Mission
+                </h2>
 
-        <p>
-            Depending on the listed service, a mentor may provide subject
-            guidance, career guidance, skill-based learning, study support,
-            practical advice or other educational knowledge-sharing sessions.
-        </p>
+                <p>
+                    Our mission is to make meaningful creator connections
+                    simple, accessible, and easy to explore.
+                </p>
 
-        <p>
-            The exact service, session format, duration, availability and price
-            are displayed on the relevant mentor profile or service page.
-        </p>
+                <p>
+                    FriendConnect brings creator profiles and their
+                    available services together in one convenient place.
+                    Users can explore creator information, review service
+                    prices, and choose the service that best matches
+                    their needs.
+                </p>
 
+                <p>
+                    We aim to create a clear and user-friendly experience
+                    for both users and creators.
+                </p>
 
-        <h2>Our Commitment</h2>
-
-        <p>
-            We aim to provide clear and useful information about mentor
-            profiles, educational services, session details and pricing.
-        </p>
-
-        <p>
-            We encourage learners to review our
-            <a href="terms.html">Terms & Conditions</a>,
-            <a href="privacy.html">Privacy Policy</a> and
-            <a href="refund.html">Refund & Cancellation Policy</a>
-            before making a payment.
-        </p>
+            </div>
 
 
-        <h2>Payments</h2>
+            <!-- VALUES -->
 
-        <p>
-            Payments on CreatorPay may be processed through a supported
-            third-party payment gateway such as Razorpay. The final payable
-            amount is displayed before payment confirmation.
-        </p>
+            <div class="about-values">
 
-        <p>
-            CreatorPay does not ask users to share confidential payment
-            information such as OTPs, UPI PINs, card PINs or passwords.
-        </p>
+                <div class="about-value-card">
 
+                    <div class="about-value-icon">
+                        🤝
+                    </div>
 
-        <h2>Business Information</h2>
+                    <h3>
+                        Meaningful Connections
+                    </h3>
 
-        <p>
-            <strong>Business Name:</strong>
-            CreatorPay
-        </p>
+                    <p>
+                        We help users discover creators and explore
+                        opportunities for conversations, guidance,
+                        mentorship, and other available services.
+                    </p>
 
-        <p>
-            <strong>Business Type:</strong>
-            Online Educational and Mentoring Platform
-        </p>
-
-        <p>
-            <strong>Business Location:</strong>
-            Bina, Madhya Pradesh, India - 470113
-        </p>
-
-        <p>
-            <strong>Support Hours:</strong>
-            Every day, 6:00 AM to 9:00 PM
-        </p>
-
-        <p>
-            <strong>Email:</strong>
-            <a href="mailto:viveksharma577666@gmail.com">
-                viveksharma577666@gmail.com
-            </a>
-        </p>
-
-        <p>
-            <strong>Phone:</strong>
-            <a href="tel:7828071265">
-                7828071265
-            </a>
-        </p>
+                </div>
 
 
-        <div class="about-note">
+                <div class="about-value-card">
 
-            <p>
-                <strong>Important:</strong>
-                CreatorPay provides access to listed educational and mentoring
-                services. The quality, availability, response time and outcome
-                of a session may depend on the individual mentor and the
-                specific service selected.
-            </p>
+                    <div class="about-value-icon">
+                        🔍
+                    </div>
+
+                    <h3>
+                        Simple Discovery
+                    </h3>
+
+                    <p>
+                        Our platform is designed to make creator profiles,
+                        categories, service details, and prices easy
+                        to understand.
+                    </p>
+
+                </div>
+
+
+                <div class="about-value-card">
+
+                    <div class="about-value-icon">
+                        🔒
+                    </div>
+
+                    <h3>
+                        User Awareness
+                    </h3>
+
+                    <p>
+                        We encourage users to review creator information,
+                        service details, pricing, and applicable policies
+                        before making a payment.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- HOW IT WORKS -->
+
+            <div class="about-highlight">
+
+                <h2>
+                    How FriendConnect Works
+                </h2>
+
+                <p>
+                    Explore creator profiles, review the services they
+                    offer, select an available service, and follow the
+                    payment instructions shown on the platform.
+                </p>
+
+                <p>
+                    Payments may be processed through Razorpay or another
+                    authorized payment service provider.
+                </p>
+
+            </div>
 
         </div>
-
-
-        <p>
-            For questions or support, please visit our
-            <a href="contact.html">
-                Contact Us
-            </a>
-            page.
-        </p>
-
-
-        <a href="creator_home.html" class="back-link">
-            ← Back to CreatorPay
-        </a>
 
     </main>
 
 
+    <!-- FOOTER -->
+
     <footer class="site-footer">
 
         <p>
-            © 2026 CreatorPay. All rights reserved.
+            © 2026 FriendConnect. All rights reserved.
         </p>
 
         <div class="footer-links">
-            <a href="about.html">About Us</a>
-            <a href="contact.html">Contact Us</a>
-            <a href="pricing.html">Pricing</a>
-            <a href="terms.html">Terms & Conditions</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refund.html">Refund & Cancellation</a>
+
+            <a href="about.html">
+                About
+            </a>
+
+            <a href="contact.html">
+                Contact
+            </a>
+
+            <a href="privacy.html">
+                Privacy Policy
+            </a>
+
+            <a href="terms.html">
+                Terms & Conditions
+            </a>
+
+            <a href="refund.html">
+                Refund Policy
+            </a>
+
         </div>
 
     </footer>
 
 </body>
+
 </html>
