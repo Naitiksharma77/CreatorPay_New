@@ -2,12 +2,16 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Discover mentors, explore useful skills and learn from experienced creators on CreatorPay."
     >
 
     <title>Explore Mentors | CreatorPay</title>
@@ -16,27 +20,35 @@
         rel="stylesheet"
         href="explore_styles.css"
     >
-
 </head>
+
 
 <body>
 
     <header class="site-header">
 
-        <div class="logo">
-            CreatorPay
-        </div>
+        <a
+            href="explore.html"
+            class="logo"
+            aria-label="CreatorPay home"
+        >
+            Creator<span>Pay</span>
+        </a>
 
-        <nav>
-
-            <a href="explore.html">
+        <nav
+            class="site-nav"
+            aria-label="Main navigation"
+        >
+            <a
+                href="explore.html"
+                class="active"
+            >
                 Explore Mentors
             </a>
 
             <a href="creator_home.html">
                 Home
             </a>
-
         </nav>
 
     </header>
@@ -47,30 +59,44 @@
         <section class="hero-section">
 
             <p class="small-heading">
-                DISCOVER & LEARN
+                DISCOVER &amp; LEARN
             </p>
 
             <h1>
-                Find mentors and explore new knowledge
+                Find mentors.<br>
+                Learn something valuable.
             </h1>
 
             <p class="hero-description">
-                Explore mentor profiles, discover useful skills and
-                learn from people with practical knowledge and experience.
+                Explore mentor profiles, discover useful skills
+                and learn from people with practical knowledge
+                and experience.
             </p>
 
         </section>
 
 
-        <section class="friends-section">
+        <section
+            class="friends-section"
+            aria-labelledby="exploreHeading"
+        >
 
             <div class="section-heading">
 
-                <h2>
-                    Explore Mentors
-                </h2>
+                <div>
+                    <p class="section-label">
+                        OUR COMMUNITY
+                    </p>
 
-                <span id="creatorCount">
+                    <h2 id="exploreHeading">
+                        Explore Mentors
+                    </h2>
+                </div>
+
+                <span
+                    id="creatorCount"
+                    class="creator-count"
+                >
                     0 mentors
                 </span>
 
@@ -83,7 +109,8 @@
             >
 
                 <div class="loading-state">
-                    Loading mentors...
+                    <span class="loading-spinner"></span>
+                    <p>Loading mentors...</p>
                 </div>
 
             </div>
@@ -93,7 +120,18 @@
     </main>
 
 
-    <!-- Existing dynamic mentor loading logic - keep unchanged -->
+    <footer class="site-footer">
+
+        <p>
+            © 2026 CreatorPay. Learn from people, grow your skills.
+        </p>
+
+        <a href="creator_home.html">
+            Become a creator
+        </a>
+
+    </footer>
+
 
     <script src="explore_app.js"></script>
 

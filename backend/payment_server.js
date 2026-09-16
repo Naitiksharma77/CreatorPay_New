@@ -1,35 +1,94 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const multer = require("multer");
 
 const razorpay = require("./payment_config");
 const supabase = require("./supabase_config");
-const multer = require("multer");
-
-const upload = multer({
-  storage: multer.memoryStorage()
-});
 
 const app = express();
-const PORT = 5000;
 
-app.use(cors());
+const PORT = process.env.PORT || 5000;
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  }
+});
+
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
 app.use(express.json());
 
 
-// Backend status
+// ======================================
+// HELPER FUNCTIONS
+// ======================================
+
+function sendError(res, statusCode, message, error = null) {
+  console.error(message, error || "");
+
+  return res.status(statusCode).json({
+    success: false,
+    message
+  });
+}
+
+
+function getRazorpayKeyId() {
+  return (
+    process.env.RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY ||
+    ""
+  );
+}
+
+
+function getNumericPrice(price) {
+  const amount = Number(price);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return null;
+  }
+
+  return amount;
+}
+
+
+// ======================================
+// BACKEND STATUS
+// ======================================
+
 app.get("/api/status", (req, res) => {
   res.json({
     success: true,
-    message: "CreatorPay backend is running!"
+    message: "CreatorPay backend is running!",
+    razorpayConfigured: Boolean(
+      getRazorpayKeyId()
+    )
   });
 });
 
 
-// Get all creators
+// ======================================
+// GET ALL CREATORS
+// ======================================
+
 app.get("/api/creators", async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const {
+      data,
+      error
+    } = await supabase
       .from("creators")
       .select("*")
       .order("created_at", {
@@ -37,246 +96,301 @@ app.get("/api/creators", async (req, res) => {
       });
 
     if (error) {
-      console.error("Supabase fetch error:", error);
-
-      return res.status(500).json({
-        success: false,
-        message: "Unable to load creators"
-      });
+      return sendError(
+        res,
+        500,
+        "Unable to load creators",
+        error
+      );
     }
 
-    res.json({
+    return res.json({
       success: true,
-      creators: data
+      creators: data || []
     });
 
   } catch (error) {
-    console.error("Creators GET API error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    return sendError(
+      res,
+      500,
+      "Server error while loading creators",
+      error
+    );
   }
 });
 
 
-// Upload creator profile image
+// ======================================
+// UPLOAD CREATOR PROFILE IMAGE
+// ======================================
+
 app.post(
   "/api/upload-creator-image",
   upload.single("profile_image"),
   async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "Profile image is required"
-        });
+        return sendError(
+          res,
+          400,
+          "Profile image is required"
+        );
       }
 
-      const fileExtension =
-        req.file.originalname.split(".").pop();
+      const originalName =
+        req.file.originalname || "image.jpg";
+
+      const extension =
+        originalName.includes(".")
+          ? originalName.split(".").pop().toLowerCase()
+          : "jpg";
+
+      const safeExtension =
+        ["jpg", "jpeg", "png", "webp"].includes(
+          extension
+        )
+          ? extension
+          : "jpg";
 
       const fileName =
-        `creator_${Date.now()}.${fileExtension}`;
+        `creator_${Date.now()}_${crypto
+          .randomBytes(4)
+          .toString("hex")}.${safeExtension}`;
 
-      const { error } = await supabase.storage
+      const {
+        error
+      } = await supabase.storage
         .from("creator-images")
         .upload(
           fileName,
           req.file.buffer,
           {
-            contentType: req.file.mimetype,
+            contentType:
+              req.file.mimetype,
             upsert: false
           }
         );
 
       if (error) {
-        console.error(
-          "Storage upload error:",
+        return sendError(
+          res,
+          500,
+          "Unable to upload profile image",
           error
         );
-
-        return res.status(500).json({
-          success: false,
-          message: "Unable to upload profile image",
-          error: error.message
-        });
       }
 
-      const { data: publicUrlData } =
-        supabase.storage
-          .from("creator-images")
-          .getPublicUrl(fileName);
+      const {
+        data: publicUrlData
+      } = supabase.storage
+        .from("creator-images")
+        .getPublicUrl(fileName);
 
-      res.json({
+      return res.json({
         success: true,
-        message: "Profile image uploaded successfully",
-        image_url: publicUrlData.publicUrl
+        message:
+          "Profile image uploaded successfully",
+        image_url:
+          publicUrlData.publicUrl
       });
 
     } catch (error) {
-      console.error(
-        "Image upload API error:",
+      return sendError(
+        res,
+        500,
+        "Image upload failed",
         error
       );
-
-      res.status(500).json({
-        success: false,
-        message: "Server error"
-      });
     }
   }
 );
 
 
-// Add creator
+// ======================================
+// ADD CREATOR
+// ======================================
+
 app.post("/api/creators", async (req, res) => {
   try {
     const {
-  name,
-  category,
-  bio,
-  price,
-  instagram_url,
-  profile_image,
-  upi_id
-} = req.body;
+      name,
+      category,
+      bio,
+      price,
+      instagram_url,
+      profile_image
+    } = req.body;
 
-    if (!name || !price) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and price are required"
-      });
+    if (
+      !name ||
+      !String(name).trim() ||
+      price === undefined ||
+      price === null ||
+      price === ""
+    ) {
+      return sendError(
+        res,
+        400,
+        "Name and price are required"
+      );
     }
 
-    const { data, error } = await supabase
+    const numericPrice =
+      getNumericPrice(price);
+
+    if (numericPrice === null) {
+      return sendError(
+        res,
+        400,
+        "Price must be a valid positive number"
+      );
+    }
+
+    const {
+      data,
+      error
+    } = await supabase
       .from("creators")
       .insert([
         {
-  name,
-  category,
-  bio,
-  price,
-  instagram_url,
-  profile_image,
-  upi_id
-}
+          name: String(name).trim(),
+          category: category || "",
+          bio: bio || "",
+          price: numericPrice,
+          instagram_url: instagram_url || "",
+          profile_image: profile_image || ""
+        }
       ])
       .select()
       .single();
 
     if (error) {
-      console.error(
-        "Supabase creator error:",
+      return sendError(
+        res,
+        500,
+        "Unable to add creator",
         error
       );
-
-      return res.status(500).json({
-        success: false,
-        message: "Unable to add creator",
-        error: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Creator added successfully",
       creator: data
     });
 
   } catch (error) {
-    console.error(
-      "Creator API error:",
+    return sendError(
+      res,
+      500,
+      "Creator creation failed",
       error
     );
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
   }
 });
 
 
-// Update creator
+// ======================================
+// UPDATE CREATOR
+// ======================================
+
 app.put("/api/creators/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
     const {
-  name,
-  category,
-  bio,
-  price,
-  instagram_url,
-  profile_image,
-  upi_id
-} = req.body;
-    if (!name || !price) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and price are required"
-      });
+      name,
+      category,
+      bio,
+      price,
+      instagram_url,
+      profile_image
+    } = req.body;
+
+    if (
+      !name ||
+      !String(name).trim() ||
+      price === undefined ||
+      price === null ||
+      price === ""
+    ) {
+      return sendError(
+        res,
+        400,
+        "Name and price are required"
+      );
     }
 
-    const { data, error } = await supabase
+    const numericPrice =
+      getNumericPrice(price);
+
+    if (numericPrice === null) {
+      return sendError(
+        res,
+        400,
+        "Price must be a valid positive number"
+      );
+    }
+
+    const {
+      data,
+      error
+    } = await supabase
       .from("creators")
       .update({
-  name,
-  category,
-  bio,
-  price,
-  instagram_url,
-  profile_image,
-  upi_id
-})
+        name: String(name).trim(),
+        category: category || "",
+        bio: bio || "",
+        price: numericPrice,
+        instagram_url: instagram_url || "",
+        profile_image: profile_image || ""
+      })
       .eq("id", id)
       .select()
       .single();
 
     if (error) {
-      console.error(
-        "Supabase creator update error:",
+      return sendError(
+        res,
+        500,
+        "Unable to update creator",
         error
       );
-
-      return res.status(500).json({
-        success: false,
-        message: "Unable to update creator",
-        error: error.message
-      });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Creator updated successfully",
       creator: data
     });
 
   } catch (error) {
-    console.error(
-      "Creator update API error:",
+    return sendError(
+      res,
+      500,
+      "Creator update failed",
       error
     );
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
   }
 });
 
 
-// Delete creator
+// ======================================
+// DELETE CREATOR
+// ======================================
+
 app.delete("/api/creators/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
-    const { data, error } = await supabase
+    const {
+      data,
+      error
+    } = await supabase
       .from("creators")
       .delete()
       .eq("id", id)
@@ -284,51 +398,60 @@ app.delete("/api/creators/:id", async (req, res) => {
       .single();
 
     if (error) {
-      console.error(
-        "Supabase creator delete error:",
+      return sendError(
+        res,
+        500,
+        "Unable to delete creator",
         error
       );
-
-      return res.status(500).json({
-        success: false,
-        message: "Unable to delete creator",
-        error: error.message
-      });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Creator deleted successfully",
       creator: data
     });
 
   } catch (error) {
-    console.error(
-      "Creator delete API error:",
+    return sendError(
+      res,
+      500,
+      "Creator deletion failed",
       error
     );
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
   }
 });
 
 
-// Create Razorpay order using Supabase saved price
+// ======================================
+// CREATE RAZORPAY ORDER
+// ======================================
+
 app.post("/api/create-order", async (req, res) => {
   try {
-    const { creatorId } = req.body;
+    const {
+      creatorId
+    } = req.body;
 
     if (!creatorId) {
-      return res.status(400).json({
-        success: false,
-        message: "Creator ID is required"
-      });
+      return sendError(
+        res,
+        400,
+        "Creator ID is required"
+      );
     }
 
-    // Get creator details from Supabase
+    const razorpayKeyId =
+      getRazorpayKeyId();
+
+    if (!razorpayKeyId) {
+      return sendError(
+        res,
+        500,
+        "Razorpay key ID is not configured"
+      );
+    }
+
     const {
       data: creator,
       error: creatorError
@@ -339,43 +462,49 @@ app.post("/api/create-order", async (req, res) => {
       .single();
 
     if (creatorError || !creator) {
-      console.error(
-        "Creator lookup error:",
+      return sendError(
+        res,
+        404,
+        "Creator not found",
         creatorError
       );
-
-      return res.status(404).json({
-        success: false,
-        message: "Creator not found"
-      });
     }
 
-    const numericAmount =
-      Number(creator.price);
+    const numericPrice =
+      getNumericPrice(creator.price);
 
-    if (
-      !Number.isFinite(numericAmount) ||
-      numericAmount <= 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Creator price is invalid"
-      });
+    if (numericPrice === null) {
+      return sendError(
+        res,
+        400,
+        "Creator price is invalid"
+      );
     }
+
+    const amountInPaise =
+      Math.round(numericPrice * 100);
+
+    const receipt =
+      `creatorpay_${Date.now()}`;
 
     const order =
       await razorpay.orders.create({
-        amount: Math.round(
-          numericAmount * 100
-        ),
+        amount: amountInPaise,
         currency: "INR",
-        receipt:
-          `creatorpay_${Date.now()}`
+        receipt,
+        notes: {
+          creatorId: String(creator.id),
+          creatorName: String(creator.name)
+        }
       });
 
-    res.json({
+    return res.json({
       success: true,
+
+      keyId: razorpayKeyId,
+
       order,
+
       creator: {
         id: creator.id,
         name: creator.name,
@@ -384,20 +513,20 @@ app.post("/api/create-order", async (req, res) => {
     });
 
   } catch (error) {
-    console.error(
-      "Razorpay order error:",
+    return sendError(
+      res,
+      500,
+      "Unable to create Razorpay order",
       error
     );
-
-    res.status(500).json({
-      success: false,
-      message: "Unable to create Razorpay order"
-    });
   }
 });
 
 
-// Verify Razorpay payment signature
+// ======================================
+// VERIFY RAZORPAY PAYMENT
+// ======================================
+
 app.post("/api/verify-payment", async (req, res) => {
   try {
     const {
@@ -411,55 +540,81 @@ app.post("/api/verify-payment", async (req, res) => {
       !razorpay_payment_id ||
       !razorpay_signature
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment details are required"
-      });
+      return sendError(
+        res,
+        400,
+        "Payment details are required"
+      );
+    }
+
+    const secret =
+      process.env.RAZORPAY_KEY_SECRET;
+
+    if (!secret) {
+      return sendError(
+        res,
+        500,
+        "Razorpay secret is not configured"
+      );
     }
 
     const generatedSignature =
       crypto
-        .createHmac(
-          "sha256",
-          process.env.RAZORPAY_KEY_SECRET
-        )
+        .createHmac("sha256", secret)
         .update(
           `${razorpay_order_id}|${razorpay_payment_id}`
         )
         .digest("hex");
 
     const isValid =
-      generatedSignature === razorpay_signature;
+      crypto.timingSafeEqual(
+        Buffer.from(generatedSignature),
+        Buffer.from(razorpay_signature)
+      );
 
     if (!isValid) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment verification failed"
-      });
+      return sendError(
+        res,
+        400,
+        "Payment verification failed"
+      );
     }
 
-    res.json({
+    return res.json({
       success: true,
-      message: "Payment verified successfully"
+      message:
+        "Payment verified successfully"
     });
 
   } catch (error) {
-    console.error(
-      "Payment verification error:",
+    return sendError(
+      res,
+      500,
+      "Unable to verify payment",
       error
     );
-
-    res.status(500).json({
-      success: false,
-      message: "Unable to verify payment"
-    });
   }
 });
 
 
-// Start server
+// ======================================
+// 404 ROUTE
+// ======================================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found"
+  });
+});
+
+
+// ======================================
+// START SERVER
+// ======================================
+
 app.listen(PORT, () => {
   console.log(
-    `CreatorPay backend running on http://localhost:${PORT}`
+    `CreatorPay backend running on port ${PORT}`
   );
 });

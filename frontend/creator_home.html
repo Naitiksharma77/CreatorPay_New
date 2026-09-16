@@ -10,6 +10,11 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="description"
+        content="CreatorPay helps you discover mentors and learn from practical experience."
+    >
+
     <title>CreatorPay | Learn From Experienced Mentors</title>
 
     <link
@@ -17,532 +22,32 @@
         href="creator_styles.css"
     >
 
-    <style>
-
-        /* Main Layout */
-
-        main {
-            overflow: hidden;
-        }
-
-        .home-section {
-            width: min(1180px, 90%);
-            margin: 0 auto;
-        }
-
-        .hero-section {
-            padding: 95px 0 75px;
-            background:
-                radial-gradient(
-                    circle at 85% 15%,
-                    rgba(59, 130, 246, 0.13),
-                    transparent 32%
-                ),
-                linear-gradient(
-                    135deg,
-                    #eff6ff 0%,
-                    #ffffff 55%,
-                    #f8fafc 100%
-                );
-        }
-
-        .hero-layout {
-            display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            align-items: center;
-            gap: 55px;
-        }
-
-        .hero-content h1 {
-            max-width: 720px;
-            margin: 18px 0 25px;
-            color: #172554;
-            font-size: clamp(42px, 6vw, 76px);
-            line-height: 1.04;
-            letter-spacing: -3px;
-        }
-
-        .hero-content h1 span {
-            color: #2563eb;
-        }
-
-        .hero-description {
-            max-width: 590px;
-            color: #64748b;
-            font-size: 18px;
-            line-height: 1.8;
-            margin-bottom: 30px;
-        }
-
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            align-items: center;
-        }
-
-        .secondary-button {
-            display: inline-block;
-            padding: 13px 22px;
-            border: 1px solid #bfdbfe;
-            border-radius: 10px;
-            color: #1d4ed8;
-            background: #ffffff;
-            font-weight: 700;
-            text-decoration: none;
-            transition: 0.2s ease;
-        }
-
-        .secondary-button:hover {
-            background: #eff6ff;
-            transform: translateY(-2px);
-        }
-
-        .hero-visual {
-            position: relative;
-            min-height: 380px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hero-card {
-            width: min(100%, 380px);
-            padding: 30px;
-            border: 1px solid #dbeafe;
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.92);
-            box-shadow: 0 25px 70px rgba(30, 64, 175, 0.12);
-        }
-
-        .hero-card-top {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 24px;
-        }
-
-        .hero-icon {
-            width: 58px;
-            height: 58px;
-            display: grid;
-            place-items: center;
-            border-radius: 16px;
-            background: #dbeafe;
-            color: #1d4ed8;
-            font-size: 27px;
-            font-weight: 800;
-        }
-
-        .hero-card h3 {
-            color: #172554;
-            margin: 0 0 5px;
-            font-size: 21px;
-        }
-
-        .hero-card small {
-            color: #64748b;
-        }
-
-        .hero-card-list {
-            display: grid;
-            gap: 14px;
-        }
-
-        .hero-card-list div {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 13px;
-            border-radius: 12px;
-            background: #f8fafc;
-            color: #334155;
-            font-size: 14px;
-        }
-
-        .hero-card-list span {
-            color: #2563eb;
-            font-weight: 800;
-        }
-
-        .floating-badge {
-            position: absolute;
-            padding: 13px 17px;
-            border: 1px solid #dbeafe;
-            border-radius: 14px;
-            background: #ffffff;
-            color: #1e3a8a;
-            box-shadow: 0 12px 35px rgba(30, 64, 175, 0.12);
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .badge-one {
-            top: 28px;
-            right: -5px;
-        }
-
-        .badge-two {
-            bottom: 30px;
-            left: -10px;
-        }
-
-        /* Trust Strip */
-
-        .trust-strip {
-            padding: 25px 0;
-            border-bottom: 1px solid #e2e8f0;
-            background: #ffffff;
-        }
-
-        .trust-items {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .trust-item {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            color: #475569;
-            font-size: 14px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .trust-item span {
-            color: #2563eb;
-            font-size: 20px;
-        }
-
-        /* General Sections */
-
-        .content-section {
-            padding: 85px 0;
-        }
-
-        .section-heading {
-            max-width: 680px;
-            margin: 0 auto 40px;
-            text-align: center;
-        }
-
-        .section-heading h2 {
-            margin: 12px 0 15px;
-            color: #172554;
-            font-size: clamp(30px, 4vw, 46px);
-            line-height: 1.15;
-            letter-spacing: -1.2px;
-        }
-
-        .section-heading p:not(.eyebrow) {
-            color: #64748b;
-            line-height: 1.8;
-        }
-
-        /* Learning Categories */
-
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-        }
-
-        .category-card {
-            padding: 25px;
-            border: 1px solid #dbeafe;
-            border-radius: 18px;
-            background: #ffffff;
-            transition: 0.2s ease;
-        }
-
-        .category-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(30, 64, 175, 0.08);
-        }
-
-        .category-icon {
-            width: 48px;
-            height: 48px;
-            display: grid;
-            place-items: center;
-            margin-bottom: 18px;
-            border-radius: 14px;
-            background: #eff6ff;
-            color: #2563eb;
-            font-size: 23px;
-            font-weight: 800;
-        }
-
-        .category-card h3 {
-            margin-bottom: 10px;
-            color: #172554;
-            font-size: 18px;
-        }
-
-        .category-card p {
-            color: #64748b;
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        /* Mentors */
-
-        .mentors-section {
-            background: #f8fafc;
-        }
-
-        .creator-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 25px;
-        }
-
-        .creator-card {
-            overflow: hidden;
-            border: 1px solid #dbeafe;
-            border-radius: 20px;
-            background: #ffffff;
-            cursor: pointer;
-            transition: 0.2s ease;
-        }
-
-        .creator-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 18px 40px rgba(30, 64, 175, 0.09);
-        }
-
-        .creator-photo-placeholder {
-            min-height: 220px;
-            display: grid;
-            place-items: center;
-            background:
-                linear-gradient(
-                    135deg,
-                    #dbeafe,
-                    #eff6ff
-                );
-            color: #1d4ed8;
-            font-size: 18px;
-            font-weight: 800;
-        }
-
-        .creator-info {
-            padding: 25px;
-        }
-
-        .creator-info h3 {
-            margin-bottom: 7px;
-            color: #172554;
-            font-size: 23px;
-        }
-
-        .creator-category {
-            color: #2563eb;
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-        .creator-bio {
-            min-height: 50px;
-            color: #64748b;
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .creator-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            margin-top: 22px;
-            padding-top: 18px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .creator-bottom small {
-            display: block;
-            color: #64748b;
-            margin-bottom: 5px;
-        }
-
-        .creator-bottom strong {
-            color: #172554;
-            font-size: 24px;
-        }
-
-        /* Steps */
-
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
-        }
-
-        .step {
-            padding: 30px;
-            border: 1px solid #dbeafe;
-            border-radius: 18px;
-            background: #ffffff;
-        }
-
-        .step-number {
-            display: inline-grid;
-            place-items: center;
-            width: 45px;
-            height: 45px;
-            margin-bottom: 20px;
-            border-radius: 50%;
-            background: #2563eb;
-            color: #ffffff;
-            font-weight: 800;
-        }
-
-        .step h3 {
-            margin-bottom: 12px;
-            color: #172554;
-            font-size: 20px;
-        }
-
-        .step p {
-            color: #64748b;
-            font-size: 14px;
-            line-height: 1.8;
-        }
-
-        /* Final CTA */
-
-        .final-cta {
-            width: min(1000px, 90%);
-            margin: 35px auto 85px;
-            padding: 65px 30px;
-            border-radius: 25px;
-            background:
-                linear-gradient(
-                    135deg,
-                    #172554,
-                    #1d4ed8
-                );
-            text-align: center;
-        }
-
-        .final-cta .eyebrow {
-            color: #bfdbfe;
-        }
-
-        .final-cta h2 {
-            margin: 15px 0;
-            color: #ffffff;
-            font-size: clamp(30px, 4vw, 48px);
-        }
-
-        .final-cta p:not(.eyebrow) {
-            max-width: 600px;
-            margin: 0 auto 28px;
-            color: #dbeafe;
-            line-height: 1.8;
-        }
-
-        .final-cta .primary-button {
-            background: #ffffff;
-            color: #1d4ed8;
-        }
-
-        /* Responsive */
-
-        @media (max-width: 900px) {
-
-            .hero-layout {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .hero-description {
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .hero-actions {
-                justify-content: center;
-            }
-
-            .hero-visual {
-                min-height: 330px;
-            }
-
-            .category-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .steps-grid {
-                grid-template-columns: 1fr;
-            }
-
-        }
-
-        @media (max-width: 650px) {
-
-            .hero-section {
-                padding: 65px 0 45px;
-            }
-
-            .hero-content h1 {
-                letter-spacing: -1.5px;
-            }
-
-            .hero-description {
-                font-size: 16px;
-            }
-
-            .trust-items {
-                grid-template-columns: 1fr;
-                gap: 14px;
-            }
-
-            .category-grid,
-            .creator-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .content-section {
-                padding: 60px 0;
-            }
-
-            .floating-badge {
-                display: none;
-            }
-
-            .hero-card {
-                padding: 23px;
-            }
-
-        }
-
-    </style>
-
 </head>
 
 
 <body>
 
-    <!-- Header -->
+    <!-- ===============================
+         HEADER
+    ================================ -->
 
     <header class="top-header">
 
-        <div class="brand">
+        <a
+            href="creator_home.html"
+            class="brand"
+        >
             CreatorPay
-        </div>
+        </a>
 
-        <nav>
+        <nav class="main-nav">
 
-            <a href="#mentors">
-                Mentors
+            <a href="explore.html">
+                Explore Mentors
             </a>
 
             <a href="#how-it-works">
-                How it works
+                How It Works
             </a>
 
             <a href="about.html">
@@ -556,7 +61,9 @@
 
     <main>
 
-        <!-- Hero Section -->
+        <!-- ===============================
+             HERO SECTION
+        ================================ -->
 
         <section class="hero-section">
 
@@ -574,9 +81,9 @@
                     </h1>
 
                     <p class="hero-description">
-                        Discover experienced mentors and educators,
-                        explore useful knowledge and join learning
-                        sessions designed to help you move forward.
+                        Discover experienced mentors, explore useful
+                        knowledge and learn from people with practical
+                        skills and real-world experience.
                     </p>
 
                     <div class="hero-actions">
@@ -586,13 +93,6 @@
                             class="primary-button"
                         >
                             Explore Mentors
-                        </a>
-
-                        <a
-                            href="#how-it-works"
-                            class="secondary-button"
-                        >
-                            How It Works
                         </a>
 
                     </div>
@@ -605,6 +105,7 @@
                     <div class="floating-badge badge-one">
                         ✓ Learn from experience
                     </div>
+
 
                     <div class="hero-card">
 
@@ -638,7 +139,7 @@
 
                             <div>
                                 <span>02</span>
-                                Choose a learning session
+                                Review available sessions
                             </div>
 
                             <div>
@@ -650,8 +151,9 @@
 
                     </div>
 
+
                     <div class="floating-badge badge-two">
-                        ✓ Simple and transparent pricing
+                        ✓ Clear and transparent pricing
                     </div>
 
                 </div>
@@ -661,25 +163,38 @@
         </section>
 
 
-        <!-- Trust Strip -->
+        <!-- ===============================
+             TRUST STRIP
+        ================================ -->
 
         <section class="trust-strip">
 
             <div class="home-section trust-items">
 
                 <div class="trust-item">
+
                     <span>✓</span>
+
                     Experienced mentors
+
                 </div>
 
+
                 <div class="trust-item">
+
                     <span>✓</span>
+
                     Clear session pricing
+
                 </div>
 
+
                 <div class="trust-item">
+
                     <span>✓</span>
-                    Secure payment checkout
+
+                    Secure Razorpay checkout
+
                 </div>
 
             </div>
@@ -687,7 +202,9 @@
         </section>
 
 
-        <!-- Learning Categories -->
+        <!-- ===============================
+             LEARNING CATEGORIES
+        ================================ -->
 
         <section class="content-section">
 
@@ -704,9 +221,9 @@
                     </h2>
 
                     <p>
-                        Explore different areas of learning and
-                        discover mentors who can share useful
-                        knowledge, skills and experiences.
+                        Explore different areas of learning and discover
+                        mentors who can share useful knowledge, skills
+                        and practical experiences.
                     </p>
 
                 </div>
@@ -779,8 +296,8 @@
                         </h3>
 
                         <p>
-                            Learn practical habits, planning
-                            methods and personal development ideas.
+                            Learn practical habits, planning methods
+                            and personal development ideas.
                         </p>
 
                     </article>
@@ -792,7 +309,9 @@
         </section>
 
 
-        <!-- Mentors Section -->
+        <!-- ===============================
+             MENTORS INTRODUCTION
+        ================================ -->
 
         <section
             class="content-section mentors-section"
@@ -808,132 +327,25 @@
                     </p>
 
                     <h2>
-                        Learn from experienced people
+                        Find the right mentor for your learning journey
                     </h2>
 
                     <p>
-                        Explore mentor profiles, review their
-                        session details and choose the learning
-                        guidance that fits your needs.
+                        Browse available mentor profiles, read their
+                        information and explore the learning sessions
+                        they offer.
                     </p>
 
-                </div>
+                    <div class="section-action">
 
+                        <a
+                            href="explore.html"
+                            class="primary-button"
+                        >
+                            Explore All Mentors
+                        </a>
 
-                <div class="creator-grid">
-
-                    <!-- Mentor Card 1 -->
-
-                    <article
-                        class="creator-card"
-                        onclick="window.location.href='explore.html'"
-                        role="button"
-                        tabindex="0"
-                    >
-
-                        <div class="creator-photo-placeholder">
-                            Mentor Photo
-                        </div>
-
-                        <div class="creator-info">
-
-                            <h3>
-                                Experienced Mentor
-                            </h3>
-
-                            <p class="creator-category">
-                                Content Creation
-                            </p>
-
-                            <p class="creator-bio">
-                                Learn content ideas, editing basics,
-                                storytelling and practical creator skills.
-                            </p>
-
-                            <div class="creator-bottom">
-
-                                <div>
-
-                                    <small>
-                                        Session price
-                                    </small>
-
-                                    <strong>
-                                        ₹999
-                                    </strong>
-
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="pay-button"
-                                    onclick="event.stopPropagation(); window.location.href='explore.html'"
-                                >
-                                    View Session
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </article>
-
-
-                    <!-- Mentor Card 2 -->
-
-                    <article
-                        class="creator-card"
-                        onclick="window.location.href='explore.html'"
-                        role="button"
-                        tabindex="0"
-                    >
-
-                        <div class="creator-photo-placeholder">
-                            Mentor Photo
-                        </div>
-
-                        <div class="creator-info">
-
-                            <h3>
-                                Learning Mentor
-                            </h3>
-
-                            <p class="creator-category">
-                                Skills & Personal Growth
-                            </p>
-
-                            <p class="creator-bio">
-                                Explore useful knowledge, practical
-                                experiences and learning guidance.
-                            </p>
-
-                            <div class="creator-bottom">
-
-                                <div>
-
-                                    <small>
-                                        Session price
-                                    </small>
-
-                                    <strong>
-                                        ₹799
-                                    </strong>
-
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="pay-button"
-                                    onclick="event.stopPropagation(); window.location.href='explore.html'"
-                                >
-                                    View Session
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </article>
+                    </div>
 
                 </div>
 
@@ -942,7 +354,9 @@
         </section>
 
 
-        <!-- How It Works -->
+        <!-- ===============================
+             HOW IT WORKS
+        ================================ -->
 
         <section
             class="content-section"
@@ -962,8 +376,8 @@
                     </h2>
 
                     <p>
-                        Find the right mentor, select a session
-                        and continue with the learning process.
+                        Find the right mentor, review the session
+                        details and continue with the learning process.
                     </p>
 
                 </div>
@@ -984,7 +398,7 @@
                         <p>
                             Browse mentor profiles and discover
                             different subjects, skills and areas
-                            of educational guidance.
+                            of practical guidance.
                         </p>
 
                     </article>
@@ -1021,8 +435,8 @@
 
                         <p>
                             Continue through the available
-                            Razorpay checkout and access the
-                            selected educational session.
+                            Razorpay checkout for the selected
+                            learning session.
                         </p>
 
                     </article>
@@ -1034,7 +448,9 @@
         </section>
 
 
-        <!-- Final CTA -->
+        <!-- ===============================
+             FINAL CTA
+        ================================ -->
 
         <section class="final-cta">
 
@@ -1063,7 +479,9 @@
     </main>
 
 
-    <!-- Footer -->
+    <!-- ===============================
+         FOOTER
+    ================================ -->
 
     <footer class="site-footer">
 
@@ -1101,8 +519,6 @@
 
     </footer>
 
-
-    <!-- Existing JavaScript - DO NOT CHANGE -->
 
     <script src="creator_app.js"></script>
 

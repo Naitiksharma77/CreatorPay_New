@@ -1,14 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const creatorCards = document.querySelectorAll(".creator-card");
+    const buttons = document.querySelectorAll(".view-profile-button");
 
-    creatorCards.forEach(function (card) {
-        card.style.cursor = "pointer";
-
-        card.addEventListener("keydown", function (event) {
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                window.location.href = "explore.html";
-            }
+    buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            window.location.href = "explore.html";
         });
     });
 });

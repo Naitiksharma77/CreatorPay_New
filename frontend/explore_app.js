@@ -1,13 +1,12 @@
 const API_URL = "https://creatorpay-backend.onrender.com";
 
-const creatorList =
-    document.getElementById("creatorList");
-
-const creatorCount =
-    document.getElementById("creatorCount");
+const creatorList = document.getElementById("creatorList");
+const creatorCount = document.getElementById("creatorCount");
 
 
-// Safe text helper
+// ===============================
+// SAFE HTML TEXT
+// ===============================
 
 function escapeHTML(value) {
     return String(value ?? "")
@@ -19,7 +18,9 @@ function escapeHTML(value) {
 }
 
 
-// Load all creators from backend
+// ===============================
+// LOAD CREATORS
+// ===============================
 
 async function loadCreators() {
     try {
@@ -32,11 +33,15 @@ async function loadCreators() {
         if (!response.ok || !result.success) {
             throw new Error(
                 result.message ||
-                "Unable to load profiles"
+                "Unable to load profiles."
             );
         }
 
-        displayCreators(result.creators);
+        displayCreators(
+            Array.isArray(result.creators)
+                ? result.creators
+                : []
+        );
 
     } catch (error) {
         console.error(
@@ -44,9 +49,11 @@ async function loadCreators() {
             error
         );
 
+        creatorCount.textContent = "Unable to load";
+
         creatorList.innerHTML = `
             <div class="empty-state">
-                <h3>Unable to load profiles</h3>
+                <h3>Unable to load mentors</h3>
                 <p>Please try again later.</p>
             </div>
         `;
@@ -54,21 +61,24 @@ async function loadCreators() {
 }
 
 
-// Display creator cards
+// ===============================
+// DISPLAY CREATOR CARDS
+// ===============================
 
 function displayCreators(creators) {
+    const totalCreators = creators.length;
 
     creatorCount.textContent =
-        `${creators.length} ${
-            creators.length === 1
-                ? "profile"
-                : "profiles"
+        `${totalCreators} ${
+            totalCreators === 1
+                ? "mentor"
+                : "mentors"
         }`;
 
-    if (creators.length === 0) {
+    if (totalCreators === 0) {
         creatorList.innerHTML = `
             <div class="empty-state">
-                <h3>No profiles available yet</h3>
+                <h3>No mentors available yet</h3>
                 <p>Please check again later.</p>
             </div>
         `;
@@ -76,75 +86,78 @@ function displayCreators(creators) {
         return;
     }
 
-    creatorList.innerHTML = creators.map((creator) => {
+    creatorList.innerHTML = creators
+        .map((creator) => {
+            const image =
+                creator.profile_image ||
+                "https://via.placeholder.com/300";
 
-        const image = creator.profile_image
-            ? creator.profile_image
-            : "https://via.placeholder.com/300";
+            const name =
+                creator.name ||
+                "Creator";
 
-        const bio = creator.bio
-            ? creator.bio
-            : "Explore this profile and learn from their experience.";
+            const category =
+                creator.category ||
+                "Knowledge Sharing";
 
-        const price = Number(creator.price || 0)
-            .toLocaleString("en-IN");
+            const bio =
+                creator.bio ||
+                "Explore this profile and learn from their experience.";
 
-        return `
-            <div class="creator-card">
+            const price = Number(
+                creator.price || 0
+            ).toLocaleString("en-IN");
 
-                <img
-                    src="${escapeHTML(image)}"
-                    alt="${escapeHTML(creator.name)}"
-                >
+            const profileLink =
+                `friend_profile.html?id=${encodeURIComponent(
+                    creator.id
+                )}`;
 
-                <h3>
-                    ${escapeHTML(creator.name)}
-                </h3>
+            return `
+                <article class="creator-card">
 
-                <p class="creator-category">
-                    ${escapeHTML(
-                        creator.category ||
-                        "Knowledge Sharing"
-                    )}
-                </p>
-
-                <p class="creator-bio">
-                    ${escapeHTML(bio)}
-                </p>
-
-                <div class="creator-price">
-                    ₹${price}
-                </div>
-
-                <div class="creator-actions">
-
-                    <a
-                        class="view-profile-button"
-                        href="friend_profile.html?id=${encodeURIComponent(
-                            creator.id
-                        )}"
+                    <img
+                        src="${escapeHTML(image)}"
+                        alt="${escapeHTML(name)}"
+                        loading="lazy"
                     >
-                        View Profile
-                    </a>
 
-                    <a
-                        class="pay-button"
-                        href="upi_payment.html?id=${encodeURIComponent(
-                            creator.id
-                        )}"
-                    >
-                        Pay via UPI
-                    </a>
+                    <h3>
+                        ${escapeHTML(name)}
+                    </h3>
 
-                </div>
+                    <p class="creator-category">
+                        ${escapeHTML(category)}
+                    </p>
 
-            </div>
-        `;
+                    <p class="creator-bio">
+                        ${escapeHTML(bio)}
+                    </p>
 
-    }).join("");
+                    <div class="creator-price">
+                        ₹${price}
+                    </div>
+
+                    <div class="creator-actions">
+
+                        <a
+                            class="view-profile-button"
+                            href="${profileLink}"
+                        >
+                            View Profile
+                        </a>
+
+                    </div>
+
+                </article>
+            `;
+        })
+        .join("");
 }
 
 
-// Start page
+// ===============================
+// START APP
+// ===============================
 
 loadCreators();
