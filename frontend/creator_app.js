@@ -4,8 +4,11 @@ document.addEventListener("DOMContentLoaded", function () {
     creatorCards.forEach(function (card) {
         card.style.cursor = "pointer";
 
-        card.addEventListener("click", function () {
-            window.location.href = "explore.html";
+        card.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                window.location.href = "explore.html";
+            }
         });
     });
 });

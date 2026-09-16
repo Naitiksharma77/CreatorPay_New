@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,13 +32,19 @@
 
             <div>
                 <p class="eyebrow">MANAGEMENT</p>
+
                 <h1>Creators</h1>
+
                 <p class="page-description">
                     Add, edit and manage creators listed on your platform.
                 </p>
             </div>
 
-            <button id="addCreatorButton" class="primary-button">
+            <button
+                id="addCreatorButton"
+                class="primary-button"
+                type="button"
+            >
                 + Add Creator
             </button>
 
@@ -57,13 +64,19 @@
             </div>
 
 
-            <div id="creatorList" class="creator-list">
+            <div
+                id="creatorList"
+                class="creator-list"
+            >
 
                 <div class="empty-state">
+
                     <h3>No creators yet</h3>
+
                     <p>
                         Add your first creator to get started.
                     </p>
+
                 </div>
 
             </div>
@@ -75,7 +88,10 @@
 
     <!-- Add Creator Modal -->
 
-    <div id="creatorModal" class="modal">
+    <div
+        id="creatorModal"
+        class="modal"
+    >
 
         <div class="modal-content">
 
@@ -83,10 +99,15 @@
 
                 <div>
                     <p class="eyebrow">CREATOR</p>
+
                     <h2>Add Creator</h2>
                 </div>
 
-                <button id="closeModalButton" class="close-button">
+                <button
+                    id="closeModalButton"
+                    class="close-button"
+                    type="button"
+                >
                     ×
                 </button>
 
@@ -96,6 +117,7 @@
             <form id="creatorForm">
 
                 <div class="form-group">
+
                     <label for="creatorName">
                         Creator Name
                     </label>
@@ -106,10 +128,12 @@
                         placeholder="Enter creator name"
                         required
                     >
+
                 </div>
 
 
                 <div class="form-group">
+
                     <label for="creatorCategory">
                         Category
                     </label>
@@ -119,10 +143,12 @@
                         id="creatorCategory"
                         placeholder="e.g. Fashion & Lifestyle"
                     >
+
                 </div>
 
 
                 <div class="form-group">
+
                     <label for="creatorBio">
                         Bio
                     </label>
@@ -132,10 +158,12 @@
                         placeholder="Write a short creator bio"
                         rows="4"
                     ></textarea>
+
                 </div>
 
 
                 <div class="form-group">
+
                     <label for="creatorPrice">
                         Collaboration Price
                     </label>
@@ -147,10 +175,12 @@
                         min="1"
                         required
                     >
+
                 </div>
 
 
                 <div class="form-group">
+
                     <label for="creatorInstagram">
                         Instagram URL
                     </label>
@@ -160,10 +190,27 @@
                         id="creatorInstagram"
                         placeholder="https://instagram.com/username"
                     >
+
                 </div>
 
 
                 <div class="form-group">
+
+                    <label for="creatorUpi">
+                        UPI ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="creatorUpi"
+                        placeholder="example@upi"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
                     <label for="creatorImage">
                         Profile Photo
                     </label>
@@ -173,6 +220,7 @@
                         id="creatorImage"
                         accept="image/*"
                     >
+
                 </div>
 
 
@@ -189,134 +237,162 @@
 
     </div>
 
+
     <!-- Edit Creator Modal -->
 
-<div id="editCreatorModal" class="modal">
+    <div
+        id="editCreatorModal"
+        class="modal"
+    >
 
-    <div class="modal-content">
+        <div class="modal-content">
 
-        <div class="modal-header">
+            <div class="modal-header">
 
-            <div>
-                <p class="eyebrow">CREATOR</p>
-                <h2>Edit Creator</h2>
+                <div>
+                    <p class="eyebrow">CREATOR</p>
+
+                    <h2>Edit Creator</h2>
+                </div>
+
+                <button
+                    id="closeEditModalButton"
+                    class="close-button"
+                    type="button"
+                >
+                    ×
+                </button>
+
             </div>
 
-            <button
-                id="closeEditModalButton"
-                class="close-button"
-                type="button"
-            >
-                ×
-            </button>
+
+            <form id="editCreatorForm">
+
+                <input
+                    type="hidden"
+                    id="editCreatorId"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="editCreatorName">
+                        Creator Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editCreatorName"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editCreatorCategory">
+                        Category
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editCreatorCategory"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editCreatorBio">
+                        Bio
+                    </label>
+
+                    <textarea
+                        id="editCreatorBio"
+                        rows="4"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editCreatorPrice">
+                        Collaboration Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editCreatorPrice"
+                        min="1"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editCreatorInstagram">
+                        Instagram URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="editCreatorInstagram"
+                        placeholder="https://instagram.com/username"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editCreatorUpi">
+                        UPI ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editCreatorUpi"
+                        placeholder="example@upi"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editProfileImage">
+                        Change Profile Photo
+                    </label>
+
+                    <input
+                        type="file"
+                        id="editProfileImage"
+                        accept="image/*"
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="save-button"
+                >
+                    Update Creator
+                </button>
+
+            </form>
 
         </div>
-
-
-        <form id="editCreatorForm">
-
-            <input
-                type="hidden"
-                id="editCreatorId"
-            >
-
-
-            <div class="form-group">
-
-                <label for="editCreatorName">
-                    Creator Name
-                </label>
-
-                <input
-                    type="text"
-                    id="editCreatorName"
-                    required
-                >
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="editCreatorCategory">
-                    Category
-                </label>
-
-                <input
-                    type="text"
-                    id="editCreatorCategory"
-                >
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="editCreatorBio">
-                    Bio
-                </label>
-
-                <textarea
-                    id="editCreatorBio"
-                    rows="4"
-                ></textarea>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="editCreatorPrice">
-                    Collaboration Price
-                </label>
-
-                <input
-                    type="number"
-                    id="editCreatorPrice"
-                    min="1"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-  <label for="editProfileImage">Change Profile Photo</label>
-  <input
-    type="file"
-    id="editProfileImage"
-    accept="image/*"
-  />
-</div>
-
-            <div class="form-group">
-
-                <label for="editCreatorInstagram">
-                    Instagram URL
-                </label>
-
-                <input
-                    type="url"
-                    id="editCreatorInstagram"
-                >
-
-            </div>
-
-
-            <button
-                type="submit"
-                class="save-button"
-            >
-                Update Creator
-            </button>
-
-        </form>
 
     </div>
 
 
     <script src="admin_creator_app.js"></script>
-
-</div>
 
 </body>
 </html>

@@ -1,10 +1,22 @@
-const API_URL = "https://creatorpay-backend.onrender.com"
+const API_URL = "https://creatorpay-backend.onrender.com";
 
 const creatorList =
     document.getElementById("creatorList");
 
 const creatorCount =
     document.getElementById("creatorCount");
+
+
+// Safe text helper
+
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 
 // Load all creators from backend
@@ -20,7 +32,7 @@ async function loadCreators() {
         if (!response.ok || !result.success) {
             throw new Error(
                 result.message ||
-                "Unable to load friends"
+                "Unable to load profiles"
             );
         }
 
@@ -34,7 +46,7 @@ async function loadCreators() {
 
         creatorList.innerHTML = `
             <div class="empty-state">
-                <h3>Unable to load friends</h3>
+                <h3>Unable to load profiles</h3>
                 <p>Please try again later.</p>
             </div>
         `;
@@ -45,17 +57,18 @@ async function loadCreators() {
 // Display creator cards
 
 function displayCreators(creators) {
+
     creatorCount.textContent =
         `${creators.length} ${
             creators.length === 1
-                ? "friend"
-                : "friends"
+                ? "profile"
+                : "profiles"
         }`;
 
     if (creators.length === 0) {
         creatorList.innerHTML = `
             <div class="empty-state">
-                <h3>No friends available yet</h3>
+                <h3>No profiles available yet</h3>
                 <p>Please check again later.</p>
             </div>
         `;
@@ -64,49 +77,70 @@ function displayCreators(creators) {
     }
 
     creatorList.innerHTML = creators.map((creator) => {
+
         const image = creator.profile_image
             ? creator.profile_image
             : "https://via.placeholder.com/300";
 
         const bio = creator.bio
             ? creator.bio
-            : "Get to know this person and become friends.";
+            : "Explore this profile and learn from their experience.";
+
+        const price = Number(creator.price || 0)
+            .toLocaleString("en-IN");
 
         return `
             <div class="creator-card">
 
                 <img
-                    src="${image}"
-                    alt="${creator.name}"
+                    src="${escapeHTML(image)}"
+                    alt="${escapeHTML(creator.name)}"
                 >
 
                 <h3>
-                    ${creator.name}
+                    ${escapeHTML(creator.name)}
                 </h3>
 
                 <p class="creator-category">
-                    ${creator.category || "Friend"}
+                    ${escapeHTML(
+                        creator.category ||
+                        "Knowledge Sharing"
+                    )}
                 </p>
 
                 <p class="creator-bio">
-                    ${bio}
+                    ${escapeHTML(bio)}
                 </p>
 
                 <div class="creator-price">
-                    ₹${Number(
-                        creator.price
-                    ).toLocaleString("en-IN")}
+                    ₹${price}
                 </div>
 
-                <a
-                    class="view-profile-button"
-                    href="friend_profile.html?id=${creator.id}"
-                >
-                    View Profile
-                </a>
+                <div class="creator-actions">
+
+                    <a
+                        class="view-profile-button"
+                        href="friend_profile.html?id=${encodeURIComponent(
+                            creator.id
+                        )}"
+                    >
+                        View Profile
+                    </a>
+
+                    <a
+                        class="pay-button"
+                        href="upi_payment.html?id=${encodeURIComponent(
+                            creator.id
+                        )}"
+                    >
+                        Pay via UPI
+                    </a>
+
+                </div>
 
             </div>
         `;
+
     }).join("");
 }
 

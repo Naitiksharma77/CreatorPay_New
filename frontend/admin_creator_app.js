@@ -196,6 +196,9 @@ function editCreator(id) {
         "editCreatorInstagram"
     ).value = creator.instagram_url || "";
 
+    document.getElementById("editCreatorUpi").value =
+    creator.upi_id || "";
+
     // Clear previous selected photo
     const editImageInput = document.getElementById(
         "editProfileImage"
@@ -251,14 +254,19 @@ creatorForm.addEventListener("submit", async (event) => {
         ).value;
 
     const instagram_url =
-        document.getElementById(
-            "creatorInstagram"
-        ).value.trim();
+    document.getElementById(
+        "creatorInstagram"
+    ).value.trim();
 
-    const imageFile =
-        document.getElementById(
-            "creatorImage"
-        ).files[0];
+const upi_id =
+    document.getElementById(
+        "creatorUpi"
+    ).value.trim();
+
+const imageFile =
+    document.getElementById(
+        "creatorImage"
+    ).files[0];
 
     try {
         let profileImageUrl = "";
@@ -309,14 +317,23 @@ creatorForm.addEventListener("submit", async (event) => {
                     "Content-Type": "application/json"
                 },
 
-                body: JSON.stringify({
-                    name,
-                    category,
-                    bio,
-                    price,
-                    instagram_url,
-                    profile_image: profileImageUrl
-                })
+               body: JSON.stringify({
+
+    name,
+
+    category,
+
+    bio,
+
+    price,
+
+    instagram_url,
+
+    upi_id,
+
+    profile_image: profileImageUrl
+
+})
             }
         );
 
@@ -394,6 +411,11 @@ editCreatorForm.addEventListener(
                 "editCreatorInstagram"
             ).value.trim();
 
+            const upi_id =
+    document.getElementById(
+        "editCreatorUpi"
+    ).value.trim();
+
         // Get selected edit photo
 
         const editImageInput =
@@ -447,12 +469,13 @@ editCreatorForm.addEventListener(
             // Prepare updated creator data
 
             const updatedCreatorData = {
-                name,
-                category,
-                bio,
-                price,
-                instagram_url
-            };
+    name,
+    category,
+    bio,
+    price,
+    instagram_url,
+    upi_id
+};
 
             // Add profile_image only when new photo is selected
 

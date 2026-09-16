@@ -1,10 +1,6 @@
 const API_URL = "https://creatorpay-backend.onrender.com";
 
-/*
-  यह Razorpay TEST KEY ID है.
-  Secret Key कभी भी frontend में नहीं डालनी है.
-*/
-const RAZORPAY_KEY_ID = "rzp_live_TbMnvmib0JVGT3";
+const YOUR_UPI_ID = "9329728138@ibl";
 
 const profileContent =
     document.getElementById("profileContent");
@@ -19,6 +15,7 @@ let selectedCreator = null;
 
 
 // Load selected creator profile
+
 async function loadProfile() {
 
     if (!creatorId) {
@@ -69,6 +66,7 @@ async function loadProfile() {
 
 
 // Display creator profile
+
 function displayProfile(creator) {
 
     const image = creator.profile_image
@@ -77,11 +75,11 @@ function displayProfile(creator) {
 
     const category = creator.category
         ? creator.category
-        : "Friend";
+        : "Knowledge Sharing";
 
     const bio = creator.bio
         ? creator.bio
-        : "Get to know this person and become friends.";
+        : "Explore this profile and learn from this person's experience.";
 
     const price = Number(
         creator.price
@@ -101,10 +99,11 @@ function displayProfile(creator) {
 
             </div>
 
+
             <div class="profile-info">
 
                 <p class="eyebrow">
-                    FRIEND PROFILE
+                    PROFILE DETAILS
                 </p>
 
                 <h1>
@@ -119,10 +118,11 @@ function displayProfile(creator) {
                     ${bio}
                 </p>
 
+
                 <div class="price-box">
 
                     <span class="price-label">
-                        Pay to be a friend
+                        Conversation and knowledge-sharing session
                     </span>
 
                     <span class="price">
@@ -131,11 +131,12 @@ function displayProfile(creator) {
 
                 </div>
 
+
                 <button
                     class="pay-button"
                     id="payButton"
                 >
-                    Pay and Be a Friend
+                    Pay via UPI
                 </button>
 
             </div>
@@ -150,13 +151,14 @@ function displayProfile(creator) {
 
     payButton.addEventListener(
         "click",
-        startPayment
+        startUPIPayment
     );
 }
 
 
-// Start Razorpay payment
-async function startPayment() {
+// Start UPI payment
+
+function startUPIPayment() {
 
     if (!selectedCreator) {
         alert("Profile information is not available.");
@@ -164,156 +166,67 @@ async function startPayment() {
     }
 
     if (
-        !RAZORPAY_KEY_ID ||
-        RAZORPAY_KEY_ID === "YOUR_RAZORPAY_KEY_ID"
+        !YOUR_UPI_ID ||
+        YOUR_UPI_ID === "YOURUPI@upi"
     ) {
-        alert("Please add your Razorpay Key ID first.");
+        alert("Please add your UPI ID first.");
         return;
     }
 
-    const payButton =
-        document.getElementById("payButton");
+    const amount = Number(
+        selectedCreator.price
+    );
 
-    payButton.disabled = true;
-    payButton.textContent = "Preparing payment...";
-
-
-    try {
-
-        const response = await fetch(
-            `${API_URL}/api/create-order`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    creatorId: selectedCreator.id
-                })
-            }
-        );
-
-
-        const result = await response.json();
-
-
-        if (!response.ok || !result.success) {
-            throw new Error(
-                result.message ||
-                "Unable to create payment order"
-            );
-        }
-
-
-        const order = result.order;
-
-
-        const options = {
-
-            key: RAZORPAY_KEY_ID,
-
-            amount: order.amount,
-
-            currency: order.currency,
-
-            name: "CreatorPay",
-
-            description:
-                `Friend payment for ${selectedCreator.name}`,
-
-            order_id: order.id,
-
-          handler: async function (response) {
-  try {
-    const verifyResponse = await fetch(`${API_URL}/api/verify-payment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_signature: response.razorpay_signature
-      })
-    });
-
-    const verifyResult = await verifyResponse.json();
-
-    if (!verifyResponse.ok || !verifyResult.success) {
-      throw new Error(
-        verifyResult.message || "Payment verification failed"
-      );
+    if (!amount || amount <= 0) {
+        alert("Invalid creator price.");
+        return;
     }
+
+
+    const upiLink =
+        `upi://pay?pa=${encodeURIComponent(YOUR_UPI_ID)}` +
+        `&pn=${encodeURIComponent("CreatorPay")}` +
+        `&am=${encodeURIComponent(amount.toFixed(2))}` +
+        `&cu=INR` +
+        `&tn=${encodeURIComponent(
+            "Knowledge-sharing session with " +
+            selectedCreator.name
+        )}`;
+
 
     const paymentDetails = {
-      creatorName: selectedCreator.name,
-      amount: selectedCreator.price,
-      creatorId: selectedCreator.id,
-      orderId: response.razorpay_order_id,
-      paymentId: response.razorpay_payment_id
+
+        creatorName:
+            selectedCreator.name,
+
+        amount:
+            amount,
+
+        creatorId:
+            selectedCreator.id,
+
+        paymentMethod:
+            "UPI",
+
+        paymentStatus:
+            "initiated"
+
     };
 
+
     localStorage.setItem(
-      "creatorpay_payment",
-      JSON.stringify(paymentDetails)
+        "creatorpay_payment",
+        JSON.stringify(paymentDetails)
     );
 
-    window.location.href = "payment_success.html";
 
-  } catch (error) {
-    console.error("Payment verification error:", error);
+    window.location.href = upiLink;
 
-    alert(
-      error.message || "Payment could not be verified."
-    );
-  }
-           },
-            theme: {
-                color: "#2563eb"
-            }
-
-        };
-
-
-        const razorpayCheckout =
-            new Razorpay(options);
-
-
-        razorpayCheckout.open();
-
-
-        payButton.disabled = false;
-
-        payButton.textContent =
-            "Pay and Be a Friend";
-
-
-    } catch (error) {
-
-        console.error(
-            "Payment error:",
-            error
-        );
-
-
-        alert(
-            error.message ||
-            "Unable to start payment."
-        );
-
-
-        payButton.disabled = false;
-
-        payButton.textContent =
-            "Pay and Be a Friend";
-
-    }
 }
 
 
 // Show error message
+
 function showError(message) {
 
     profileContent.innerHTML = `
@@ -336,4 +249,5 @@ function showError(message) {
 
 
 // Start loading profile
+
 loadProfile();

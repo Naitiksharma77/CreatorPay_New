@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Pay via UPI | CreatorPay</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f7f9fc;
+            color: #172554;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        /* HEADER */
+
+        .top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 7%;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .logo {
+            color: #2563eb;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .home-link {
+            color: #2563eb;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            color: #1d4ed8;
+        }
+
+        /* PAYMENT WRAPPER */
+
+        .payment-wrapper {
+            width: min(480px, 92%);
+            margin: 55px auto;
+        }
+
+        /* PAYMENT CARD */
+
+        .payment-card {
+            padding: 34px;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-radius: 24px;
+            box-shadow: 0 15px 45px rgba(30, 64, 175, 0.08);
+        }
+
+        .payment-card h1 {
+            margin-bottom: 10px;
+            color: #172554;
+            font-size: 29px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            margin-bottom: 28px;
+            color: #64748b;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* CREATOR */
+
+        .creator-image {
+            display: block;
+            width: 105px;
+            height: 105px;
+            margin: 0 auto 18px;
+            border: 4px solid #dbeafe;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .creator-name {
+            margin-bottom: 7px;
+            color: #172554;
+            font-size: 25px;
+            line-height: 1.2;
+        }
+
+        .creator-category {
+            margin-bottom: 25px;
+            color: #2563eb;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* PRICE */
+
+        .price-box {
+            margin-bottom: 25px;
+            padding: 22px;
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            background: linear-gradient(
+                135deg,
+                #eff6ff,
+                #f5f3ff
+            );
+        }
+
+        .price-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .price {
+            color: #2563eb;
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        /* PAYMENT BUTTON */
+
+        .pay-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 56px;
+            padding: 16px 22px;
+            border: none;
+            border-radius: 12px;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+            transition:
+                background 0.2s ease,
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .pay-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+
+        .pay-button:active {
+            transform: translateY(0);
+        }
+
+        .pay-button:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 3px;
+        }
+
+        /* NOTE */
+
+        .note {
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* ERROR AND LOADING */
+
+        .loading,
+        .error-message {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .error-message h1 {
+            margin-bottom: 12px;
+            color: #172554;
+            font-size: 26px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 520px) {
+
+            .top-header {
+                padding: 18px 5%;
+            }
+
+            .logo {
+                font-size: 22px;
+            }
+
+            .home-link {
+                font-size: 12px;
+            }
+
+            .payment-wrapper {
+                width: 92%;
+                margin: 30px auto;
+            }
+
+            .payment-card {
+                padding: 27px 20px;
+                border-radius: 20px;
+            }
+
+            .payment-card h1 {
+                font-size: 26px;
+            }
+
+            .creator-name {
+                font-size: 23px;
+            }
+
+            .price {
+                font-size: 34px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <header class="top-header">
+
+        <div class="logo">
+            CreatorPay
+        </div>
+
+        <a
+            class="home-link"
+            href="explore.html"
+        >
+            Back to Mentors
+        </a>
+
+    </header>
+
+
+    <main class="payment-wrapper">
+
+        <section
+            id="paymentContent"
+            class="payment-card"
+        >
+
+            <p class="loading">
+                Loading payment details...
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <script>
+
+        const API_URL =
+            "https://creatorpay-backend.onrender.com";
+
+
+        /*
+          UPI ID page par show nahi hogi.
+          Ye sirf payment link banane ke liye use hogi.
+        */
+
+        const UPI_ID =
+            "9329728138@ibl";
+
+
+        const paymentContent =
+            document.getElementById("paymentContent");
+
+
+        function escapeHTML(value) {
+
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        function getCreatorId() {
+
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+            return params.get("id");
+
+        }
+
+
+        async function loadPaymentDetails() {
+
+            const creatorId =
+                getCreatorId();
+
+
+            if (!creatorId) {
+
+                paymentContent.innerHTML = `
+
+                    <div class="error-message">
+
+                        <h1>
+                            Creator not found
+                        </h1>
+
+                        <p class="subtitle">
+                            Please go back and select a creator.
+                        </p>
+
+                        <a
+                            class="home-link"
+                            href="explore.html"
+                        >
+                            Back to Mentors
+                        </a>
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/api/creators`
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        "Unable to load creator details"
+                    );
+
+                }
+
+
+                const creator =
+                    result.creators.find(
+                        item =>
+                            String(item.id) ===
+                            String(creatorId)
+                    );
+
+
+                if (!creator) {
+
+                    throw new Error(
+                        "Creator not found"
+                    );
+
+                }
+
+
+                const image =
+                    creator.profile_image ||
+                    "https://via.placeholder.com/300";
+
+
+                const price =
+                    Number(creator.price || 0);
+
+
+                const formattedPrice =
+                    price.toLocaleString("en-IN");
+
+
+                const creatorName =
+                    creator.name ||
+                    "Creator";
+
+
+                const upiLink =
+                    "upi://pay" +
+                    `?pa=${encodeURIComponent(UPI_ID)}` +
+                    `&pn=${encodeURIComponent("CreatorPay")}` +
+                    `&am=${encodeURIComponent(
+                        price.toFixed(2)
+                    )}` +
+                    "&cu=INR" +
+                    `&tn=${encodeURIComponent(
+                        "Session with " + creatorName
+                    )}`;
+
+
+                paymentContent.innerHTML = `
+
+                    <h1>
+                        Complete Your Payment
+                    </h1>
+
+                    <p class="subtitle">
+                        Pay securely using your UPI app.
+                    </p>
+
+
+                    <img
+                        class="creator-image"
+                        src="${escapeHTML(image)}"
+                        alt="${escapeHTML(creatorName)}"
+                    >
+
+
+                    <h2 class="creator-name">
+                        ${escapeHTML(creatorName)}
+                    </h2>
+
+
+                    <p class="creator-category">
+                        ${escapeHTML(
+                            creator.category ||
+                            "Knowledge Sharing"
+                        )}
+                    </p>
+
+
+                    <div class="price-box">
+
+                        <span class="price-label">
+                            Session price
+                        </span>
+
+                        <span class="price">
+                            ₹${formattedPrice}
+                        </span>
+
+                    </div>
+
+
+                    <a
+                        id="upiPayButton"
+                        class="pay-button"
+                        href="${upiLink}"
+                    >
+                        Pay ₹${formattedPrice} via UPI
+                    </a>
+
+
+                    <p class="note">
+                        Open this page on your mobile phone
+                        to continue with your UPI app.
+                    </p>
+
+                `;
+
+
+                const upiPayButton =
+                    document.getElementById(
+                        "upiPayButton"
+                    );
+
+
+                upiPayButton.addEventListener(
+                    "click",
+                    function () {
+
+                        upiPayButton.textContent =
+                            "Opening UPI app...";
+
+                    }
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Payment page error:",
+                    error
+                );
+
+
+                paymentContent.innerHTML = `
+
+                    <div class="error-message">
+
+                        <h1>
+                            Unable to load payment
+                        </h1>
+
+                        <p class="subtitle">
+                            Please try again later.
+                        </p>
+
+                        <a
+                            class="home-link"
+                            href="explore.html"
+                        >
+                            Back to Mentors
+                        </a>
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+        loadPaymentDetails();
+
+    </script>
+
+</body>
+
+</html>

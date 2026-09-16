@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Mentor Details | CreatorPay</title>
+    <title>Creator Profile | CreatorPay</title>
 
     <link
         rel="stylesheet"
@@ -19,59 +19,36 @@
 
 </head>
 
+
 <body>
 
-    <header class="site-header">
-
-        <a
-            href="creator_home.html"
-            class="logo"
-        >
-            CreatorPay
-        </a>
-
-        <nav>
-
-            <a href="explore.html">
-                Explore Mentors
-            </a>
-
-            <a href="creator_home.html">
-                Home
-            </a>
-
-        </nav>
-
-    </header>
-
-
-    <main class="profile-container">
+    <main class="profile-page">
 
         <a
             href="explore.html"
             class="back-link"
         >
-            ← Back to Mentors
+            ← Back to Creators
         </a>
 
 
-        <div id="profileContent">
+        <section
+            id="profileContent"
+            class="profile-content"
+        >
 
             <div class="loading-state">
-                Loading mentor details...
+
+                <p>
+                    Loading profile...
+                </p>
+
             </div>
 
-        </div>
+        </section>
 
     </main>
 
-
-    <!-- Razorpay checkout - keep unchanged -->
-
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-
-    <!-- Existing profile and payment logic - keep unchanged -->
 
     <script src="friend_profile_app.js"></script>
 

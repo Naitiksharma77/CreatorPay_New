@@ -134,13 +134,14 @@ app.post(
 app.post("/api/creators", async (req, res) => {
   try {
     const {
-      name,
-      category,
-      bio,
-      price,
-      instagram_url,
-      profile_image
-    } = req.body;
+  name,
+  category,
+  bio,
+  price,
+  instagram_url,
+  profile_image,
+  upi_id
+} = req.body;
 
     if (!name || !price) {
       return res.status(400).json({
@@ -153,13 +154,14 @@ app.post("/api/creators", async (req, res) => {
       .from("creators")
       .insert([
         {
-          name,
-          category,
-          bio,
-          price,
-          instagram_url,
-          profile_image
-        }
+  name,
+  category,
+  bio,
+  price,
+  instagram_url,
+  profile_image,
+  upi_id
+}
       ])
       .select()
       .single();
@@ -206,14 +208,14 @@ app.put("/api/creators/:id", async (req, res) => {
     const { id } = req.params;
 
     const {
-      name,
-      category,
-      bio,
-      price,
-      instagram_url,
-      profile_image
-    } = req.body;
-
+  name,
+  category,
+  bio,
+  price,
+  instagram_url,
+  profile_image,
+  upi_id
+} = req.body;
     if (!name || !price) {
       return res.status(400).json({
         success: false,
@@ -224,13 +226,14 @@ app.put("/api/creators/:id", async (req, res) => {
     const { data, error } = await supabase
       .from("creators")
       .update({
-        name,
-        category,
-        bio,
-        price,
-        instagram_url,
-        profile_image
-      })
+  name,
+  category,
+  bio,
+  price,
+  instagram_url,
+  profile_image,
+  upi_id
+})
       .eq("id", id)
       .select()
       .single();
