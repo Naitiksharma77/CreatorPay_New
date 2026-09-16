@@ -1,7 +1,5 @@
 const API_URL = "https://creatorpay-backend.onrender.com";
 
-const YOUR_UPI_ID = "9329728138@ibl";
-
 const profileContent =
     document.getElementById("profileContent");
 
@@ -14,17 +12,17 @@ const creatorId = params.get("id");
 let selectedCreator = null;
 
 
-// Load selected creator profile
+// ===============================
+// LOAD CREATOR PROFILE
+// ===============================
 
 async function loadProfile() {
-
     if (!creatorId) {
         showError("Profile not found.");
         return;
     }
 
     try {
-
         const response = await fetch(
             `${API_URL}/api/creators`
         );
@@ -34,7 +32,7 @@ async function loadProfile() {
         if (!response.ok || !result.success) {
             throw new Error(
                 result.message ||
-                "Unable to load profile"
+                "Unable to load profile."
             );
         }
 
@@ -52,7 +50,6 @@ async function loadProfile() {
         displayProfile(creator);
 
     } catch (error) {
-
         console.error(
             "Profile loading error:",
             error
@@ -65,40 +62,33 @@ async function loadProfile() {
 }
 
 
-// Display creator profile
+// ===============================
+// DISPLAY PROFILE
+// ===============================
 
 function displayProfile(creator) {
+    const image = creator.profile_image ||
+        "https://via.placeholder.com/700";
 
-    const image = creator.profile_image
-        ? creator.profile_image
-        : "https://via.placeholder.com/700";
+    const category = creator.category ||
+        "Knowledge Sharing";
 
-    const category = creator.category
-        ? creator.category
-        : "Knowledge Sharing";
-
-    const bio = creator.bio
-        ? creator.bio
-        : "Explore this profile and learn from this person's experience.";
+    const bio = creator.bio ||
+        "Explore this profile and learn from this person's experience.";
 
     const price = Number(
         creator.price
     ).toLocaleString("en-IN");
 
-
     profileContent.innerHTML = `
-
         <div class="profile-card">
 
             <div class="profile-image-wrapper">
-
                 <img
-                    src="${image}"
-                    alt="${creator.name}"
+                    src="${escapeHTML(image)}"
+                    alt="${escapeHTML(creator.name)}"
                 >
-
             </div>
-
 
             <div class="profile-info">
 
@@ -107,20 +97,18 @@ function displayProfile(creator) {
                 </p>
 
                 <h1>
-                    ${creator.name}
+                    ${escapeHTML(creator.name)}
                 </h1>
 
                 <p class="profile-category">
-                    ${category}
+                    ${escapeHTML(category)}
                 </p>
 
                 <p class="profile-bio">
-                    ${bio}
+                    ${escapeHTML(bio)}
                 </p>
 
-
                 <div class="price-box">
-
                     <span class="price-label">
                         Conversation and knowledge-sharing session
                     </span>
@@ -128,48 +116,40 @@ function displayProfile(creator) {
                     <span class="price">
                         ₹${price}
                     </span>
-
                 </div>
-
 
                 <button
                     class="pay-button"
                     id="payButton"
+                    type="button"
                 >
-                    Pay via UPI
+                    Pay via Razorpay
                 </button>
 
             </div>
 
         </div>
-
     `;
-
 
     const payButton =
         document.getElementById("payButton");
 
     payButton.addEventListener(
         "click",
-        startUPIPayment
+        startRazorpayPayment
     );
 }
 
 
-// Start UPI payment
+// ===============================
+// START RAZORPAY PAYMENT
+// ===============================
 
-function startUPIPayment() {
-
+async function startRazorpayPayment() {
     if (!selectedCreator) {
-        alert("Profile information is not available.");
-        return;
-    }
-
-    if (
-        !YOUR_UPI_ID ||
-        YOUR_UPI_ID === "YOURUPI@upi"
-    ) {
-        alert("Please add your UPI ID first.");
+        alert(
+            "Profile information is not available."
+        );
         return;
     }
 
@@ -182,72 +162,191 @@ function startUPIPayment() {
         return;
     }
 
+    const payButton =
+        document.getElementById("payButton");
 
-    const upiLink =
-        `upi://pay?pa=${encodeURIComponent(YOUR_UPI_ID)}` +
-        `&pn=${encodeURIComponent("CreatorPay")}` +
-        `&am=${encodeURIComponent(amount.toFixed(2))}` +
-        `&cu=INR` +
-        `&tn=${encodeURIComponent(
-            "Knowledge-sharing session with " +
-            selectedCreator.name
-        )}`;
+    payButton.disabled = true;
+    payButton.textContent =
+        "Please wait...";
 
+    try {
+        const response = await fetch(
+            `${API_URL}/api/create-order`,
+            {
+                method: "POST",
 
-    const paymentDetails = {
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-        creatorName:
-            selectedCreator.name,
+                body: JSON.stringify({
+                    creatorId: selectedCreator.id
+                })
+            }
+        );
 
-        amount:
-            amount,
+        const result = await response.json();
 
-        creatorId:
-            selectedCreator.id,
+        if (!response.ok || !result.success) {
+            throw new Error(
+                result.message ||
+                "Unable to create Razorpay order."
+            );
+        }
 
-        paymentMethod:
-            "UPI",
+        if (
+            typeof Razorpay === "undefined"
+        ) {
+            throw new Error(
+                "Razorpay Checkout script is missing."
+            );
+        }
 
-        paymentStatus:
-            "initiated"
+        const options = {
+            key: result.keyId,
 
-    };
+            amount: result.order.amount,
 
+            currency:
+                result.order.currency || "INR",
 
-    localStorage.setItem(
-        "creatorpay_payment",
-        JSON.stringify(paymentDetails)
-    );
+            name: "CreatorPay",
 
+            description:
+                `Session with ${selectedCreator.name}`,
 
-    window.location.href = upiLink;
+            order_id:
+                result.order.id,
 
+            handler: async function (
+                paymentResponse
+            ) {
+                alert(
+                    "Payment successful!\n\nPayment ID: " +
+                    paymentResponse.razorpay_payment_id
+                );
+
+                console.log(
+                    "Payment response:",
+                    paymentResponse
+                );
+            },
+
+            prefill: {
+                name: "",
+                email: ""
+            },
+
+            notes: {
+                creatorId:
+                    selectedCreator.id,
+
+                creatorName:
+                    selectedCreator.name
+            },
+
+            theme: {
+                color: "#2563eb"
+            },
+
+            modal: {
+                ondismiss: function () {
+                    resetPayButton();
+                }
+            }
+        };
+
+        const razorpay =
+            new Razorpay(options);
+
+        razorpay.on(
+            "payment.failed",
+            function (response) {
+                console.error(
+                    "Payment failed:",
+                    response.error
+                );
+
+                alert(
+                    response.error.description ||
+                    "Payment failed. Please try again."
+                );
+
+                resetPayButton();
+            }
+        );
+
+        razorpay.open();
+
+    } catch (error) {
+        console.error(
+            "Razorpay error:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to start payment."
+        );
+
+        resetPayButton();
+    }
 }
 
 
-// Show error message
+// ===============================
+// RESET PAYMENT BUTTON
+// ===============================
+
+function resetPayButton() {
+    const payButton =
+        document.getElementById("payButton");
+
+    if (!payButton) {
+        return;
+    }
+
+    payButton.disabled = false;
+    payButton.textContent =
+        "Pay via Razorpay";
+}
+
+
+// ===============================
+// ERROR MESSAGE
+// ===============================
 
 function showError(message) {
-
     profileContent.innerHTML = `
-
         <div class="error-state">
-
             <h2>
                 Something went wrong
             </h2>
 
             <p>
-                ${message}
+                ${escapeHTML(message)}
             </p>
-
         </div>
-
     `;
-
 }
 
 
-// Start loading profile
+// ===============================
+// BASIC HTML ESCAPE
+// ===============================
+
+function escapeHTML(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+// ===============================
+// START APP
+// ===============================
 
 loadProfile();
