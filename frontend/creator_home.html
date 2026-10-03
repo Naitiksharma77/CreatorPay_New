@@ -7,566 +7,3357 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <meta
         name="description"
-        content="FriendConnect helps you discover people, start conversations and make meaningful connections."
+        content="FriendConnect — discover interesting people, explore profiles and start meaningful conversations."
     >
 
-    <title>FriendConnect | Meet People & Make Connections</title>
+    <meta
+        name="theme-color"
+        content="#f5f7fb"
+    >
 
+    <title>FriendConnect — Discover People</title>
+
+    <!-- Existing stylesheet connection preserved -->
     <link
         rel="stylesheet"
         href="creator_styles.css"
     >
 
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+    <!-- Google Analytics preserved -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
 
-    gtag('config', 'G-3ZVP8Q457D');
-</script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-3ZVP8Q457D');
+    </script>
+
+
+    <style>
+
+        :root {
+
+            --fc-blue: #0a84ff;
+            --fc-blue-dark: #0066d6;
+
+            --fc-navy: #101828;
+            --fc-text: #172033;
+            --fc-muted: #6f7b8d;
+
+            --fc-bg: #f5f7fb;
+            --fc-card: #ffffff;
+
+            --fc-line: #e7ebf1;
+
+            --fc-green: #34c759;
+            --fc-purple: #7357ff;
+
+            --fc-radius-xl: 30px;
+            --fc-radius-lg: 24px;
+            --fc-radius-md: 18px;
+
+            --fc-shadow:
+                0 18px 50px rgba(16, 24, 40, 0.08);
+
+            --fc-shadow-small:
+                0 8px 25px rgba(16, 24, 40, 0.07);
+
+        }
+
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+
+        body.fc-page {
+
+            margin: 0;
+
+            background: var(--fc-bg);
+
+            color: var(--fc-text);
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "SF Pro Display",
+                "SF Pro Text",
+                "Segoe UI",
+                sans-serif;
+
+            line-height: 1.5;
+
+            -webkit-font-smoothing: antialiased;
+
+            overflow-x: hidden;
+
+            padding-bottom: 0;
+
+        }
+
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+
+        button {
+            font: inherit;
+        }
+
+
+        .fc-wrap {
+
+            width: min(
+                1120px,
+                calc(100% - 40px)
+            );
+
+            margin: 0 auto;
+
+        }
+
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .fc-header {
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 100;
+
+            background:
+                rgba(255, 255, 255, 0.88);
+
+            border-bottom:
+                1px solid rgba(231, 235, 241, 0.8);
+
+            backdrop-filter:
+                blur(22px);
+
+            -webkit-backdrop-filter:
+                blur(22px);
+
+        }
+
+
+        .fc-header-inner {
+
+            min-height: 74px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 25px;
+
+        }
+
+
+        .fc-brand {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            font-size: 1.15rem;
+
+            font-weight: 800;
+
+            letter-spacing: -0.04em;
+
+        }
+
+
+        .fc-brand-mark {
+
+            width: 38px;
+
+            height: 38px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 12px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #1594ff,
+                    #0878ed
+                );
+
+            box-shadow:
+                0 8px 20px
+                rgba(10, 132, 255, 0.22);
+
+        }
+
+
+        .fc-brand-mark svg {
+
+            width: 20px;
+
+            height: 20px;
+
+        }
+
+
+        .fc-brand-name span {
+
+            color: var(--fc-blue);
+
+        }
+
+
+        .fc-desktop-nav {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 4px;
+
+        }
+
+
+        .fc-desktop-nav a {
+
+            padding: 9px 13px;
+
+            border-radius: 11px;
+
+            color: #687386;
+
+            font-size: 0.88rem;
+
+            font-weight: 650;
+
+            transition:
+                background .2s ease,
+                color .2s ease;
+
+        }
+
+
+        .fc-desktop-nav a:hover {
+
+            color: var(--fc-blue);
+
+            background: #edf6ff;
+
+        }
+
+
+        .fc-header-action {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 43px;
+
+            padding: 10px 17px;
+
+            border-radius: 13px;
+
+            color: white;
+
+            background: var(--fc-blue);
+
+            font-size: .84rem;
+
+            font-weight: 750;
+
+            box-shadow:
+                0 8px 20px
+                rgba(10, 132, 255, .18);
+
+        }
+
+
+
+        /* =====================================================
+           HERO
+        ===================================================== */
+
+        .fc-hero {
+
+            padding: 55px 0 35px;
+
+        }
+
+
+        .fc-hero-card {
+
+            position: relative;
+
+            overflow: hidden;
+
+            min-height: 560px;
+
+            display: grid;
+
+            grid-template-columns: 1.05fr .95fr;
+
+            align-items: center;
+
+            gap: 30px;
+
+            padding: 65px;
+
+            border-radius: var(--fc-radius-xl);
+
+            background:
+
+                radial-gradient(
+                    circle at 85% 10%,
+                    rgba(10,132,255,.14),
+                    transparent 32%
+                ),
+
+                radial-gradient(
+                    circle at 20% 100%,
+                    rgba(115,87,255,.09),
+                    transparent 30%
+                ),
+
+                #ffffff;
+
+            border:
+                1px solid rgba(226,231,238,.9);
+
+            box-shadow:
+                0 25px 70px
+                rgba(20, 30, 50, .08);
+
+        }
+
+
+        .fc-hero-content {
+
+            position: relative;
+
+            z-index: 2;
+
+        }
+
+
+        .fc-status {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            padding: 8px 12px;
+
+            border-radius: 999px;
+
+            background: #f1f7ff;
+
+            border:
+                1px solid #dcecff;
+
+            color: #2376c8;
+
+            font-size: .72rem;
+
+            font-weight: 750;
+
+            letter-spacing: .04em;
+
+            text-transform: uppercase;
+
+        }
+
+
+        .fc-status-dot {
+
+            width: 7px;
+
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: var(--fc-green);
+
+            box-shadow:
+                0 0 0 4px
+                rgba(52,199,89,.10);
+
+        }
+
+
+        .fc-hero h1 {
+
+            margin: 20px 0 18px;
+
+            max-width: 650px;
+
+            font-size:
+                clamp(3.2rem, 6vw, 5.4rem);
+
+            line-height: .98;
+
+            letter-spacing: -.075em;
+
+            font-weight: 850;
+
+            color: var(--fc-navy);
+
+        }
+
+
+        .fc-hero h1 span {
+
+            color: var(--fc-blue);
+
+        }
+
+
+        .fc-hero-description {
+
+            max-width: 570px;
+
+            margin: 0;
+
+            color: var(--fc-muted);
+
+            font-size: 1rem;
+
+            line-height: 1.75;
+
+        }
+
+
+        .fc-hero-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-top: 28px;
+
+        }
+
+
+        .fc-primary-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 9px;
+
+            min-height: 50px;
+
+            padding: 13px 20px;
+
+            border-radius: 15px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #1594ff,
+                    #0878ed
+                );
+
+            font-size: .88rem;
+
+            font-weight: 750;
+
+            box-shadow:
+                0 12px 26px
+                rgba(10,132,255,.22);
+
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+
+        }
+
+
+        .fc-primary-button:hover {
+
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 15px 30px
+                rgba(10,132,255,.28);
+
+        }
+
+
+        .fc-secondary-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 50px;
+
+            padding: 13px 19px;
+
+            border-radius: 15px;
+
+            color: #4f5c70;
+
+            background: #f6f8fb;
+
+            border:
+                1px solid #e6eaf0;
+
+            font-size: .88rem;
+
+            font-weight: 700;
+
+        }
+
+
+
+        /* =====================================================
+           HERO VISUAL
+        ===================================================== */
+
+        .fc-hero-visual {
+
+            position: relative;
+
+            min-height: 430px;
+
+            display: grid;
+
+            place-items: center;
+
+        }
+
+
+        .fc-glow {
+
+            position: absolute;
+
+            width: 310px;
+
+            height: 310px;
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(10,132,255,.18),
+                    rgba(10,132,255,0)
+                );
+
+            filter: blur(8px);
+
+        }
+
+
+        .fc-phone-card {
+
+            position: relative;
+
+            z-index: 3;
+
+            width: min(320px, 88%);
+
+            padding: 11px;
+
+            border-radius: 32px;
+
+            background: #ffffff;
+
+            border:
+                1px solid #e7ebf1;
+
+            box-shadow:
+                0 30px 75px
+                rgba(20,35,65,.16);
+
+            transform:
+                rotate(-2deg);
+
+        }
+
+
+        .fc-phone-top {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 12px 12px 10px;
+
+        }
+
+
+        .fc-phone-title {
+
+            font-size: .73rem;
+
+            font-weight: 800;
+
+            color: #7a8494;
+
+        }
+
+
+        .fc-phone-menu {
+
+            width: 30px;
+
+            height: 30px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 10px;
+
+            background: #f2f5f8;
+
+            color: #6f7a8a;
+
+        }
+
+
+        .fc-feature-card {
+
+            overflow: hidden;
+
+            border-radius: 23px;
+
+            background: #f2f7fd;
+
+        }
+
+
+        .fc-feature-image {
+
+            min-height: 190px;
+
+            display: grid;
+
+            place-items: center;
+
+            background:
+
+                linear-gradient(
+                    145deg,
+                    #dceeff,
+                    #edf5ff
+                );
+
+        }
+
+
+        .fc-profile-symbol {
+
+            width: 92px;
+
+            height: 92px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 50%;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #17233a,
+                    #31496e
+                );
+
+            font-size: 2rem;
+
+            font-weight: 700;
+
+            box-shadow:
+                0 14px 30px
+                rgba(20,35,60,.18);
+
+        }
+
+
+        .fc-feature-info {
+
+            padding: 18px;
+
+            background: white;
+
+        }
+
+
+        .fc-feature-info h3 {
+
+            margin: 0;
+
+            font-size: 1rem;
+
+            letter-spacing: -.025em;
+
+        }
+
+
+        .fc-feature-info p {
+
+            margin: 6px 0 13px;
+
+            color: var(--fc-muted);
+
+            font-size: .78rem;
+
+        }
+
+
+        .fc-interest-row {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 6px;
+
+        }
+
+
+        .fc-interest {
+
+            padding: 6px 9px;
+
+            border-radius: 999px;
+
+            color: #4f647d;
+
+            background: #f0f5fa;
+
+            font-size: .68rem;
+
+            font-weight: 700;
+
+        }
+
+
+        .fc-floating-card {
+
+            position: absolute;
+
+            z-index: 5;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            padding: 12px 14px;
+
+            border:
+                1px solid rgba(255,255,255,.95);
+
+            border-radius: 16px;
+
+            background:
+                rgba(255,255,255,.94);
+
+            box-shadow:
+                0 16px 35px
+                rgba(20,30,50,.11);
+
+            color: #566276;
+
+            font-size: .72rem;
+
+            font-weight: 750;
+
+            backdrop-filter: blur(15px);
+
+        }
+
+
+        .fc-floating-icon {
+
+            width: 27px;
+
+            height: 27px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 9px;
+
+            color: var(--fc-blue);
+
+            background: #eaf5ff;
+
+        }
+
+
+        .fc-floating-one {
+
+            top: 65px;
+
+            left: 0;
+
+        }
+
+
+        .fc-floating-two {
+
+            right: 0;
+
+            bottom: 50px;
+
+        }
+
+
+
+        /* =====================================================
+           QUICK STATS
+        ===================================================== */
+
+        .fc-stats {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 12px;
+
+            margin-top: 15px;
+
+        }
+
+
+        .fc-stat-card {
+
+            padding: 18px;
+
+            border-radius: 20px;
+
+            background: white;
+
+            border:
+                1px solid var(--fc-line);
+
+            box-shadow:
+                var(--fc-shadow-small);
+
+        }
+
+
+        .fc-stat-label {
+
+            color: #8a94a3;
+
+            font-size: .68rem;
+
+            font-weight: 700;
+
+        }
+
+
+        .fc-stat-value {
+
+            margin-top: 5px;
+
+            color: var(--fc-navy);
+
+            font-size: 1.15rem;
+
+            font-weight: 800;
+
+            letter-spacing: -.03em;
+
+        }
+
+
+        .fc-stat-blue {
+
+            color: var(--fc-blue);
+
+        }
+
+
+
+        /* =====================================================
+           SECTION
+        ===================================================== */
+
+        .fc-section {
+
+            padding: 75px 0;
+
+        }
+
+
+        .fc-section-header {
+
+            display: flex;
+
+            align-items: flex-end;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 27px;
+
+        }
+
+
+        .fc-section-kicker {
+
+            color: var(--fc-blue);
+
+            font-size: .72rem;
+
+            font-weight: 800;
+
+            letter-spacing: .09em;
+
+            text-transform: uppercase;
+
+        }
+
+
+        .fc-section-header h2 {
+
+            margin: 7px 0 0;
+
+            color: var(--fc-navy);
+
+            font-size:
+                clamp(1.9rem, 4vw, 2.8rem);
+
+            line-height: 1.05;
+
+            letter-spacing: -.065em;
+
+        }
+
+
+        .fc-section-header p {
+
+            max-width: 450px;
+
+            margin: 8px 0 0;
+
+            color: var(--fc-muted);
+
+            font-size: .9rem;
+
+        }
+
+
+        .fc-section-link {
+
+            color: var(--fc-blue);
+
+            font-size: .82rem;
+
+            font-weight: 750;
+
+            white-space: nowrap;
+
+        }
+
+
+
+        /* =====================================================
+           PROFILE PREVIEW
+        ===================================================== */
+
+        .fc-profile-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 16px;
+
+        }
+
+
+        .fc-person-card {
+
+            overflow: hidden;
+
+            border-radius: 24px;
+
+            background: white;
+
+            border:
+                1px solid var(--fc-line);
+
+            box-shadow:
+                var(--fc-shadow-small);
+
+            transition:
+                transform .22s ease,
+                box-shadow .22s ease;
+
+        }
+
+
+        .fc-person-card:hover {
+
+            transform: translateY(-4px);
+
+            box-shadow:
+                var(--fc-shadow);
+
+        }
+
+
+        .fc-person-image {
+
+            position: relative;
+
+            min-height: 210px;
+
+            display: grid;
+
+            place-items: center;
+
+            overflow: hidden;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #e7f2ff,
+                    #f1f4f9
+                );
+
+        }
+
+
+        .fc-person-image img {
+
+            width: 100%;
+
+            height: 210px;
+
+            object-fit: cover;
+
+            display: block;
+
+        }
+
+
+        .fc-person-placeholder {
+
+            width: 75px;
+
+            height: 75px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 50%;
+
+            color: #ffffff;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #18243a,
+                    #405778
+                );
+
+            font-size: 1.5rem;
+
+            font-weight: 750;
+
+        }
+
+
+        .fc-online {
+
+            position: absolute;
+
+            right: 13px;
+
+            top: 13px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            padding: 6px 9px;
+
+            border-radius: 999px;
+
+            color: #21843a;
+
+            background:
+                rgba(255,255,255,.92);
+
+            font-size: .65rem;
+
+            font-weight: 750;
+
+        }
+
+
+        .fc-online-dot {
+
+            width: 6px;
+
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: var(--fc-green);
+
+        }
+
+
+        .fc-person-info {
+
+            padding: 17px;
+
+        }
+
+
+        .fc-person-name {
+
+            margin: 0;
+
+            color: var(--fc-navy);
+
+            font-size: 1rem;
+
+            font-weight: 800;
+
+            letter-spacing: -.025em;
+
+        }
+
+
+        .fc-person-category {
+
+            margin: 4px 0 12px;
+
+            color: var(--fc-muted);
+
+            font-size: .76rem;
+
+        }
+
+
+        .fc-person-tags {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 5px;
+
+        }
+
+
+        .fc-person-tag {
+
+            padding: 6px 8px;
+
+            border-radius: 8px;
+
+            color: #607086;
+
+            background: #f3f6f9;
+
+            font-size: .64rem;
+
+            font-weight: 700;
+
+        }
+
+
+        .fc-profile-loading {
+
+            grid-column: 1 / -1;
+
+            padding: 35px;
+
+            text-align: center;
+
+            color: #8792a3;
+
+            font-size: .82rem;
+
+        }
+
+
+
+        /* =====================================================
+           DISCOVER BANNER
+        ===================================================== */
+
+        .fc-discover {
+
+            position: relative;
+
+            overflow: hidden;
+
+            padding: 32px;
+
+            border-radius: 27px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #111c2e,
+                    #182b47
+                );
+
+            box-shadow:
+                0 25px 55px
+                rgba(15,25,45,.15);
+
+        }
+
+
+        .fc-discover::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 220px;
+
+            height: 220px;
+
+            right: -70px;
+
+            top: -90px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(10,132,255,.22);
+
+            filter: blur(3px);
+
+        }
+
+
+        .fc-discover-content {
+
+            position: relative;
+
+            z-index: 2;
+
+            max-width: 650px;
+
+        }
+
+
+        .fc-discover h2 {
+
+            margin: 0 0 8px;
+
+            font-size:
+                clamp(1.55rem, 4vw, 2.2rem);
+
+            line-height: 1.1;
+
+            letter-spacing: -.055em;
+
+        }
+
+
+        .fc-discover p {
+
+            margin: 0;
+
+            color: #aeb9c9;
+
+            font-size: .88rem;
+
+        }
+
+
+        .fc-discover-button {
+
+            position: relative;
+
+            z-index: 3;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin-top: 21px;
+
+            min-height: 45px;
+
+            padding: 11px 17px;
+
+            border-radius: 13px;
+
+            color: #102039;
+
+            background: white;
+
+            font-size: .82rem;
+
+            font-weight: 800;
+
+        }
+
+
+
+        /* =====================================================
+           HOW IT WORKS
+        ===================================================== */
+
+        .fc-process-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 13px;
+
+        }
+
+
+        .fc-process-card {
+
+            padding: 22px;
+
+            border-radius: 22px;
+
+            background: white;
+
+            border:
+                1px solid var(--fc-line);
+
+        }
+
+
+        .fc-process-number {
+
+            width: 38px;
+
+            height: 38px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 12px;
+
+            color: var(--fc-blue);
+
+            background: #eaf5ff;
+
+            font-size: .76rem;
+
+            font-weight: 850;
+
+        }
+
+
+        .fc-process-card h3 {
+
+            margin: 16px 0 7px;
+
+            color: var(--fc-navy);
+
+            font-size: .98rem;
+
+        }
+
+
+        .fc-process-card p {
+
+            margin: 0;
+
+            color: var(--fc-muted);
+
+            font-size: .8rem;
+
+            line-height: 1.65;
+
+        }
+
+
+
+        /* =====================================================
+           FINAL CTA
+        ===================================================== */
+
+        .fc-final {
+
+            padding: 0 0 70px;
+
+        }
+
+
+        .fc-final-card {
+
+            padding: 52px 25px;
+
+            text-align: center;
+
+            border-radius: 29px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #edf6ff,
+                    #f7f9fc
+                );
+
+            border:
+                1px solid #dfeaf5;
+
+        }
+
+
+        .fc-final-card h2 {
+
+            margin: 0;
+
+            color: var(--fc-navy);
+
+            font-size:
+                clamp(1.9rem, 4vw, 2.8rem);
+
+            line-height: 1.05;
+
+            letter-spacing: -.065em;
+
+        }
+
+
+        .fc-final-card p {
+
+            max-width: 520px;
+
+            margin: 13px auto 22px;
+
+            color: var(--fc-muted);
+
+            font-size: .9rem;
+
+        }
+
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .fc-footer {
+
+            padding: 35px 0 40px;
+
+            background: #ffffff;
+
+            border-top:
+                1px solid var(--fc-line);
+
+        }
+
+
+        .fc-footer-inner {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: flex-start;
+
+            gap: 30px;
+
+        }
+
+
+        .fc-footer-copy {
+
+            max-width: 300px;
+
+        }
+
+
+        .fc-footer-copy p {
+
+            margin: 10px 0 0;
+
+            color: #8a94a3;
+
+            font-size: .76rem;
+
+            line-height: 1.6;
+
+        }
+
+
+        .fc-footer-links {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            justify-content: flex-end;
+
+            gap: 8px 18px;
+
+        }
+
+
+        .fc-footer-links a {
+
+            color: #687386;
+
+            font-size: .75rem;
+
+            font-weight: 650;
+
+        }
+
+
+
+        /* =====================================================
+           MOBILE BOTTOM NAV
+        ===================================================== */
+
+        .fc-mobile-nav {
+
+            display: none;
+
+        }
+
+
+
+        /* =====================================================
+           TABLET
+        ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .fc-hero-card {
+
+                grid-template-columns: 1fr;
+
+                padding: 50px;
+
+            }
+
+
+            .fc-hero-visual {
+
+                min-height: 390px;
+
+            }
+
+
+            .fc-profile-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 640px) {
+
+            body.fc-page {
+
+                padding-bottom: 84px;
+
+            }
+
+
+            .fc-wrap {
+
+                width:
+                    calc(100% - 28px);
+
+            }
+
+
+            /* Header */
+
+            .fc-header-inner {
+
+                min-height: 62px;
+
+            }
+
+
+            .fc-brand {
+
+                font-size: 1rem;
+
+            }
+
+
+            .fc-brand-mark {
+
+                width: 34px;
+
+                height: 34px;
+
+                border-radius: 11px;
+
+            }
+
+
+            .fc-desktop-nav {
+
+                display: none;
+
+            }
+
+
+            .fc-header-action {
+
+                min-height: 38px;
+
+                padding: 9px 12px;
+
+                border-radius: 11px;
+
+                font-size: .72rem;
+
+            }
+
+
+
+            /* Hero */
+
+            .fc-hero {
+
+                padding: 16px 0 10px;
+
+            }
+
+
+            .fc-hero-card {
+
+                display: block;
+
+                min-height: auto;
+
+                padding: 29px 19px 19px;
+
+                border-radius: 26px;
+
+            }
+
+
+            .fc-status {
+
+                padding: 7px 10px;
+
+                font-size: .64rem;
+
+            }
+
+
+            .fc-hero h1 {
+
+                margin: 18px 0 15px;
+
+                font-size:
+                    clamp(2.65rem, 13vw, 3.6rem);
+
+                line-height: .98;
+
+            }
+
+
+            .fc-hero-description {
+
+                font-size: .87rem;
+
+                line-height: 1.65;
+
+            }
+
+
+            .fc-hero-actions {
+
+                display: grid;
+
+                grid-template-columns: 1fr 1fr;
+
+                gap: 8px;
+
+                margin-top: 21px;
+
+            }
+
+
+            .fc-primary-button,
+            .fc-secondary-button {
+
+                min-height: 47px;
+
+                padding: 11px 10px;
+
+                border-radius: 13px;
+
+                font-size: .76rem;
+
+            }
+
+
+            .fc-hero-visual {
+
+                min-height: 320px;
+
+                margin-top: 15px;
+
+            }
+
+
+            .fc-phone-card {
+
+                width: min(275px, 84%);
+
+                border-radius: 27px;
+
+            }
+
+
+            .fc-feature-image {
+
+                min-height: 155px;
+
+            }
+
+
+            .fc-profile-symbol {
+
+                width: 70px;
+
+                height: 70px;
+
+                font-size: 1.3rem;
+
+            }
+
+
+            .fc-feature-info {
+
+                padding: 14px;
+
+            }
+
+
+            .fc-feature-info h3 {
+
+                font-size: .86rem;
+
+            }
+
+
+            .fc-feature-info p {
+
+                font-size: .7rem;
+
+            }
+
+
+            .fc-floating-card {
+
+                padding: 9px 10px;
+
+                border-radius: 13px;
+
+                font-size: .61rem;
+
+            }
+
+
+            .fc-floating-one {
+
+                top: 35px;
+
+                left: -2px;
+
+            }
+
+
+            .fc-floating-two {
+
+                right: -2px;
+
+                bottom: 25px;
+
+            }
+
+
+
+            /* Stats */
+
+            .fc-stats {
+
+                gap: 7px;
+
+                margin-top: 10px;
+
+            }
+
+
+            .fc-stat-card {
+
+                padding: 13px 10px;
+
+                border-radius: 16px;
+
+            }
+
+
+            .fc-stat-label {
+
+                font-size: .59rem;
+
+            }
+
+
+            .fc-stat-value {
+
+                font-size: .95rem;
+
+            }
+
+
+
+            /* Sections */
+
+            .fc-section {
+
+                padding: 48px 0;
+
+            }
+
+
+            .fc-section-header {
+
+                display: block;
+
+                margin-bottom: 21px;
+
+            }
+
+
+            .fc-section-header h2 {
+
+                font-size: 2rem;
+
+            }
+
+
+            .fc-section-header p {
+
+                font-size: .82rem;
+
+                line-height: 1.6;
+
+            }
+
+
+            .fc-section-link {
+
+                display: inline-block;
+
+                margin-top: 12px;
+
+            }
+
+
+
+            /* Profiles */
+
+            .fc-profile-grid {
+
+                display: flex;
+
+                overflow-x: auto;
+
+                gap: 11px;
+
+                margin-right: -14px;
+
+                padding-right: 14px;
+
+                padding-bottom: 5px;
+
+                scroll-snap-type: x mandatory;
+
+                scrollbar-width: none;
+
+            }
+
+
+            .fc-profile-grid::-webkit-scrollbar {
+
+                display: none;
+
+            }
+
+
+            .fc-person-card {
+
+                flex:
+                    0 0 76%;
+
+                scroll-snap-align: start;
+
+                border-radius: 21px;
+
+            }
+
+
+            .fc-person-image {
+
+                min-height: 195px;
+
+            }
+
+
+            .fc-person-image img {
+
+                height: 195px;
+
+            }
+
+
+
+            /* Discover */
+
+            .fc-discover {
+
+                padding: 25px 19px;
+
+                border-radius: 23px;
+
+            }
+
+
+            .fc-discover h2 {
+
+                font-size: 1.65rem;
+
+            }
+
+
+            .fc-discover p {
+
+                font-size: .78rem;
+
+                line-height: 1.6;
+
+            }
+
+
+            .fc-discover-button {
+
+                width: 100%;
+
+                min-height: 45px;
+
+            }
+
+
+
+            /* Process */
+
+            .fc-process-grid {
+
+                grid-template-columns: 1fr;
+
+                gap: 9px;
+
+            }
+
+
+            .fc-process-card {
+
+                display: grid;
+
+                grid-template-columns: 40px 1fr;
+
+                column-gap: 12px;
+
+                padding: 17px;
+
+                border-radius: 18px;
+
+            }
+
+
+            .fc-process-number {
+
+                grid-row: span 2;
+
+            }
+
+
+            .fc-process-card h3 {
+
+                margin: 1px 0 4px;
+
+                font-size: .88rem;
+
+            }
+
+
+            .fc-process-card p {
+
+                font-size: .76rem;
+
+            }
+
+
+
+            /* Final */
+
+            .fc-final {
+
+                padding-bottom: 40px;
+
+            }
+
+
+            .fc-final-card {
+
+                padding: 38px 19px;
+
+                border-radius: 23px;
+
+            }
+
+
+            .fc-final-card h2 {
+
+                font-size: 2rem;
+
+            }
+
+
+            .fc-final-card p {
+
+                font-size: .8rem;
+
+                line-height: 1.6;
+
+            }
+
+
+
+            /* Footer */
+
+            .fc-footer {
+
+                padding:
+                    25px 0 30px;
+
+            }
+
+
+            .fc-footer-inner {
+
+                display: block;
+
+            }
+
+
+            .fc-footer-links {
+
+                justify-content: flex-start;
+
+                margin-top: 20px;
+
+                gap: 10px 16px;
+
+            }
+
+
+
+            /* Bottom navigation */
+
+            .fc-mobile-nav {
+
+                position: fixed;
+
+                z-index: 200;
+
+                left: 10px;
+
+                right: 10px;
+
+                bottom: 9px;
+
+                display: grid;
+
+                grid-template-columns:
+                    repeat(4, 1fr);
+
+                gap: 3px;
+
+                padding: 6px;
+
+                padding-bottom:
+                    max(
+                        6px,
+                        env(safe-area-inset-bottom)
+                    );
+
+                border:
+                    1px solid
+                    rgba(224,229,236,.95);
+
+                border-radius: 21px;
+
+                background:
+                    rgba(255,255,255,.94);
+
+                backdrop-filter:
+                    blur(22px);
+
+                -webkit-backdrop-filter:
+                    blur(22px);
+
+                box-shadow:
+                    0 12px 38px
+                    rgba(15,25,45,.15);
+
+            }
+
+
+            .fc-mobile-nav a {
+
+                min-height: 49px;
+
+                display: flex;
+
+                flex-direction: column;
+
+                align-items: center;
+
+                justify-content: center;
+
+                gap: 3px;
+
+                border-radius: 15px;
+
+                color: #8a94a3;
+
+                font-size: .61rem;
+
+                font-weight: 700;
+
+            }
+
+
+            .fc-mobile-nav-icon {
+
+                width: 21px;
+
+                height: 21px;
+
+            }
+
+
+            .fc-mobile-nav a[aria-current="page"] {
+
+                color: var(--fc-blue);
+
+                background: #edf6ff;
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           REDUCED MOTION
+        ===================================================== */
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+
+                animation: none !important;
+
+                transition: none !important;
+
+                scroll-behavior: auto !important;
+
+            }
+
+        }
+
+    </style>
 
 </head>
 
 
-<body>
 
-    <!-- ===============================
+<body class="fc-page">
+
+
+    <!-- =====================================================
          HEADER
-    ================================ -->
+    ===================================================== -->
 
-    <header class="top-header">
+    <header class="fc-header">
 
-        <a
-            href="creator_home.html"
-            class="brand"
-        >
-            FriendConnect
-        </a>
+        <div class="fc-wrap fc-header-inner">
 
 
-        <nav class="main-nav">
+            <a
+                class="fc-brand"
+                href="creator_home.html"
+                aria-label="FriendConnect Home"
+            >
 
-            <a href="explore.html">
-                Explore Friends
+                <span class="fc-brand-mark">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+
+                        <path d="M12 3v18"></path>
+                        <path d="M3 12h18"></path>
+
+                    </svg>
+
+                </span>
+
+
+                <span class="fc-brand-name">
+                    Friend<span>Connect</span>
+                </span>
+
             </a>
 
-            <a href="#how-it-works">
-                How It Works
-            </a>
 
-            <a href="about.html">
-                About
-            </a>
 
-        </nav>
+            <nav
+                class="fc-desktop-nav"
+                aria-label="Main navigation"
+            >
 
-    </header>
+                <a href="explore.html">
+                    Discover
+                </a>
 
+                <a href="#how-it-works">
+                    How it works
+                </a>
 
-    <main>
+                <a href="about.html">
+                    About
+                </a>
 
-        <!-- ===============================
-             HERO SECTION
-        ================================ -->
+            </nav>
 
-        <section class="hero-section">
-
-            <div class="home-section hero-layout">
-
-                <div class="hero-content">
-
-                    <p class="eyebrow">
-                        CONNECT • TALK • MAKE FRIENDS
-                    </p>
-
-
-                    <h1>
-                        Meet people.
-                        <span>
-                            Start real conversations.
-                        </span>
-                    </h1>
-
-
-                    <p class="hero-description">
-                        Discover interesting people, explore their
-                        profiles and connect through meaningful
-                        conversations and shared interests.
-                    </p>
-
-
-                    <div class="hero-actions">
-
-                        <a
-                            href="explore.html"
-                            class="primary-button"
-                        >
-                            Explore Friends
-                        </a>
-
-                    </div>
-
-                </div>
-
-
-                <div class="hero-visual">
-
-                    <div class="floating-badge badge-one">
-                        ✓ Meet interesting people
-                    </div>
-
-
-                    <div class="hero-card">
-
-                        <div class="hero-card-top">
-
-                            <div class="hero-icon">
-                                ✦
-                            </div>
-
-
-                            <div>
-
-                                <h3>
-                                    Your connection journey
-                                </h3>
-
-                                <small>
-                                    Discover people and start conversations
-                                </small>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="hero-card-list">
-
-                            <div>
-                                <span>01</span>
-                                Explore friend profiles
-                            </div>
-
-
-                            <div>
-                                <span>02</span>
-                                Review available conversations
-                            </div>
-
-
-                            <div>
-                                <span>03</span>
-                                Connect and start talking
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="floating-badge badge-two">
-                        ✓ Clear and transparent pricing
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ===============================
-             TRUST STRIP
-        ================================ -->
-
-        <section class="trust-strip">
-
-            <div class="home-section trust-items">
-
-                <div class="trust-item">
-
-                    <span>✓</span>
-
-                    Interesting people
-
-                </div>
-
-
-                <div class="trust-item">
-
-                    <span>✓</span>
-
-                    Clear conversation pricing
-
-                </div>
-
-
-                <div class="trust-item">
-
-                    <span>✓</span>
-
-                    Secure Razorpay checkout
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ===============================
-             CONNECTION CATEGORIES
-        ================================ -->
-
-        <section class="content-section">
-
-            <div class="home-section">
-
-                <div class="section-heading">
-
-                    <p class="eyebrow">
-                        EXPLORE YOUR INTERESTS
-                    </p>
-
-
-                    <h2>
-                        Find people with shared interests
-                    </h2>
-
-
-                    <p>
-                        Explore different interests and discover
-                        people who can share conversations,
-                        experiences and useful ideas with you.
-                    </p>
-
-                </div>
-
-
-                <div class="category-grid">
-
-                    <article class="category-card">
-
-                        <div class="category-icon">
-                            ✦
-                        </div>
-
-
-                        <h3>
-                            Content & Creativity
-                        </h3>
-
-
-                        <p>
-                            Connect with people interested in
-                            content creation, editing and creativity.
-                        </p>
-
-                    </article>
-
-
-                    <article class="category-card">
-
-                        <div class="category-icon">
-                            ◈
-                        </div>
-
-
-                        <h3>
-                            Career & Work
-                        </h3>
-
-
-                        <p>
-                            Talk with people about careers,
-                            work experiences and professional life.
-                        </p>
-
-                    </article>
-
-
-                    <article class="category-card">
-
-                        <div class="category-icon">
-                            ◎
-                        </div>
-
-
-                        <h3>
-                            Technology & Skills
-                        </h3>
-
-
-                        <p>
-                            Discover people interested in technology,
-                            software, websites and useful skills.
-                        </p>
-
-                    </article>
-
-
-                    <article class="category-card">
-
-                        <div class="category-icon">
-                            ↗
-                        </div>
-
-
-                        <h3>
-                            Life & Experiences
-                        </h3>
-
-
-                        <p>
-                            Start conversations about life,
-                            experiences, interests and personal growth.
-                        </p>
-
-                    </article>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ===============================
-             FRIENDS INTRODUCTION
-        ================================ -->
-
-        <section
-            class="content-section mentors-section"
-            id="mentors"
-        >
-
-            <div class="home-section">
-
-                <div class="section-heading">
-
-                    <p class="eyebrow">
-                        DISCOVER PEOPLE
-                    </p>
-
-
-                    <h2>
-                        Find someone you would like to talk to
-                    </h2>
-
-
-                    <p>
-                        Browse available profiles, read their
-                        information and explore the conversations
-                        they offer.
-                    </p>
-
-
-                    <div class="section-action">
-
-                        <a
-                            href="explore.html"
-                            class="primary-button"
-                        >
-                            Explore All Friends
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ===============================
-             HOW IT WORKS
-        ================================ -->
-
-        <section
-            class="content-section"
-            id="how-it-works"
-        >
-
-            <div class="home-section">
-
-                <div class="section-heading">
-
-                    <p class="eyebrow">
-                        SIMPLE & TRANSPARENT
-                    </p>
-
-
-                    <h2>
-                        Start connecting in three steps
-                    </h2>
-
-
-                    <p>
-                        Find someone interesting, review their
-                        profile and continue with the connection process.
-                    </p>
-
-                </div>
-
-
-                <div class="steps-grid">
-
-                    <article class="step">
-
-                        <span class="step-number">
-                            01
-                        </span>
-
-
-                        <h3>
-                            Explore friends
-                        </h3>
-
-
-                        <p>
-                            Browse profiles and discover people
-                            with different interests, skills and experiences.
-                        </p>
-
-                    </article>
-
-
-                    <article class="step">
-
-                        <span class="step-number">
-                            02
-                        </span>
-
-
-                        <h3>
-                            Choose a conversation
-                        </h3>
-
-
-                        <p>
-                            Review the profile, conversation details
-                            and listed price before making your selection.
-                        </p>
-
-                    </article>
-
-
-                    <article class="step">
-
-                        <span class="step-number">
-                            03
-                        </span>
-
-
-                        <h3>
-                            Complete payment
-                        </h3>
-
-
-                        <p>
-                            Continue through the available
-                            Razorpay checkout for the selected conversation.
-                        </p>
-
-                    </article>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ===============================
-             FINAL CTA
-        ================================ -->
-
-        <section class="final-cta">
-
-            <p class="eyebrow">
-                YOUR NEXT CONNECTION STARTS HERE
-            </p>
-
-
-            <h2>
-                Ready to meet someone interesting?
-            </h2>
-
-
-            <p>
-                Explore profiles, discover shared interests
-                and start your next conversation.
-            </p>
 
 
             <a
                 href="explore.html"
-                class="primary-button"
+                class="fc-header-action"
             >
-                Explore Friends
+                Explore people
             </a>
 
+
+        </div>
+
+    </header>
+
+
+
+    <main>
+
+
+        <!-- =====================================================
+             HERO
+        ===================================================== -->
+
+        <section class="fc-hero">
+
+            <div class="fc-wrap">
+
+                <div class="fc-hero-card">
+
+
+                    <div class="fc-hero-content">
+
+
+                        <div class="fc-status">
+
+                            <span class="fc-status-dot"></span>
+
+                            Discover your kind of people
+
+                        </div>
+
+
+
+                        <h1>
+
+                            Find your people.
+
+                            <br>
+
+                            <span>
+                                Start a conversation.
+                            </span>
+
+                        </h1>
+
+
+
+                        <p class="fc-hero-description">
+
+                            Discover interesting people,
+                            explore their profiles and find
+                            shared interests that make starting
+                            a conversation feel natural.
+
+                        </p>
+
+
+
+                        <div class="fc-hero-actions">
+
+                            <a
+                                href="explore.html"
+                                class="fc-primary-button"
+                            >
+
+                                Explore people
+
+                                <span>→</span>
+
+                            </a>
+
+
+                            <a
+                                href="#people"
+                                class="fc-secondary-button"
+                            >
+
+                                Meet people
+
+                                <span>↓</span>
+
+                            </a>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- Premium visual -->
+
+                    <div
+                        class="fc-hero-visual"
+                        aria-hidden="true"
+                    >
+
+                        <div class="fc-glow"></div>
+
+
+
+                        <div
+                            class="fc-floating-card fc-floating-one"
+                        >
+
+                            <span class="fc-floating-icon">
+
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+
+                                    <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.5 9.5 0 0 1-4-.9L3 21l1.8-4.3A8.4 8.4 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"></path>
+
+                                </svg>
+
+                            </span>
+
+                            Interesting conversations
+
+                        </div>
+
+
+
+                        <article class="fc-phone-card">
+
+
+                            <div class="fc-phone-top">
+
+                                <span class="fc-phone-title">
+                                    DISCOVER
+                                </span>
+
+
+                                <span class="fc-phone-menu">
+
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+
+                                        <circle
+                                            cx="12"
+                                            cy="5"
+                                            r="1"
+                                        ></circle>
+
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="1"
+                                        ></circle>
+
+                                        <circle
+                                            cx="12"
+                                            cy="19"
+                                            r="1"
+                                        ></circle>
+
+                                    </svg>
+
+                                </span>
+
+                            </div>
+
+
+
+                            <div class="fc-feature-card">
+
+
+                                <div class="fc-feature-image">
+
+                                    <div class="fc-profile-symbol">
+                                        FC
+                                    </div>
+
+                                </div>
+
+
+
+                                <div class="fc-feature-info">
+
+                                    <h3>
+                                        Someone who gets your vibe
+                                    </h3>
+
+
+                                    <p>
+                                        Shared interests are a
+                                        good place to start.
+                                    </p>
+
+
+                                    <div class="fc-interest-row">
+
+                                        <span class="fc-interest">
+                                            Music
+                                        </span>
+
+                                        <span class="fc-interest">
+                                            Movies
+                                        </span>
+
+                                        <span class="fc-interest">
+                                            Creativity
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+
+
+                        <div
+                            class="fc-floating-card fc-floating-two"
+                        >
+
+                            <span class="fc-floating-icon">
+
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+
+                                    <path
+                                        d="M20 7L10 17l-5-5"
+                                    ></path>
+
+                                </svg>
+
+                            </span>
+
+                            Shared interests
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Quick information cards -->
+
+                <div class="fc-stats">
+
+                    <div class="fc-stat-card">
+
+                        <div class="fc-stat-label">
+                            DISCOVER
+                        </div>
+
+                        <div class="fc-stat-value">
+                            People
+                        </div>
+
+                    </div>
+
+
+                    <div class="fc-stat-card">
+
+                        <div class="fc-stat-label">
+                            EXPLORE
+                        </div>
+
+                        <div class="fc-stat-value">
+                            Interests
+                        </div>
+
+                    </div>
+
+
+                    <div class="fc-stat-card">
+
+                        <div class="fc-stat-label">
+                            CONNECT
+                        </div>
+
+                        <div class="fc-stat-value fc-stat-blue">
+                            Conversations
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </section>
+
+
+
+        <!-- =====================================================
+             PEOPLE
+        ===================================================== -->
+
+        <section
+            class="fc-section"
+            id="people"
+        >
+
+            <div class="fc-wrap">
+
+
+                <div class="fc-section-header">
+
+                    <div>
+
+                        <div class="fc-section-kicker">
+                            Discover people
+                        </div>
+
+                        <h2>
+                            Someone worth meeting.
+                        </h2>
+
+                        <p>
+                            A small preview of people you can
+                            discover on FriendConnect.
+                        </p>
+
+                    </div>
+
+
+                    <a
+                        href="explore.html"
+                        class="fc-section-link"
+                    >
+                        Explore all profiles →
+                    </a>
+
+                </div>
+
+
+
+                <div
+                    class="fc-profile-grid"
+                    id="fcProfiles"
+                >
+
+                    <div class="fc-profile-loading">
+                        Loading profiles...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================================
+             DISCOVER BANNER
+        ===================================================== -->
+
+        <section class="fc-section">
+
+            <div class="fc-wrap">
+
+                <div class="fc-discover">
+
+                    <div class="fc-discover-content">
+
+                        <h2>
+                            The right conversation can start
+                            with one profile.
+                        </h2>
+
+                        <p>
+                            Explore people, check their interests
+                            and discover someone you would genuinely
+                            like to talk to.
+                        </p>
+
+
+                        <a
+                            href="explore.html"
+                            class="fc-discover-button"
+                        >
+                            Explore all profiles →
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================================
+             HOW IT WORKS
+        ===================================================== -->
+
+        <section
+            class="fc-section"
+            id="how-it-works"
+        >
+
+            <div class="fc-wrap">
+
+
+                <div class="fc-section-header">
+
+                    <div>
+
+                        <div class="fc-section-kicker">
+                            Simple process
+                        </div>
+
+                        <h2>
+                            From profile to conversation.
+                        </h2>
+
+                        <p>
+                            Everything stays simple and clear.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="fc-process-grid">
+
+
+                    <article class="fc-process-card">
+
+                        <div class="fc-process-number">
+                            01
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Explore profiles
+                            </h3>
+
+                            <p>
+                                Browse available people and
+                                discover their interests,
+                                categories and profile details.
+                            </p>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <article class="fc-process-card">
+
+                        <div class="fc-process-number">
+                            02
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Find your match
+                            </h3>
+
+                            <p>
+                                Look through profiles and find
+                                someone whose interests or
+                                personality feels interesting.
+                            </p>
+
+                        </div>
+
+                    </article>
+
+
+
+                    <article class="fc-process-card">
+
+                        <div class="fc-process-number">
+                            03
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Start talking
+                            </h3>
+
+                            <p>
+                                Continue through the available
+                                connection process and begin
+                                your conversation.
+                            </p>
+
+                        </div>
+
+                    </article>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================================
+             FINAL CTA
+        ===================================================== -->
+
+        <section class="fc-final">
+
+            <div class="fc-wrap">
+
+                <div class="fc-final-card">
+
+                    <h2>
+                        Your next conversation
+                        starts here.
+                    </h2>
+
+                    <p>
+                        Explore profiles and discover people
+                        you might genuinely enjoy talking to.
+                    </p>
+
+                    <a
+                        href="explore.html"
+                        class="fc-primary-button"
+                    >
+                        Explore people →
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
 
     </main>
 
 
-    <!-- ===============================
+
+    <!-- =====================================================
          FOOTER
-    ================================ -->
+    ===================================================== -->
 
-    <footer class="site-footer">
+    <footer class="fc-footer">
 
-        <p>
-            © 2026 FriendConnect. All rights reserved.
-        </p>
+        <div class="fc-wrap fc-footer-inner">
 
 
-        <div class="footer-links">
+            <div class="fc-footer-copy">
 
-            <a href="about.html">
-                About Us
-            </a>
+                <a
+                    class="fc-brand"
+                    href="creator_home.html"
+                >
 
+                    <span class="fc-brand-mark">
 
-            <a href="contact.html">
-                Contact Us
-            </a>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        >
 
+                            <path d="M12 3v18"></path>
+                            <path d="M3 12h18"></path>
 
-            <a href="pricing.html">
-                Pricing
-            </a>
+                        </svg>
 
-
-            <a href="terms.html">
-                Terms & Conditions
-            </a>
-
-
-            <a href="privacy.html">
-                Privacy Policy
-            </a>
+                    </span>
 
 
-            <a href="refund.html">
-                Refund & Cancellation
-            </a>
+                    <span class="fc-brand-name">
+                        Friend<span>Connect</span>
+                    </span>
+
+                </a>
+
+
+                <p>
+                    Discover people, shared interests
+                    and meaningful conversations.
+                </p>
+
+
+                <p>
+                    © 2026 FriendConnect. All rights reserved.
+                </p>
+
+            </div>
+
+
+
+            <nav
+                class="fc-footer-links"
+                aria-label="Footer navigation"
+            >
+
+                <a href="about.html">
+                    About
+                </a>
+
+                <a href="contact.html">
+                    Contact
+                </a>
+
+                <a href="pricing.html">
+                    Pricing
+                </a>
+
+                <a href="terms.html">
+                    Terms
+                </a>
+
+                <a href="privacy.html">
+                    Privacy
+                </a>
+
+                <a href="refund.html">
+                    Refunds
+                </a>
+
+            </nav>
+
 
         </div>
 
     </footer>
 
 
+
+    <!-- =====================================================
+         MOBILE BOTTOM NAVIGATION
+    ===================================================== -->
+
+    <nav
+        class="fc-mobile-nav"
+        aria-label="Mobile navigation"
+    >
+
+
+        <a
+            href="creator_home.html"
+            aria-current="page"
+        >
+
+            <svg
+                class="fc-mobile-nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+
+                <path
+                    d="M3 10.5 12 3l9 7.5"
+                ></path>
+
+                <path
+                    d="M5 9.5V21h14V9.5"
+                ></path>
+
+            </svg>
+
+            <span>
+                Home
+            </span>
+
+        </a>
+
+
+
+        <a href="explore.html">
+
+            <svg
+                class="fc-mobile-nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+
+                <circle
+                    cx="11"
+                    cy="11"
+                    r="6.5"
+                ></circle>
+
+                <path
+                    d="m16 16 5 5"
+                ></path>
+
+            </svg>
+
+            <span>
+                Discover
+            </span>
+
+        </a>
+
+
+
+        <a href="chat.html">
+
+            <svg
+                class="fc-mobile-nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+
+                <path
+                    d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.6 8.6 0 0 1-3.5-.8L4 20l1.5-3.5A7.4 7.4 0 0 1 4 11.5C4 7.4 7.6 4 12 4s8 3.4 8 7.5Z"
+                ></path>
+
+            </svg>
+
+            <span>
+                Chats
+            </span>
+
+        </a>
+
+
+
+        <a href="about.html">
+
+            <svg
+                class="fc-mobile-nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+
+                <circle
+                    cx="12"
+                    cy="8"
+                    r="3.5"
+                ></circle>
+
+                <path
+                    d="M5 20c.8-3.3 3.1-5 7-5s6.2 1.7 7 5"
+                ></path>
+
+            </svg>
+
+            <span>
+                Profile
+            </span>
+
+        </a>
+
+
+    </nav>
+
+
+
+    <!-- =====================================================
+         EXISTING JAVASCRIPT PRESERVED
+    ===================================================== -->
+
     <script src="creator_app.js"></script>
+
+
+
+    <!-- =====================================================
+         PROFILE PREVIEW SCRIPT
+         Read-only creator loading.
+         No price/payment logic is touched.
+    ===================================================== -->
+
+    <script>
+
+        (async function () {
+
+            const container =
+                document.getElementById("fcProfiles");
+
+            if (!container) {
+                return;
+            }
+
+
+            try {
+
+                const response = await fetch(
+                    "https://creatorpay-backend.onrender.com/api/creators"
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Unable to load profiles"
+                    );
+
+                }
+
+
+                const result =
+                    await response.json();
+
+
+                const creators =
+                    Array.isArray(result)
+                        ? result
+                        : (
+                            Array.isArray(result.creators)
+                                ? result.creators
+                                : []
+                        );
+
+
+                if (!creators.length) {
+
+                    container.innerHTML = `
+                        <div class="fc-profile-loading">
+                            More profiles are coming soon.
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                /*
+                    Only showing profile information.
+
+                    PRICE IS INTENTIONALLY NOT USED.
+                    PAYMENT IS NOT TOUCHED.
+                */
+
+                const previewCreators =
+                    creators.slice(-3).reverse();
+
+
+                container.innerHTML =
+                    previewCreators.map(function (creator) {
+
+                        const name =
+                            creator.name ||
+                            "FriendConnect member";
+
+
+                        const category =
+                            creator.category ||
+                            "Interesting people";
+
+
+                        const image =
+                            creator.profile_image ||
+                            creator.profileImage ||
+                            "";
+
+
+                        const tags =
+                            String(category)
+                                .split("&")
+                                .slice(0, 2)
+                                .map(
+                                    item => item.trim()
+                                );
+
+
+                        const tagHTML =
+                            tags.map(function (tag) {
+
+                                return `
+                                    <span class="fc-person-tag">
+                                        ${tag}
+                                    </span>
+                                `;
+
+                            }).join("");
+
+
+                        const imageHTML =
+                            image
+                                ? `
+                                    <img
+                                        src="${image}"
+                                        alt="${name}"
+                                        loading="lazy"
+                                    >
+                                `
+                                : `
+                                    <div
+                                        class="fc-person-placeholder"
+                                        aria-hidden="true"
+                                    >
+                                        ${name
+                                            .trim()
+                                            .slice(0, 2)
+                                            .toUpperCase()}
+                                    </div>
+                                `;
+
+
+                        return `
+
+                            <article
+                                class="fc-person-card"
+                            >
+
+                                <div
+                                    class="fc-person-image"
+                                >
+
+                                    ${imageHTML}
+
+                                    <span
+                                        class="fc-online"
+                                    >
+
+                                        <span
+                                            class="fc-online-dot"
+                                        ></span>
+
+                                        Available
+
+                                    </span>
+
+                                </div>
+
+
+                                <div
+                                    class="fc-person-info"
+                                >
+
+                                    <h3
+                                        class="fc-person-name"
+                                    >
+                                        ${name}
+                                    </h3>
+
+
+                                    <p
+                                        class="fc-person-category"
+                                    >
+                                        ${category}
+                                    </p>
+
+
+                                    <div
+                                        class="fc-person-tags"
+                                    >
+
+                                        ${tagHTML}
+
+                                    </div>
+
+                                </div>
+
+                            </article>
+
+                        `;
+
+                    }).join("");
+
+
+            } catch (error) {
+
+                console.error(
+                    "FriendConnect profiles:",
+                    error
+                );
+
+
+                container.innerHTML = `
+
+                    <div class="fc-profile-loading">
+
+                        Explore the full community
+                        to discover available profiles.
+
+                    </div>
+
+                `;
+
+            }
+
+        })();
+
+    </script>
+
 
 </body>
 
