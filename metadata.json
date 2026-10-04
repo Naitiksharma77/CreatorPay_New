@@ -1,0 +1,7 @@
+{
+  "name": "CreatorPay",
+  "description": "CreatorPay — Creator monetization and 1-on-1 personal guidance session booking platform.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

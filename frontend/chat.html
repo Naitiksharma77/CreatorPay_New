@@ -1,0 +1,497 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat | FriendConnect</title>
+
+    <style>
+        :root {
+            --navy: #172554;
+            --blue: #2563eb;
+            --light-blue: #eff6ff;
+            --text: #334155;
+            --muted: #64748b;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --background: #f8fafc;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--navy);
+            min-height: 100vh;
+        }
+
+        button, input { font: inherit; }
+
+        .topbar {
+            height: 68px;
+            padding: 0 6%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-button {
+            text-decoration: none;
+            color: var(--blue);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .brand {
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -.5px;
+        }
+
+        .brand span { color: var(--blue); }
+
+        .page {
+            max-width: 900px;
+            height: calc(100dvh - 100px);
+            min-height: 450px;
+            margin: 16px auto;
+            padding: 0 16px;
+        }
+
+        .chat-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(23,37,84,.05);
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .creator-avatar {
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--light-blue);
+        }
+
+        .creator-details { min-width: 0; }
+
+        .creator-details h1 {
+            margin: 0 0 5px;
+            font-size: 17px;
+            overflow-wrap: anywhere;
+        }
+
+        .creator-details p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .chat-badge {
+            margin-left: auto;
+            padding: 7px 11px;
+            border-radius: 20px;
+            background: var(--light-blue);
+            color: var(--blue);
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 24px;
+            overflow-y: auto;
+            background:
+                radial-gradient(circle at top right,
+                rgba(219,234,254,.35), transparent 45%),
+                var(--white);
+        }
+
+        .welcome-message {
+            max-width: 340px;
+            margin: auto;
+            text-align: center;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .welcome-icon {
+            display: grid;
+            place-items: center;
+            width: 62px;
+            height: 62px;
+            margin: 0 auto 14px;
+            border-radius: 20px;
+            background: var(--light-blue);
+            color: var(--blue);
+            font-size: 27px;
+        }
+
+        .welcome-message h2 {
+            color: var(--navy);
+            font-size: 19px;
+            margin: 0 0 8px;
+        }
+
+        .message {
+            max-width: min(75%, 520px);
+            padding: 12px 15px;
+            border-radius: 16px;
+            color: var(--text);
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background: var(--blue);
+            color: var(--white);
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: var(--light-blue);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.pending { opacity: .7; }
+
+        .demo-notice {
+            padding: 8px 15px;
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .composer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            background: var(--white);
+        }
+
+        .composer input {
+            flex: 1;
+            width: 0;
+            min-width: 0;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            outline: none;
+            color: var(--text);
+            background: var(--background);
+        }
+
+        .composer input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+
+        .send-button {
+            padding: 14px 20px;
+            border: 0;
+            border-radius: 14px;
+            background: var(--blue);
+            color: var(--white);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .send-button:hover { background: var(--navy); }
+
+        .send-button:disabled,
+        .composer input:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 16px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .error { color: #b91c1c; }
+
+        @media (max-width: 600px) {
+            .topbar { height: 60px; padding: 0 16px; }
+
+            .page {
+                height: calc(100dvh - 76px);
+                min-height: 380px;
+                margin: 8px auto;
+                padding: 0 8px;
+            }
+
+            .chat-card { border-radius: 15px; }
+            .chat-header { padding: 13px; }
+            .messages { padding: 16px 12px; }
+            .composer { padding: 10px; gap: 7px; }
+            .composer input { padding: 13px 11px; }
+            .send-button { padding: 13px 14px; }
+            .chat-badge { padding: 6px 8px; font-size: 10px; }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="back-button" id="backButton" href="explore.html">
+            ← Back
+        </a>
+        <div class="brand">Friend<span>Connect</span></div>
+    </header>
+
+    <main class="page">
+        <section class="chat-card">
+            <header class="chat-header">
+                <img
+                    class="creator-avatar"
+                    id="creatorAvatar"
+                    src="https://via.placeholder.com/100"
+                    alt="Profile photo"
+                >
+
+                <div class="creator-details">
+                    <h1 id="creatorName">Loading profile...</h1>
+                    <p id="creatorCategory">Getting things ready...</p>
+                </div>
+
+                <span class="chat-badge">CHAT</span>
+            </header>
+
+            <div class="messages" id="messages" aria-live="polite">
+                <div class="status">Loading profile...</div>
+            </div>
+            <form class="composer" id="messageForm">
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Write a message..."
+                    autocomplete="off"
+                    maxlength="1000"
+                    aria-label="Write a message"
+                    disabled
+                >
+
+                <button
+                    type="submit"
+                    class="send-button"
+                    id="sendButton"
+                    disabled
+                >Send</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        // Existing creator API remains unchanged.
+        const API_URL = "https://creatorpay-backend.onrender.com";
+
+        // Local-only AI endpoint. Deploy separately before public launch.
+        const AI_CHAT_URL = "http://127.0.0.1:5001/api/ai-chat";
+
+        const params = new URLSearchParams(window.location.search);
+        const creatorId = params.get("id");
+
+        const creatorAvatar = document.getElementById("creatorAvatar");
+        const creatorName = document.getElementById("creatorName");
+        const creatorCategory = document.getElementById("creatorCategory");
+        const messages = document.getElementById("messages");
+        const messageInput = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+        const messageForm = document.getElementById("messageForm");
+
+        let profileLoaded = false;
+        let isSending = false;
+        let chatHistory = [];
+
+        function addMessage(text, type, extraClass = "") {
+            const bubble = document.createElement("div");
+            bubble.className = `message ${type} ${extraClass}`.trim();
+            bubble.textContent = text;
+            messages.appendChild(bubble);
+            messages.scrollTop = messages.scrollHeight;
+            return bubble;
+        }
+
+        function showError(text) {
+            profileLoaded = false;
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            creatorName.textContent = "Profile unavailable";
+            creatorCategory.textContent = text;
+            messages.replaceChildren();
+
+            const status = document.createElement("div");
+            status.className = "status error";
+            status.textContent = text;
+            messages.appendChild(status);
+        }
+
+        async function loadCreator() {
+            if (!creatorId) {
+                showError("No profile was selected.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/creators`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error("Unable to load profiles.");
+                }
+
+                const creator = (Array.isArray(result.creators)
+                    ? result.creators : []
+                ).find(item => String(item.id) === String(creatorId));
+
+                if (!creator) {
+                    showError("This profile was not found.");
+                    return;
+                }
+
+                creatorAvatar.src =
+                    creator.profile_image || "https://via.placeholder.com/100";
+
+                creatorAvatar.alt = `${creator.name || "Creator"} profile photo`;
+
+                creatorAvatar.onerror = function () {
+                    this.onerror = null;
+                    this.src = "https://via.placeholder.com/100";
+                };
+
+                creatorName.textContent = creator.name || "Creator";
+                creatorCategory.textContent =
+                    creator.category || "Conversation";
+
+                document.title =
+                    `Chat with ${creator.name || "Creator"} | FriendConnect`;
+
+                document.getElementById("backButton").href =
+                    `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
+
+                messages.replaceChildren();
+
+                const welcome = document.createElement("div");
+                welcome.className = "welcome-message";
+
+                const icon = document.createElement("div");
+                icon.className = "welcome-icon";
+                icon.textContent = "💬";
+
+                const heading = document.createElement("h2");
+                heading.textContent = "Start a conversation";
+
+                const description = document.createElement("p");
+                description.textContent =
+                    "Say hello and start chatting. Keep it friendly! 😊";
+
+                welcome.append(icon, heading, description);
+                messages.appendChild(welcome);
+
+                profileLoaded = true;
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+
+            } catch (error) {
+                console.error("Profile loading error:", error);
+                showError("Unable to load this profile. Please try again.");
+            }
+        }
+
+        messageForm.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const message = messageInput.value.trim();
+
+            if (!message || !profileLoaded || isSending) return;
+
+            isSending = true;
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+
+            addMessage(message, "sent");
+            messageInput.value = "";
+
+            const pending = addMessage("One moment…", "received", "pending");
+
+            try {
+                const response = await fetch(AI_CHAT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message,
+                        history: chatHistory
+                    })
+                });
+
+                const result = await response.json();
+                pending.remove();
+
+                if (!response.ok || !result.success || !result.reply) {
+                    throw new Error(
+                        result.message || "Unable to get a reply."
+                    );
+                }
+
+                addMessage(result.reply, "received");
+
+                chatHistory.push(
+                    { role: "user", text: message },
+                    { role: "model", text: result.reply }
+                );
+
+                chatHistory = chatHistory.slice(-10);
+
+            } catch (error) {
+                pending.remove();
+                console.error("Chat request error:", error);
+
+                addMessage(
+                    "I couldn't connect right now. Please check the connection and try again.",
+                    "received"
+                );
+            } finally {
+                isSending = false;
+                messageInput.disabled = !profileLoaded;
+                sendButton.disabled = !profileLoaded;
+
+                if (profileLoaded) messageInput.focus();
+            }
+        });
+
+        loadCreator();
+    </script>
+</body>
+</html>

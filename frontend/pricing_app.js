@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000";
+const API_URL = "https://creatorpay-backend.onrender.com";
 
 const creatorPricingGrid =
     document.getElementById("creatorPricingGrid");
@@ -15,10 +15,11 @@ async function loadCreatorPricing() {
             await fetch(`${API_URL}/api/creators`);
 
         if (!response.ok) {
-            throw new Error("Creators load नहीं हो पाए");
+            throw new Error("Unable to load mentors");
         }
 
-        const creators = await response.json();
+        const data = await response.json();
+        const creators = Array.isArray(data) ? data : (data.creators || []);
 
         creatorPricingGrid.innerHTML = "";
 

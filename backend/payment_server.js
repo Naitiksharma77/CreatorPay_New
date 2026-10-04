@@ -10,7 +10,7 @@ const supabase = require("./supabase_config");
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+const PORT = 3000;
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -28,6 +28,16 @@ app.use(
 );
 
 app.use(express.json());
+
+// Serve static frontend files
+const path = require("path");
+const frontendDir = path.join(__dirname, "../frontend");
+app.use(express.static(frontendDir));
+
+// Root path serves the creator home page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendDir, "creator_home.html"));
+});
 
 
 // ======================================
@@ -613,8 +623,8 @@ app.use((req, res) => {
 // START SERVER
 // ======================================
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(
-    `CreatorPay backend running on port ${PORT}`
+    `CreatorPay backend running on http://0.0.0.0:${PORT}`
   );
 });

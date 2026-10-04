@@ -2,73 +2,53 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <title>Profile | FriendConnect</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Friend Profile | FriendConnect</title>
-
-    <link
-        rel="stylesheet"
-        href="friend_profile_styles.css"
-    >
+    <link rel="stylesheet" href="friend_profile_styles.css">
 
     <!-- Razorpay Checkout -->
-    <script
-        src="https://checkout.razorpay.com/v1/checkout.js"
-    ></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-3ZVP8Q457D');
-</script>
-
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-3ZVP8Q457D');
+    </script>
 </head>
-
 
 <body>
 
-    <main class="profile-page">
+    <div class="profile-app-shell">
 
-        <a
-            href="explore.html"
-            class="back-link"
-        >
-            ← Back to Friends
-        </a>
+        <!-- Top Navigation Header with iOS Back button -->
+        <header class="profile-top-bar">
+            <a href="creator_home.html" id="backBtn" class="ios-back-btn" aria-label="Back">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span>Back</span>
+            </a>
+            <span class="top-bar-title">Profile</span>
+            <div class="top-bar-spacer"></div>
+        </header>
 
-
-        <section
-            id="profileContent"
-            class="profile-content"
-        >
-
+        <main id="profileContent" class="profile-viewport">
             <div class="loading-state">
-
-                <p>
-                    Loading friend profile...
-                </p>
-
+                <span class="loading-spinner"></span>
+                <p>Loading profile...</p>
             </div>
+        </main>
 
-        </section>
-
-    </main>
-
+    </div>
 
     <!-- FriendConnect profile and Razorpay logic -->
-    <script
-        src="friend_profile_app.js"
-    ></script>
+    <script src="friend_profile_app.js"></script>
 
 </body>
 

@@ -2,957 +2,228 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Discover people you'll click with, start meaningful conversations, and build real connections on FriendConnect.">
+    <title>Discover People | FriendConnect</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    >
+    <link rel="stylesheet" href="ios_app.css">
 
-    <meta
-        name="description"
-        content="Discover people, explore interests and start meaningful conversations on FriendConnect."
-    >
-
-    <meta
-        name="theme-color"
-        content="#ffffff"
-    >
-
-    <title>
-        Discover | FriendConnect
-    </title>
-
-
-    <!-- =========================================================
-         EXISTING CSS FILE
-         UI ONLY
-    ========================================================== -->
-
-    <link
-        rel="stylesheet"
-        href="explore_styles.css"
-    >
-
-
-    <!-- =========================================================
-         GOOGLE ANALYTICS
-         EXISTING TRACKING PRESERVED
-    ========================================================== -->
-
-    <script
-        async
-        src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"
-    ></script>
-
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
     <script>
-
-        window.dataLayer =
-            window.dataLayer || [];
-
-        function gtag() {
-
-            dataLayer.push(arguments);
-
-        }
-
-        gtag(
-            "js",
-            new Date()
-        );
-
-        gtag(
-            "config",
-            "G-3ZVP8Q457D"
-        );
-
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-3ZVP8Q457D');
     </script>
-
 </head>
-
 
 <body>
 
+    <div class="app-shell">
 
-    <!-- =========================================================
-         TOP HEADER
-    ========================================================== -->
-
-    <header class="fc-header">
-
-        <div class="fc-header-inner">
-
-
-            <!-- BRAND -->
-
-            <a
-                href="creator_home.html"
-                class="fc-brand"
-                aria-label="FriendConnect home"
-            >
-
-                <span
-                    class="fc-brand-mark"
-                    aria-hidden="true"
-                >
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.9"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <circle
-                            cx="9"
-                            cy="8"
-                            r="3"
-                        ></circle>
-
-                        <path
-                            d="M3.5 19c.7-3.1 2.6-4.7 5.5-4.7s4.8 1.6 5.5 4.7"
-                        ></path>
-
-                        <path
-                            d="M16 7.5a2.8 2.8 0 0 1 0 5.4"
-                        ></path>
-
-                        <path
-                            d="M17 14.5c2 .5 3.2 1.9 3.7 4"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-
-                <span class="fc-brand-name">
-
-                    Friend<span>
-                        Connect
+        <!-- iOS App Header -->
+        <header class="app-header">
+            <div class="header-inner">
+                <a href="creator_home.html#home" class="app-brand" aria-label="FriendConnect">
+                    <span class="brand-glyph" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
                     </span>
+                    <span class="brand-name">Friend<span>Connect</span></span>
+                </a>
 
-                </span>
-
-            </a>
-
-
-
-            <!-- PROFILE -->
-
-            <a
-                href="about.html"
-                class="fc-profile-button"
-                aria-label="Open account"
-            >
-
-                <span class="fc-profile-icon-wrap">
-
-                    <svg
-                        class="fc-profile-icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-
-                        <circle
-                            cx="12"
-                            cy="8"
-                            r="3.5"
-                        ></circle>
-
-                        <path
-                            d="M5 20c.8-3.3 3.1-5 7-5s6.2 1.7 7 5"
-                        ></path>
-
+                <button type="button" class="header-avatar-btn" onclick="toggleProfileSheet()" aria-label="My Account" title="My Profile &amp; Settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                     </svg>
+                    <span class="avatar-online-dot" aria-hidden="true"></span>
+                </button>
+            </div>
+        </header>
 
+        <!-- App Viewport with 3 Tabs -->
+        <main class="app-viewport">
 
-                    <span
-                        class="fc-profile-status"
-                        aria-hidden="true"
-                    ></span>
+            <!-- TAB 1: HOME -->
+            <section id="tab-home" class="tab-view" aria-label="Home Feed">
+                <div class="app-greeting">
+                    <h1 class="greeting-title">Find someone new.</h1>
+                    <p class="greeting-subtitle">Discover people you might enjoy talking to.</p>
+                </div>
 
+                <div class="app-section-header">
+                    <div>
+                        <h2 class="section-title">People you might like</h2>
+                        <p class="section-sub">Discover new people and start a connection.</p>
+                    </div>
+
+                    <div class="people-stat-pill" aria-live="polite">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span id="homePeopleCount">Loading...</span>
+                    </div>
+                </div>
+
+                <div id="homePeopleList" class="people-feed">
+                    <div class="loading-state">
+                        <span class="loading-spinner"></span>
+                        <p>Finding people to connect with...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: DISCOVER (ACTIVE DEFAULT ON EXPLORE.HTML) -->
+            <section id="tab-discover" class="tab-view active" aria-label="Discover People">
+                <div class="app-greeting">
+                    <h1 class="greeting-title">Discover</h1>
+                    <p class="greeting-subtitle">Find someone new to talk to.</p>
+                </div>
+
+                <!-- Instant Search -->
+                <div class="search-bar-wrap">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7.5"></circle>
+                        <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+                    </svg>
+                    <input type="text" id="discoverSearchInput" class="search-input" placeholder="Search by name, interest or topic..." autocomplete="off">
+                    <button id="clearSearchBtn" class="clear-search-btn" style="display:none;" aria-label="Clear search">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <!-- Interest Filter Chips -->
+                <div id="filterChips" class="filter-chips-row">
+                    <button type="button" class="filter-chip active" data-category="all">✨ All</button>
+                    <button type="button" class="filter-chip" data-category="content">🎥 Lifestyle &amp; Content</button>
+                    <button type="button" class="filter-chip" data-category="design">🎨 Design &amp; Creative</button>
+                    <button type="button" class="filter-chip" data-category="tech">💻 Tech &amp; Coding</button>
+                    <button type="button" class="filter-chip" data-category="conversation">💬 Conversations</button>
+                </div>
+
+                <div id="discoverPeopleList" class="people-feed">
+                    <div class="loading-state">
+                        <span class="loading-spinner"></span>
+                        <p>Searching people...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: CHATS -->
+            <section id="tab-chats" class="tab-view" aria-label="Chats and Connections">
+                <div class="app-greeting">
+                    <h1 class="greeting-title">Chats</h1>
+                    <p class="greeting-subtitle">Your conversations and connections.</p>
+                </div>
+
+                <div id="chatsContent">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Fixed iOS 3-Item Bottom Navigation Bar -->
+        <nav class="bottom-tab-bar" aria-label="Main App Navigation">
+            <button type="button" class="tab-btn" data-tab="home" aria-label="Home Tab">
+                <span class="tab-icon-wrap">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 10.5L12 3l9 7.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
                 </span>
+                <span>Home</span>
+            </button>
 
-            </a>
+            <button type="button" class="tab-btn active" data-tab="discover" aria-label="Discover Tab">
+                <span class="tab-icon-wrap">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7.5"></circle>
+                        <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+                    </svg>
+                </span>
+                <span>Discover</span>
+            </button>
 
+            <button type="button" class="tab-btn" data-tab="chats" aria-label="Chats Tab">
+                <span class="tab-icon-wrap">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </span>
+                <span>Chats</span>
+            </button>
+        </nav>
+
+        <!-- Profile & Account Sheet Modal -->
+        <div id="profileSheetModal" class="profile-sheet-modal" aria-hidden="true">
+            <div class="sheet-backdrop" onclick="toggleProfileSheet()"></div>
+            <div class="sheet-card">
+                <div class="sheet-grab-bar" aria-hidden="true"></div>
+
+                <div class="sheet-top">
+                    <h2 class="sheet-title">My Account</h2>
+                    <button type="button" class="sheet-close-btn" onclick="toggleProfileSheet()" aria-label="Close">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="sheet-profile-header">
+                    <div class="sheet-avatar">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="sheet-user-info">
+                        <h3>You</h3>
+                        <p>FriendConnect Member</p>
+                    </div>
+                </div>
+
+                <div class="sheet-stats-grid">
+                    <div class="sheet-stat-box" onclick="toggleProfileSheet(); switchTab('chats');">
+                        <span id="sheetConnectionsCount" class="stat-num">0</span>
+                        <span class="stat-lbl">My Connections</span>
+                    </div>
+                    <div class="sheet-stat-box" onclick="toggleProfileSheet(); switchTab('discover');">
+                        <span id="sheetFavoritesCount" class="stat-num">0</span>
+                        <span class="stat-lbl">Saved Profiles</span>
+                    </div>
+                </div>
+
+                <div class="sheet-nav-list">
+                    <a href="admin_creator.html" class="sheet-nav-item">
+                        <div class="sheet-nav-item-left">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                            <span>Creator &amp; Member Portal</span>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </a>
+                </div>
+            </div>
         </div>
 
-    </header>
+    </div>
 
-
-
-    <!-- =========================================================
-         MAIN
-    ========================================================== -->
-
-    <main class="fc-main">
-
-
-        <!-- =====================================================
-             DISCOVER INTRO
-        ====================================================== -->
-
-        <section class="fc-discover-intro">
-
-
-            <div class="fc-intro-copy">
-
-                <h1>
-                    Discover
-                </h1>
-
-                <p>
-                    Find someone new to talk to.
-                </p>
-
-            </div>
-
-
-        </section>
-
-
-
-        <!-- =====================================================
-             SEARCH
-        ====================================================== -->
-
-        <section class="fc-search-section">
-
-            <label
-                class="fc-search-box"
-                for="creatorSearch"
-            >
-
-                <svg
-                    class="fc-search-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                >
-
-                    <circle
-                        cx="11"
-                        cy="11"
-                        r="6.5"
-                    ></circle>
-
-                    <path
-                        d="m16 16 5 5"
-                    ></path>
-
-                </svg>
-
-
-                <input
-                    id="creatorSearch"
-                    type="search"
-                    placeholder="Search by name, interest or topic..."
-                    autocomplete="off"
-                    spellcheck="false"
-                    aria-label="Search creators"
-                >
-
-            </label>
-
-        </section>
-
-
-
-        <!-- =====================================================
-             CATEGORY FILTERS
-        ====================================================== -->
-
-        <section
-            class="fc-category-section"
-            aria-label="Creator categories"
-        >
-
-            <div
-                class="fc-category-scroll"
-                id="categoryFilters"
-            >
-
-
-                <button
-                    type="button"
-                    class="fc-category-chip active"
-                    data-category="all"
-                >
-
-                    <span
-                        class="fc-chip-symbol"
-                        aria-hidden="true"
-                    >
-                        ✨
-                    </span>
-
-                    <span>
-                        All
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="fc-category-chip"
-                    data-category="lifestyle"
-                >
-
-                    <span
-                        class="fc-chip-symbol"
-                        aria-hidden="true"
-                    >
-                        🎥
-                    </span>
-
-                    <span>
-                        Lifestyle &amp; Content
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="fc-category-chip"
-                    data-category="design"
-                >
-
-                    <span
-                        class="fc-chip-symbol"
-                        aria-hidden="true"
-                    >
-                        🎨
-                    </span>
-
-                    <span>
-                        Design &amp; Creative
-                    </span>
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="fc-category-chip"
-                    data-category="conversation"
-                >
-
-                    <span
-                        class="fc-chip-symbol"
-                        aria-hidden="true"
-                    >
-                        ♡
-                    </span>
-
-                    <span>
-                        Conversations &amp; Lifestyle
-                    </span>
-
-                </button>
-
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =====================================================
-             PEOPLE HEADER
-        ====================================================== -->
-
-        <section class="fc-people-section">
-
-
-            <div class="fc-people-heading">
-
-
-                <div>
-
-                    <h2>
-                        People you might like
-                    </h2>
-
-                    <p>
-                        Discover new people and start a connection.
-                    </p>
-
-                </div>
-
-
-                <div
-                    id="creatorCount"
-                    class="fc-people-count"
-                >
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-
-                        <circle
-                            cx="9"
-                            cy="8"
-                            r="3"
-                        ></circle>
-
-                        <path
-                            d="M3.5 19c.7-3.1 2.6-4.7 5.5-4.7s4.8 1.6 5.5 4.7"
-                        ></path>
-
-                        <path
-                            d="M16 7.5a2.8 2.8 0 0 1 0 5.4"
-                        ></path>
-
-                    </svg>
-
-
-                    <span>
-                        0 people
-                    </span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- =================================================
-                 IMPORTANT
-
-                 EXISTING JS WILL INSERT CREATOR CARDS HERE.
-
-                 ID MUST REMAIN:
-                 creatorList
-
-                 DO NOT CHANGE THIS ID.
-            ================================================== -->
-
-            <div
-                id="creatorList"
-                class="creator-grid"
-            >
-
-                <div class="loading-state">
-
-
-                    <div class="loading-spinner"></div>
-
-
-                    <p>
-                        Finding people for you...
-                    </p>
-
-
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
-
-
-
-    <!-- =========================================================
-         DESKTOP FOOTER
-    ========================================================== -->
-
-    <footer class="fc-footer">
-
-
-        <div class="fc-footer-brand">
-
-            <strong>
-                FriendConnect
-            </strong>
-
-            <span>
-                Meaningful conversations, one connection at a time.
-            </span>
-
-        </div>
-
-
-        <a
-            href="creator_home.html"
-            class="fc-footer-link"
-        >
-
-            Join FriendConnect
-
-            <span aria-hidden="true">
-                →
-            </span>
-
-        </a>
-
-
-    </footer>
-
-
-
-    <!-- =========================================================
-         MOBILE BOTTOM NAVIGATION
-    ========================================================== -->
-
-    <nav
-        class="fc-mobile-nav"
-        aria-label="Mobile navigation"
-    >
-
-
-        <!-- HOME -->
-
-        <a
-            href="creator_home.html"
-        >
-
-            <svg
-                class="fc-mobile-nav-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-            >
-
-                <path
-                    d="M3 10.5 12 3l9 7.5"
-                ></path>
-
-                <path
-                    d="M5 9.5V21h14V9.5"
-                ></path>
-
-            </svg>
-
-
-            <span>
-                Home
-            </span>
-
-        </a>
-
-
-
-        <!-- DISCOVER -->
-
-        <a
-            href="explore.html"
-            class="active"
-            aria-current="page"
-        >
-
-            <svg
-                class="fc-mobile-nav-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-            >
-
-                <circle
-                    cx="11"
-                    cy="11"
-                    r="6.5"
-                ></circle>
-
-                <path
-                    d="m16 16 5 5"
-                ></path>
-
-            </svg>
-
-
-            <span>
-                Discover
-            </span>
-
-        </a>
-
-
-
-        <!-- CHATS -->
-
-        <a
-            href="chat.html"
-        >
-
-            <svg
-                class="fc-mobile-nav-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-            >
-
-                <path
-                    d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.6 8.6 0 0 1-3.5-.8L4 20l1.5-3.5A7.4 7.4 0 0 1 4 11.5C4 7.4 7.6 4 12 4s8 3.4 8 7.5Z"
-                ></path>
-
-            </svg>
-
-
-            <span>
-                Chats
-            </span>
-
-        </a>
-
-
-    </nav>
-
-
-
-    <!-- =========================================================
-         IMPORTANT
-         
-         EXISTING JAVASCRIPT — DO NOT CHANGE
-    ========================================================== -->
-
-    <script src="explore_app.js"></script>
-
-
-
-    <!-- =========================================================
-         UI FILTER ONLY
-         
-         This does NOT call the API.
-         This does NOT touch Razorpay.
-         This does NOT touch Render.
-         This does NOT touch Supabase.
-         
-         It only filters already-rendered cards in the browser.
-    ========================================================== -->
-
-    <script>
-
-        (function () {
-
-
-            const searchInput =
-                document.getElementById(
-                    "creatorSearch"
-                );
-
-
-            const filterContainer =
-                document.getElementById(
-                    "categoryFilters"
-                );
-
-
-            const creatorList =
-                document.getElementById(
-                    "creatorList"
-                );
-
-
-            if (
-                !searchInput ||
-                !filterContainer ||
-                !creatorList
-            ) {
-
-                return;
-
-            }
-
-
-
-            let activeCategory =
-                "all";
-
-
-
-            function normalize(value) {
-
-                return String(
-                    value || ""
-                )
-                    .toLowerCase()
-                    .trim();
-
-            }
-
-
-
-            function getCards() {
-
-                return Array.from(
-                    creatorList.children
-                )
-                    .filter(function (element) {
-
-                        return (
-                            element.classList.contains(
-                                "creator-card"
-                            ) ||
-                            element.classList.contains(
-                                "fc-person-card"
-                            )
-                        );
-
-                    });
-
-            }
-
-
-
-            function applyFilters() {
-
-
-                const query =
-                    normalize(
-                        searchInput.value
-                    );
-
-
-                const cards =
-                    getCards();
-
-
-                cards.forEach(
-                    function (card) {
-
-
-                        const text =
-                            normalize(
-                                card.innerText
-                            );
-
-
-                        const matchesSearch =
-                            !query ||
-                            text.includes(
-                                query
-                            );
-
-
-                        let matchesCategory =
-                            true;
-
-
-                        if (
-                            activeCategory !==
-                            "all"
-                        ) {
-
-
-                            const categoryText =
-                                normalize(
-                                    (
-                                        card.querySelector(
-                                            ".creator-category"
-                                        ) ||
-                                        card.querySelector(
-                                            ".fc-person-category"
-                                        ) ||
-                                        card
-                                    ).innerText
-                                );
-
-
-                            const buttonText =
-                                normalize(
-                                    activeCategory
-                                );
-
-
-                            matchesCategory =
-                                categoryText.includes(
-                                    buttonText
-                                ) ||
-                                text.includes(
-                                    buttonText
-                                );
-
-
-                            if (
-                                activeCategory ===
-                                "lifestyle"
-                            ) {
-
-                                matchesCategory =
-                                    text.includes(
-                                        "lifestyle"
-                                    ) ||
-                                    text.includes(
-                                        "content"
-                                    );
-
-                            }
-
-
-                            if (
-                                activeCategory ===
-                                "design"
-                            ) {
-
-                                matchesCategory =
-                                    text.includes(
-                                        "design"
-                                    ) ||
-                                    text.includes(
-                                        "creative"
-                                    ) ||
-                                    text.includes(
-                                        "arts"
-                                    );
-
-                            }
-
-
-                            if (
-                                activeCategory ===
-                                "conversation"
-                            ) {
-
-                                matchesCategory =
-                                    text.includes(
-                                        "conversation"
-                                    ) ||
-                                    text.includes(
-                                        "lifestyle"
-                                    );
-
-                            }
-
-                        }
-
-
-                        card.style.display =
-                            (
-                                matchesSearch &&
-                                matchesCategory
-                            )
-                                ? ""
-                                : "none";
-
-                    }
-                );
-
-            }
-
-
-
-            searchInput.addEventListener(
-                "input",
-                applyFilters
-            );
-
-
-
-            filterContainer
-                .addEventListener(
-                    "click",
-                    function (event) {
-
-
-                        const button =
-                            event.target.closest(
-                                ".fc-category-chip"
-                            );
-
-
-                        if (!button) {
-
-                            return;
-
-                        }
-
-
-                        document
-                            .querySelectorAll(
-                                ".fc-category-chip"
-                            )
-                            .forEach(
-                                function (item) {
-
-                                    item.classList.remove(
-                                        "active"
-                                    );
-
-                                }
-                            );
-
-
-                        button.classList.add(
-                            "active"
-                        );
-
-
-                        activeCategory =
-                            button.dataset.category ||
-                            "all";
-
-
-                        applyFilters();
-
-                    }
-                );
-
-
-
-            /*
-             * The existing explore_app.js can render
-             * asynchronously.
-             *
-             * Observe the existing creatorList only
-             * so filters are applied after cards arrive.
-             */
-
-            const observer =
-                new MutationObserver(
-                    function () {
-
-                        applyFilters();
-
-                    }
-                );
-
-
-            observer.observe(
-                creatorList,
-                {
-                    childList: true,
-                    subtree: true
-                }
-            );
-
-
-        })();
-
-    </script>
-
+    <script src="ios_app.js"></script>
 
 </body>
 
