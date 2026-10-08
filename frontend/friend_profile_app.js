@@ -123,9 +123,12 @@ function displayProfile(creator) {
         <article class="profile-card">
             <!-- Profile Hero -->
             <div class="profile-hero">
-                <div class="profile-avatar-wrap">
+                <div class="profile-portrait-wrap">
                     <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                    <span class="profile-online-badge" title="Available now" aria-hidden="true"></span>
+                    <span class="profile-online-badge" title="Available now" aria-hidden="true">
+                        <span class="status-dot"></span>
+                        <span>Available</span>
+                    </span>
                 </div>
 
                 <div class="profile-header-meta">
