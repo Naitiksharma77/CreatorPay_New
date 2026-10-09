@@ -101,10 +101,80 @@ async function loadProfile() {
 
 
 // ===============================
+// ONLINE & ACTIVITY STATUS CONFIG
+// ===============================
+
+const ONLINE_CREATOR_IDS = new Set([
+    "3faaf9a9-c333-4d78-b481-7cb2417aa2da", // Gurleen Singh
+    "9ed33502-c94a-4bff-ad72-c205dad86a83", // Sonalika
+    "18d38626-af2b-4ec6-93d5-a9e30f51d26d", // Sandhya Sharma
+    "a9183d22-3b4b-4f16-b244-cfff0f4e7264", // Chanchal
+    "4502fa25-d332-4b53-bc2f-7b126a058a6e", // Deeksha Rajput
+    "a7cc3e27-c2cf-4952-8bbf-c0317910fb3c", // Aayushi Sharma
+    "6264f38a-6536-4d13-94cd-e87669660a85", // Sanjay Rai
+    "1eb155f8-ad20-44b5-b8e3-6bef79cd288c", // Priyanshi Sharma
+    "88f1199b-948a-464a-bd42-b3116d84f33d"  // Kum Kum Somvanshi
+]);
+
+const ONLINE_CREATOR_NAMES = new Set([
+    "gurleensingh",
+    "sonalika",
+    "sandhyasharma",
+    "chanchal",
+    "deeksharajput",
+    "aayushisharma",
+    "sanjayrai",
+    "priyanshisharma",
+    "kumkumsomvanshi"
+]);
+
+const LAST_ACTIVE_INTERVALS = [
+    "Last active 2 minutes ago",
+    "Last active 7 minutes ago",
+    "Last active 18 minutes ago",
+    "Last active 35 minutes ago",
+    "Last active 1 hour ago",
+    "Last active 1 hour 20 minutes ago",
+    "Last active 2 hours ago"
+];
+
+function isCreatorOnline(creator) {
+    if (!creator) return false;
+    if (typeof creator.is_online === "boolean") return creator.is_online;
+    if (typeof creator.online === "boolean") return creator.online;
+
+    if (creator.id && ONLINE_CREATOR_IDS.has(String(creator.id).trim())) {
+        return true;
+    }
+
+    if (creator.name) {
+        const normalized = String(creator.name).toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (ONLINE_CREATOR_NAMES.has(normalized)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function getCreatorLastActive(creator) {
+    if (!creator) return "Last active recently";
+    const str = String(creator.id || creator.name || "");
+    let sum = 0;
+    for (let i = 0; i < str.length; i++) {
+        sum += str.charCodeAt(i) * (i + 19);
+    }
+    return LAST_ACTIVE_INTERVALS[Math.abs(sum) % LAST_ACTIVE_INTERVALS.length];
+}
+
+
+// ===============================
 // DISPLAY PROFILE (iOS SPEC)
 // ===============================
 
 function displayProfile(creator) {
+    const isOnline = isCreatorOnline(creator);
+    const lastActiveText = getCreatorLastActive(creator);
     const image =
         (creator.profile_image && typeof creator.profile_image === "string" && creator.profile_image.startsWith("http"))
             ? creator.profile_image
@@ -125,10 +195,14 @@ function displayProfile(creator) {
             <div class="profile-hero">
                 <div class="profile-portrait-wrap">
                     <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                    <span class="profile-online-badge" title="Available now" aria-hidden="true">
+                    ${isOnline ? `
+                    <span class="profile-online-badge" title="Active now" aria-hidden="true">
                         <span class="status-dot"></span>
-                        <span>Available</span>
-                    </span>
+                        <span>Active Now</span>
+                    </span>` : `
+                    <span class="profile-last-active-badge" title="${escapeHTML(lastActiveText)}" aria-hidden="true">
+                        <span>${escapeHTML(lastActiveText)}</span>
+                    </span>`}
                 </div>
 
                 <div class="profile-header-meta">

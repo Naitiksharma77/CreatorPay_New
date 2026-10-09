@@ -181,7 +181,8 @@ button {
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.profile-online-badge {
+.profile-online-badge,
+.profile-last-active-badge {
     position: absolute;
     bottom: 14px;
     right: 14px;
@@ -199,6 +200,11 @@ button {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.85);
     pointer-events: none;
+}
+
+.profile-last-active-badge {
+    font-weight: 600;
+    color: #475569;
 }
 
 .profile-online-badge .status-dot {
