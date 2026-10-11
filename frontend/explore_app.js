@@ -279,12 +279,15 @@ function displayCreators(creators) {
             const name = creator.name || "Friend";
             const category = creator.category || "Conversations";
             const bio = creator.bio || "Looking to have great 1-on-1 conversations and share interests.";
-            const price = Number(creator.price || 0).toLocaleString("en-IN");
+            const rawPrice = Number(creator.price || 0);
+            const price = rawPrice.toLocaleString("en-IN");
             const profileLink = `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
             const isFav = favIds.includes(String(creator.id));
             const animDelay = Math.min(index * 45, 270);
 
             const isOnline = isCreatorOnline(creator);
+            const isSpecific99Card = (String(creator.id) === "3faaf9a9-c333-4d78-b481-7cb2417aa2da") || (index === 1 && rawPrice === 99);
+            const priceSub = isSpecific99Card ? "/ one time" : "/ connection";
 
     return `
                 <article class="person-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
@@ -336,7 +339,7 @@ function displayCreators(creators) {
                     <div class="card-footer-row">
                         <div class="price-container">
                             <span class="price-main">₹${price}</span>
-                            <span class="price-sub">/ connection</span>
+                            <span class="price-sub">${priceSub}</span>
                         </div>
 
                         <a

@@ -251,6 +251,9 @@ function createProfileCardHTML(creator, index) {
     const profileLink = `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
     const animDelay = Math.min(index * 35, 250);
 
+    const isSpecific99Card = (String(creator.id) === "3faaf9a9-c333-4d78-b481-7cb2417aa2da") || (index === 1 && rawPrice === 99);
+    const priceUnit = isSpecific99Card ? "/ one time" : "/ connection";
+
     return `
         <article class="social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
             <div class="card-top-row">
@@ -294,7 +297,7 @@ function createProfileCardHTML(creator, index) {
             <div class="card-bottom-row">
                 <div class="card-price-group">
                     <span class="price-val">₹${price}</span>
-                    <span class="price-unit">/ connection</span>
+                    <span class="price-unit">${priceUnit}</span>
                 </div>
 
                 <a class="view-profile-btn" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View profile of ${escapeHTML(name)}">
