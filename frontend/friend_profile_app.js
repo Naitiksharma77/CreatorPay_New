@@ -54,46 +54,64 @@ async function loadProfile() {
         }
     } catch (_) {}
 
-    // 2. Fetch live data from Render backend
+    // 2. Fetch data (prefer local proxy for same-origin reliability and CORS safety, fallback to Render backend)
     try {
-        const response = await fetch(`${API_URL}/api/creators`);
-        const result = await response.json();
+        let creators = [];
+        let fetchedSuccessfully = false;
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || "Unable to load profile from database.");
-        }
-
-        const creators = Array.isArray(result.creators) ? result.creators : [];
-        const creator = creators.find((item) => String(item.id) === String(creatorId));
-
-        if (!creator) {
-            if (!selectedCreator) {
-                displayError("Profile does not exist", "The requested member profile could not be found.");
+        // Try local same-origin API first (always fast and immune to third-party CORS/network blocks)
+        try {
+            const localController = new AbortController();
+            const localTimeout = setTimeout(() => localController.abort(), 3500);
+            const localRes = await fetch("/api/creators", { signal: localController.signal });
+            clearTimeout(localTimeout);
+            if (localRes.ok) {
+                const localData = await localRes.json();
+                if (localData && localData.success && Array.isArray(localData.creators) && localData.creators.length > 0) {
+                    creators = localData.creators;
+                    fetchedSuccessfully = true;
+                }
             }
-            return;
-        }
+        } catch (_) {}
 
-        selectedCreator = creator;
-        displayProfile(creator);
-
-    } catch (error) {
-        console.error("Profile load error:", error);
-
-        // Fallback to relative endpoint if offline or Render waking up
-        if (!selectedCreator) {
+        // Fallback to Render backend if local didn't return data
+        if (!fetchedSuccessfully) {
             try {
-                const fallbackRes = await fetch("/api/creators");
-                const fallbackData = await fallbackRes.json();
-                if (fallbackData && fallbackData.success && Array.isArray(fallbackData.creators)) {
-                    const fallbackCreator = fallbackData.creators.find((item) => String(item.id) === String(creatorId));
-                    if (fallbackCreator) {
-                        selectedCreator = fallbackCreator;
-                        displayProfile(fallbackCreator);
-                        return;
+                const renderController = new AbortController();
+                const renderTimeout = setTimeout(() => renderController.abort(), 4500);
+                const renderRes = await fetch(`${API_URL}/api/creators`, { signal: renderController.signal });
+                clearTimeout(renderTimeout);
+                if (renderRes.ok) {
+                    const renderData = await renderRes.json();
+                    if (renderData && renderData.success && Array.isArray(renderData.creators) && renderData.creators.length > 0) {
+                        creators = renderData.creators;
+                        fetchedSuccessfully = true;
                     }
                 }
             } catch (_) {}
+        }
 
+        if (fetchedSuccessfully && creators.length > 0) {
+            // Update local cache
+            try {
+                localStorage.setItem("fc_cached_creators", JSON.stringify(creators));
+            } catch (_) {}
+
+            const creator = creators.find((item) => String(item.id) === String(creatorId));
+            if (creator) {
+                selectedCreator = creator;
+                displayProfile(creator);
+                return;
+            }
+        }
+
+        if (!selectedCreator) {
+            displayError("Profile does not exist", "The requested member profile could not be found.");
+        }
+
+    } catch (error) {
+        console.error("Profile load error:", error);
+        if (!selectedCreator) {
             displayError("Unable to load profile", "Please check your internet connection and try again.");
         }
     }
@@ -366,15 +384,30 @@ async function startRazorpayPayment() {
     payButton.innerHTML = `<span class="cta-loading-wrap"><span class="cta-spinner"></span> Connecting...</span>`;
 
     try {
-        const response = await fetch(`${API_URL}/api/create-order`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                creatorId: selectedCreator.id
-            })
-        });
+        let response;
+        try {
+            response = await fetch("/api/create-order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    creatorId: selectedCreator.id
+                })
+            });
+        } catch (_) {}
+
+        if (!response || !response.ok) {
+            response = await fetch(`${API_URL}/api/create-order`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    creatorId: selectedCreator.id
+                })
+            });
+        }
 
         const result = await response.json();
 

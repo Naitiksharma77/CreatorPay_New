@@ -141,16 +141,34 @@ function getCategoryIcon(cat) {
 
 async function loadCreators() {
     try {
-        const response = await fetch(`${API_URL}/api/creators`);
-        const result = await response.json();
+        let creators = [];
+        let fetched = false;
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || "Unable to load profiles.");
+        try {
+            const localRes = await fetch("/api/creators");
+            if (localRes.ok) {
+                const localData = await localRes.json();
+                if (localData && localData.success && Array.isArray(localData.creators)) {
+                    creators = localData.creators;
+                    fetched = true;
+                }
+            }
+        } catch (_) {}
+
+        if (!fetched) {
+            const response = await fetch(`${API_URL}/api/creators`);
+            const result = await response.json();
+            if (response.ok && result.success && Array.isArray(result.creators)) {
+                creators = result.creators;
+                fetched = true;
+            }
         }
 
-        const creators = Array.isArray(result.creators) ? result.creators : [];
-        allLoadedCreators = creators;
+        if (!fetched) {
+            throw new Error("Unable to load profiles.");
+        }
 
+        allLoadedCreators = creators;
         displayCreators(creators);
 
     } catch (error) {

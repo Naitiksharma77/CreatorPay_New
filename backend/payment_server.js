@@ -590,6 +590,17 @@ app.post("/api/verify-payment", async (req, res) => {
       );
     }
 
+    // Safely record verified transaction in store
+    try {
+      recordVerifiedPayment({
+        order_id: razorpay_order_id,
+        payment_id: razorpay_payment_id,
+        timestamp: new Date().toISOString()
+      });
+    } catch (recErr) {
+      console.warn("Analytics record warning:", recErr.message);
+    }
+
     return res.json({
       success: true,
       message:
@@ -603,6 +614,238 @@ app.post("/api/verify-payment", async (req, res) => {
       "Unable to verify payment",
       error
     );
+  }
+});
+
+
+// ======================================
+// ANALYTICS & ACTIVITY LOGGING (ADDITIVE ONLY)
+// ======================================
+
+const fs = require("fs");
+const ANALYTICS_DATA_FILE = path.join(__dirname, "analytics_store.json");
+
+function loadAnalyticsStore() {
+  try {
+    if (fs.existsSync(ANALYTICS_DATA_FILE)) {
+      const data = JSON.parse(fs.readFileSync(ANALYTICS_DATA_FILE, "utf-8"));
+      return {
+        payments: Array.isArray(data.payments) ? data.payments : [],
+        active_users: Array.isArray(data.active_users) ? data.active_users : []
+      };
+    }
+  } catch (e) {
+    console.warn("Could not read analytics store:", e.message);
+  }
+  return {
+    payments: [],
+    active_users: []
+  };
+}
+
+function saveAnalyticsStore(data) {
+  try {
+    fs.writeFileSync(ANALYTICS_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  } catch (e) {
+    console.warn("Could not save analytics store:", e.message);
+  }
+}
+
+function recordVerifiedPayment(paymentInfo) {
+  const store = loadAnalyticsStore();
+  // Prevent duplicate payment records
+  const existing = store.payments.find(p => p.payment_id === paymentInfo.payment_id);
+  if (!existing) {
+    store.payments.push({
+      ...paymentInfo,
+      id: paymentInfo.payment_id,
+      status: "verified",
+      created_at: paymentInfo.timestamp || new Date().toISOString()
+    });
+    saveAnalyticsStore(store);
+  }
+}
+
+// Minimal, non-intrusive active user ping endpoint
+app.post("/api/analytics/ping", (req, res) => {
+  try {
+    const { userId } = req.body || {};
+    if (!userId || typeof userId !== "string" || userId.length > 100) {
+      return res.json({ success: true, recorded: false });
+    }
+    const store = loadAnalyticsStore();
+    const today = new Date().toISOString().slice(0, 10);
+    // Record unique user per day
+    const alreadyRecorded = store.active_users.some(
+      u => u.userId === userId && u.date === today
+    );
+    if (!alreadyRecorded) {
+      store.active_users.push({
+        userId,
+        date: today,
+        timestamp: new Date().toISOString()
+      });
+      // Keep store lean: only retain last 90 days of records
+      if (store.active_users.length > 5000) {
+        store.active_users = store.active_users.slice(-5000);
+      }
+      saveAnalyticsStore(store);
+    }
+    return res.json({ success: true, recorded: !alreadyRecorded });
+  } catch (e) {
+    return res.json({ success: true, error: e.message });
+  }
+});
+
+// Analytics summary endpoint for Admin Dashboard
+app.get("/api/analytics", async (req, res) => {
+  try {
+    const period = req.query.period || "7d"; // "today", "7d", "30d"
+    const store = loadAnalyticsStore();
+
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+
+    let daysToInclude = 7;
+    if (period === "today") daysToInclude = 1;
+    else if (period === "30d") daysToInclude = 30;
+    else daysToInclude = 7;
+
+    // Build timeline date keys (YYYY-MM-DD)
+    const timelineKeys = [];
+    for (let i = daysToInclude - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      timelineKeys.push(d.toISOString().slice(0, 10));
+    }
+
+    // Calculate Active Users
+    // Daily active users bucketed by date
+    const usersByDate = {};
+    timelineKeys.forEach(k => { usersByDate[k] = new Set(); });
+
+    store.active_users.forEach(entry => {
+      const d = (entry.timestamp || entry.date || "").slice(0, 10);
+      if (usersByDate[d]) {
+        usersByDate[d].add(entry.userId);
+      }
+    });
+
+    // Unique active users across the entire selected window
+    const windowUserSet = new Set();
+    timelineKeys.forEach(k => {
+      if (usersByDate[k]) {
+        usersByDate[k].forEach(u => windowUserSet.add(u));
+      }
+    });
+
+    const activeUsersCount = windowUserSet.size;
+
+    // Previous equivalent period for subtle comparison
+    const prevWindowUserSet = new Set();
+    for (let i = daysToInclude * 2 - 1; i >= daysToInclude; i--) {
+      const d = new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10);
+      store.active_users.forEach(entry => {
+        const entryDate = (entry.timestamp || entry.date || "").slice(0, 10);
+        if (entryDate === d) {
+          prevWindowUserSet.add(entry.userId);
+        }
+      });
+    }
+
+    let userComparisonPercent = null;
+    if (prevWindowUserSet.size > 0) {
+      userComparisonPercent = Math.round(((activeUsersCount - prevWindowUserSet.size) / prevWindowUserSet.size) * 100);
+    }
+
+    // Calculate Revenue from verified payment records
+    // Each verified payment has an associated amount (in INR)
+    const revenueByDate = {};
+    const countByDate = {};
+    timelineKeys.forEach(k => {
+      revenueByDate[k] = 0;
+      countByDate[k] = 0;
+    });
+
+    let totalRevenue = 0;
+    let totalCount = 0;
+    let todayRevenue = 0;
+    let last7DaysRevenue = 0;
+    let last30DaysRevenue = 0;
+
+    // Calculate period specific aggregate totals across all stored verified payments
+    const msToday = new Date(todayStr).getTime();
+    const ms7DaysAgo = now.getTime() - 7 * 86400000;
+    const ms30DaysAgo = now.getTime() - 30 * 86400000;
+
+    store.payments.forEach(p => {
+      const pDate = new Date(p.created_at || p.timestamp || now);
+      const pDateStr = pDate.toISOString().slice(0, 10);
+      const amount = Number(p.amount) || 49; // Default fallback to connection price if not specified
+
+      // Overall totals
+      totalRevenue += amount;
+      totalCount += 1;
+
+      if (pDateStr === todayStr) {
+        todayRevenue += amount;
+      }
+      if (pDate.getTime() >= ms7DaysAgo) {
+        last7DaysRevenue += amount;
+      }
+      if (pDate.getTime() >= ms30DaysAgo) {
+        last30DaysRevenue += amount;
+      }
+
+      // Add to timeline if within selected window
+      if (revenueByDate[pDateStr] !== undefined) {
+        revenueByDate[pDateStr] += amount;
+        countByDate[pDateStr] += 1;
+      }
+    });
+
+    // Timeline series formatted for charts
+    const timeline = timelineKeys.map(dateKey => {
+      const dateObj = new Date(dateKey + "T00:00:00");
+      const label = period === "today" 
+        ? "Today" 
+        : dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return {
+        date: dateKey,
+        label,
+        activeUsers: usersByDate[dateKey] ? usersByDate[dateKey].size : 0,
+        revenue: revenueByDate[dateKey] || 0,
+        paymentsCount: countByDate[dateKey] || 0
+      };
+    });
+
+    // Selected period revenue & payments count
+    const periodRevenue = timeline.reduce((acc, t) => acc + t.revenue, 0);
+    const periodPaymentsCount = timeline.reduce((acc, t) => acc + t.paymentsCount, 0);
+
+    return res.json({
+      success: true,
+      period,
+      activeUsers: {
+        count: activeUsersCount,
+        comparisonPercent: userComparisonPercent,
+        hasHistoricalData: store.active_users.length > 0
+      },
+      revenue: {
+        totalRevenue,
+        totalPaymentsCount: totalCount,
+        todayRevenue,
+        last7DaysRevenue,
+        last30DaysRevenue,
+        periodRevenue,
+        periodPaymentsCount,
+        hasHistoricalData: store.payments.length > 0
+      },
+      timeline,
+      rawPayments: store.payments.slice(-20).reverse() // Recent verified transactions
+    });
+
+  } catch (err) {
+    return sendError(res, 500, "Error compiling analytics", err);
   }
 });
 

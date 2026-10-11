@@ -537,17 +537,44 @@ async function loadCreators() {
         }
     } catch (_) {}
 
-    // 2. Fetch fresh live profiles from Render backend
+    // 2. Fetch fresh live profiles (prefer same-origin /api/creators, fallback to Render backend)
     try {
-        const response = await fetch(`${API_URL}/api/creators`);
-        const result = await response.json();
+        let freshList = [];
+        let fetched = false;
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || "Failed to load profiles");
+        // Try same-origin first
+        try {
+            const localController = new AbortController();
+            const localTimeout = setTimeout(() => localController.abort(), 3500);
+            const localRes = await fetch("/api/creators", { signal: localController.signal });
+            clearTimeout(localTimeout);
+            if (localRes.ok) {
+                const localData = await localRes.json();
+                if (localData && localData.success && Array.isArray(localData.creators) && localData.creators.length > 0) {
+                    freshList = localData.creators;
+                    fetched = true;
+                }
+            }
+        } catch (_) {}
+
+        // Fallback to Render backend if needed
+        if (!fetched) {
+            try {
+                const renderController = new AbortController();
+                const renderTimeout = setTimeout(() => renderController.abort(), 4500);
+                const response = await fetch(`${API_URL}/api/creators`, { signal: renderController.signal });
+                clearTimeout(renderTimeout);
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result && result.success && Array.isArray(result.creators) && result.creators.length > 0) {
+                        freshList = result.creators;
+                        fetched = true;
+                    }
+                }
+            } catch (_) {}
         }
 
-        const freshList = Array.isArray(result.creators) ? result.creators : [];
-        if (freshList.length > 0) {
+        if (fetched && freshList.length > 0) {
             allCreators = freshList;
             try {
                 localStorage.setItem("fc_cached_creators", JSON.stringify(freshList));
@@ -556,25 +583,7 @@ async function loadCreators() {
             renderHomeFeed();
             renderDiscoverFeed();
             renderChatsFeed();
-        }
-
-    } catch (err) {
-        console.warn("Live fetch from Render backend encountered an issue, trying fallback:", err);
-
-        // If nothing was loaded from cache, attempt fallback to local proxy
-        if (allCreators.length === 0) {
-            try {
-                const fallbackRes = await fetch("/api/creators");
-                const fallbackData = await fallbackRes.json();
-                if (fallbackData && fallbackData.success && Array.isArray(fallbackData.creators)) {
-                    allCreators = fallbackData.creators;
-                    renderHomeFeed();
-                    renderDiscoverFeed();
-                    renderChatsFeed();
-                    return;
-                }
-            } catch (_) {}
-
+        } else if (allCreators.length === 0) {
             if (homePeopleList) {
                 homePeopleList.innerHTML = `
                     <div class="empty-chats-state">
@@ -585,6 +594,9 @@ async function loadCreators() {
                 `;
             }
         }
+
+    } catch (err) {
+        console.warn("Issue loading creators:", err);
     }
 }
 
