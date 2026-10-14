@@ -187,70 +187,50 @@ function getCreatorLastActive(creator) {
 
 
 // ===============================
-// DISPLAY PROFILE (iOS SPEC)
+// ===============================
+// DISPLAY PROFILE (MEET YOU PARTNER)
 // ===============================
 
 function displayProfile(creator) {
-    const isOnline = isCreatorOnline(creator);
-    const lastActiveText = getCreatorLastActive(creator);
-    const replyTimeText = (creator.response_time && String(creator.response_time).trim())
-        ? `Replies in ${creator.response_time}`
-        : "Response times may vary";
-
     const image =
         (creator.profile_image && typeof creator.profile_image === "string" && creator.profile_image.startsWith("http"))
             ? creator.profile_image
             : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
 
-    const name = (creator.name && creator.name.trim()) || "Friend";
-    const category = (creator.category && creator.category.trim()) || "Conversations & Lifestyle";
+    const name = (creator.name && creator.name.trim()) || "Member";
+    const category = (creator.category && creator.category.trim()) || "Lifestyle & Conversations";
     const bio =
         (creator.bio && creator.bio.trim()) ||
-        "Connect with this person for a personal 1-on-1 conversation and guidance.";
+        "Excited to meet lovely people, share meaningful stories and start great conversations.";
 
     const rawPrice = Number(creator.price);
     const price = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice.toLocaleString("en-IN") : "49";
 
     profileContent.innerHTML = `
         <article class="profile-card">
-            <!-- Profile Hero -->
+            <!-- Profile Hero (Portrait Frame) -->
             <div class="profile-hero">
                 <div class="profile-portrait-wrap">
                     <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                    ${isOnline ? `
-                    <span class="profile-online-badge" title="Active now" aria-hidden="true">
-                        <span class="status-dot"></span>
-                        <span>Active Now</span>
-                    </span>` : `
-                    <span class="profile-last-active-badge" title="${escapeHTML(lastActiveText)}" aria-hidden="true">
-                        <span>${escapeHTML(lastActiveText)}</span>
-                    </span>`}
                 </div>
 
                 <div class="profile-header-meta">
                     <div class="profile-name-row">
                         <h1 class="profile-name">${escapeHTML(name)}</h1>
                         <span class="verified-check" title="Verified Member">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="10" fill="#2563eb"></circle>
-                                <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10" fill="#EC4899"></circle>
+                                <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
                         </span>
                     </div>
 
                     <div class="profile-badges-row">
                         <div class="profile-interest-pill">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                             </svg>
                             <span>${escapeHTML(category)}</span>
-                        </div>
-
-                        <div class="profile-reply-badge" title="Typical reply time">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span>${escapeHTML(replyTimeText)}</span>
                         </div>
                     </div>
                 </div>
@@ -274,7 +254,7 @@ function displayProfile(creator) {
                         </div>
                         <div class="perk-text">
                             <strong>Personal Chat</strong>
-                            <span>Connect one-on-one and start a conversation.</span>
+                            <span>Connect one-on-one and start a lovely conversation.</span>
                         </div>
                     </div>
 
@@ -286,8 +266,8 @@ function displayProfile(creator) {
                             </svg>
                         </div>
                         <div class="perk-text">
-                            <strong>One-Time Payment</strong>
-                            <span>Pay once for this connection. Your chat will appear in Chats after the connection is successfully created.</span>
+                            <strong>One-Time Connection</strong>
+                            <span>Connect directly with this person. Your chat will appear in Chats after connecting.</span>
                         </div>
                     </div>
 
@@ -298,8 +278,8 @@ function displayProfile(creator) {
                             </svg>
                         </div>
                         <div class="perk-text">
-                            <strong>Verified Profile</strong>
-                            <span>This profile has been verified by the Friend Connect team.</span>
+                            <strong>Verified Member</strong>
+                            <span>This profile has been verified by the Meet You Partner team.</span>
                         </div>
                     </div>
                 </div>
@@ -310,7 +290,7 @@ function displayProfile(creator) {
                 <div class="profile-price-row">
                     <div class="price-service-col">
                         <span class="price-service-label">Personal Chat</span>
-                        <span class="price-type-label">one-time payment</span>
+                        <span class="price-type-label">one-time connection</span>
                     </div>
                     <div class="price-figure">₹${price}</div>
                 </div>
@@ -320,15 +300,18 @@ function displayProfile(creator) {
                     id="payButton"
                     type="button"
                 >
-                    Pay ₹${price} &amp; Start Chat
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Say Hi &amp; Start Chat</span>
                 </button>
 
                 <p class="secure-text">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
-                    <span>Secure payment powered by Razorpay</span>
+                    <span>Secure payment powered by Razorpay · 100% Private &amp; Safe</span>
                 </p>
             </div>
         </article>
@@ -356,7 +339,7 @@ function displayError(title, message) {
             </div>
             <h2>${escapeHTML(title)}</h2>
             <p>${escapeHTML(message)}</p>
-            <a href="creator_home.html#discover" class="return-home-btn">Browse Friends</a>
+            <a href="creator_home.html#discover" class="return-home-btn">Discover Partners</a>
         </div>
     `;
 }
@@ -423,7 +406,7 @@ async function startRazorpayPayment() {
             key: result.keyId,
             amount: result.order.amount,
             currency: result.order.currency || "INR",
-            name: "FriendConnect",
+            name: "Meet You Partner",
             description: `Personal session with ${selectedCreator.name}`,
             order_id: result.order.id,
 
@@ -440,9 +423,9 @@ async function startRazorpayPayment() {
                 }
 
                 alert(
-                    "Connection confirmed with " +
+                    "Connected with " +
                     selectedCreator.name +
-                    "!\n\nPayment ID: " +
+                    "!\n\nYour chat is now open in Chats.\nPayment ID: " +
                     paymentResponse.razorpay_payment_id
                 );
 
@@ -455,7 +438,7 @@ async function startRazorpayPayment() {
             },
 
             theme: {
-                color: "#2563eb"
+                color: "#EC4899"
             },
 
             modal: {
@@ -485,10 +468,13 @@ async function startRazorpayPayment() {
 function resetPayButton() {
     const payButton = document.getElementById("payButton");
     if (!payButton || !selectedCreator) return;
-    const rawPrice = Number(selectedCreator.price);
-    const price = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice.toLocaleString("en-IN") : "49";
     payButton.disabled = false;
-    payButton.innerHTML = `Pay ₹${price} &amp; Start Chat`;
+    payButton.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Say Hi &amp; Start Chat</span>
+    `;
 }
 
 

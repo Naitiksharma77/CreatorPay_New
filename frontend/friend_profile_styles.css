@@ -1,5 +1,6 @@
 /* =========================================================
-   FRIENDCONNECT — iOS PROFILE VIEW STYLESHEET
+   MEET YOU PARTNER — iOS PROFILE VIEW STYLESHEET
+   Romantic, modern, premium partner-discovery platform
 ========================================================= */
 
 *,
@@ -11,9 +12,21 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+:root {
+    --myp-pink: #EC4899;
+    --myp-rose: #DB2777;
+    --myp-blush: #FFF7FA;
+    --myp-card-bg: #FFFFFF;
+    --myp-text: #25202A;
+    --myp-text-muted: #817783;
+    --myp-border: #F6DCE8;
+    --myp-border-subtle: #FDF2F7;
+    --myp-pink-soft: #FDF2F7;
+}
+
 html {
     scroll-behavior: smooth;
-    background-color: #ffffff;
+    background-color: var(--myp-blush);
 }
 
 body {
@@ -29,8 +42,8 @@ body {
         Helvetica,
         Arial,
         sans-serif;
-    color: #0f172a;
-    background-color: #ffffff;
+    color: var(--myp-text);
+    background-color: var(--myp-blush);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -60,19 +73,20 @@ button {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: var(--myp-blush);
 }
 
 @media (min-width: 900px) {
     body {
-        background-color: #f8fafc;
+        background-color: #FFF1F6;
     }
 
     .profile-app-shell {
         width: min(92%, 640px);
-        box-shadow: 0 0 50px rgba(15, 23, 42, 0.04);
-        border-left: 1px solid #f1f5f9;
-        border-right: 1px solid #f1f5f9;
+        box-shadow: 0 0 50px rgba(219, 39, 119, 0.06);
+        border-left: 1px solid var(--myp-border);
+        border-right: 1px solid var(--myp-border);
+        background: var(--myp-blush);
     }
 }
 
@@ -86,8 +100,10 @@ button {
     top: 0;
     z-index: 80;
     height: 52px;
-    background: #ffffff;
-    border-bottom: 1px solid rgba(241, 245, 249, 0.95);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--myp-border);
     padding-top: env(safe-area-inset-top, 0px);
     display: flex;
     align-items: center;
@@ -100,22 +116,24 @@ button {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: #2563eb;
+    color: var(--myp-pink);
     font-size: 15px;
-    font-weight: 650;
+    font-weight: 700;
     min-height: 44px;
     min-width: 44px;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .ios-back-btn:active {
-    opacity: 0.6;
+    opacity: 0.65;
+    transform: scale(0.96);
 }
 
 .top-bar-title {
     font-size: 16px;
-    font-weight: 750;
-    color: #0f172a;
+    font-weight: 800;
+    color: var(--myp-text);
+    letter-spacing: -0.2px;
 }
 
 .top-bar-spacer {
@@ -137,12 +155,12 @@ button {
 .profile-card {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     animation: fadeIn 0.25s ease;
 }
 
 
-/* Profile Hero (Large Portrait Header) */
+/* Profile Hero (Portrait Frame) */
 .profile-hero {
     display: flex;
     flex-direction: column;
@@ -158,13 +176,13 @@ button {
     max-width: 340px;
     aspect-ratio: 4 / 5;
     margin: 0 auto 16px;
-    border-radius: 24px;
+    border-radius: 26px;
     overflow: hidden;
-    background: #f1f5f9;
+    background: #FDF2F7;
     box-shadow:
-        0 12px 32px -4px rgba(15, 23, 42, 0.12),
-        0 4px 12px -2px rgba(15, 23, 42, 0.06);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+        0 14px 36px -4px rgba(236, 72, 153, 0.14),
+        0 4px 12px -2px rgba(37, 32, 42, 0.04);
+    border: 2px solid var(--myp-border);
     animation: portraitEntrance 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -177,42 +195,16 @@ button {
     display: block;
     border: none;
     box-shadow: none;
-    background: #f1f5f9;
+    background: #FDF2F7;
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Hide unwanted activity badges on customer-facing profiles */
 .profile-online-badge,
-.profile-last-active-badge {
-    position: absolute;
-    bottom: 14px;
-    right: 14px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #0f172a;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    pointer-events: none;
-}
-
-.profile-last-active-badge {
-    font-weight: 600;
-    color: #475569;
-}
-
-.profile-online-badge .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 0 2.5px rgba(34, 197, 94, 0.25);
+.profile-last-active-badge,
+.active-status-dot,
+.status-indicator {
+    display: none !important;
 }
 
 .profile-header-meta {
@@ -231,9 +223,9 @@ button {
 }
 
 .profile-name {
-    font-size: 24px;
+    font-size: 25px;
     font-weight: 850;
-    color: #0f172a;
+    color: var(--myp-text);
     letter-spacing: -0.5px;
     line-height: 1.2;
 }
@@ -247,13 +239,18 @@ button {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 999px;
-    background: #eff6ff;
-    border: 1px solid #dbeafe;
-    color: #2563eb;
+    background: #FDF2F7;
+    border: 1px solid var(--myp-border);
+    color: var(--myp-rose);
     font-size: 12px;
     font-weight: 700;
+}
+
+.profile-interest-pill svg {
+    color: var(--myp-pink);
+    flex-shrink: 0;
 }
 
 .profile-badges-row {
@@ -263,24 +260,6 @@ button {
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 2px;
-}
-
-.profile-reply-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 11px;
-    border-radius: 999px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 550;
-    line-height: 1;
-}
-
-.profile-reply-badge svg {
-    color: #64748b;
 }
 
 @keyframes portraitEntrance {
@@ -295,34 +274,33 @@ button {
 }
 
 
-
 /* Profile Sections (About & Perks) */
 .profile-section {
     background: #ffffff;
-    border: 1px solid rgba(226, 232, 240, 0.85);
-    border-radius: 20px;
-    padding: 16px 18px;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    border: 1px solid var(--myp-border);
+    border-radius: 22px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 18px rgba(236, 72, 153, 0.05);
 }
 
 .profile-section-title {
-    font-size: 14.5px;
+    font-size: 15px;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--myp-text);
     letter-spacing: -0.2px;
     margin-bottom: 8px;
 }
 
 .profile-bio-text {
-    font-size: 13.5px;
+    font-size: 13.8px;
     color: #475569;
-    line-height: 1.55;
+    line-height: 1.58;
 }
 
 .connection-perks {
     display: flex;
     flex-direction: column;
-    gap: 13px;
+    gap: 14px;
     margin-top: 6px;
 }
 
@@ -333,11 +311,12 @@ button {
 }
 
 .perk-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
-    background: #eff6ff;
-    color: #2563eb;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: #FDF2F7;
+    border: 1px solid var(--myp-border);
+    color: var(--myp-pink);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -356,13 +335,13 @@ button {
 .perk-text strong {
     font-size: 14px;
     font-weight: 750;
-    color: #0f172a;
+    color: var(--myp-text);
     line-height: 1.25;
 }
 
 .perk-text span {
     font-size: 12.5px;
-    color: #64748b;
+    color: var(--myp-text-muted);
     line-height: 1.45;
 }
 
@@ -370,13 +349,13 @@ button {
 /* Bottom Payment Action Box */
 .profile-action-box {
     background: #ffffff;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 22px;
-    padding: 18px;
-    box-shadow: 0 4px 22px rgba(15, 23, 42, 0.05);
+    border: 1px solid var(--myp-border);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 6px 24px rgba(236, 72, 153, 0.08);
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
 }
 
 .profile-price-row {
@@ -394,48 +373,50 @@ button {
 }
 
 .price-service-label {
-    font-size: 14.5px;
-    font-weight: 750;
-    color: #0f172a;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--myp-text);
     letter-spacing: -0.2px;
     line-height: 1.2;
 }
 
 .price-type-label {
     font-size: 12px;
-    color: #64748b;
+    color: var(--myp-text-muted);
     font-weight: 500;
     line-height: 1.2;
 }
 
 .price-figure {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 850;
-    color: #0f172a;
+    color: var(--myp-text);
     letter-spacing: -0.6px;
     line-height: 1;
 }
 
 .start-connection-btn {
     width: 100%;
-    min-height: 50px;
-    background: #2563eb;
+    min-height: 52px;
+    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
     color: #ffffff;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 15.5px;
+    font-weight: 750;
     letter-spacing: -0.2px;
-    border-radius: 14px;
+    border-radius: 999px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.24);
-    transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), background 0.16s ease, opacity 0.16s ease;
+    box-shadow: 0 4px 18px rgba(236, 72, 153, 0.36);
+    transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), filter 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
     cursor: pointer;
 }
 
 .start-connection-btn:hover {
-    background: #1d4ed8;
+    filter: brightness(1.05);
+    box-shadow: 0 6px 24px rgba(236, 72, 153, 0.46);
+    transform: translateY(-1px);
 }
 
 .start-connection-btn:active:not(:disabled) {
@@ -454,8 +435,8 @@ button {
 }
 
 .cta-spinner {
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
     border: 2px solid rgba(255, 255, 255, 0.35);
     border-top-color: #ffffff;
     border-radius: 50%;
@@ -467,9 +448,9 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    font-size: 11.5px;
-    color: #94a3b8;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--myp-text-muted);
     text-align: center;
 }
 
@@ -491,8 +472,8 @@ button {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: #fef2f2;
-    color: #ef4444;
+    background: #FDF2F7;
+    color: var(--myp-pink);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -501,32 +482,37 @@ button {
 .profile-error-box h2 {
     font-size: 18px;
     font-weight: 750;
-    color: #0f172a;
+    color: var(--myp-text);
 }
 
 .profile-error-box p {
     font-size: 13px;
-    color: #64748b;
+    color: var(--myp-text-muted);
     max-width: 280px;
 }
 
 .return-home-btn {
     display: inline-flex;
     align-items: center;
-    padding: 8px 18px;
-    border-radius: 12px;
-    background: #2563eb;
+    padding: 9px 20px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
     color: #ffffff;
     font-size: 13px;
-    font-weight: 650;
+    font-weight: 700;
     margin-top: 6px;
+    box-shadow: 0 3px 12px rgba(236, 72, 153, 0.3);
+}
+
+.return-home-btn:hover {
+    filter: brightness(1.05);
 }
 
 .loading-spinner {
     width: 26px;
     height: 26px;
-    border: 2.5px solid #e2e8f0;
-    border-top-color: #2563eb;
+    border: 2.5px solid var(--myp-border);
+    border-top-color: var(--myp-pink);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }

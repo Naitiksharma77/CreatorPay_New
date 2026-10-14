@@ -89,12 +89,14 @@ function toggleCardFav(event, creatorId) {
         if (svg) {
             if (isNowFav) {
                 btn.classList.add("is-fav");
-                svg.setAttribute("fill", "#ef4444");
-                svg.setAttribute("stroke", "#ef4444");
+                svg.setAttribute("fill", "#EC4899");
+                svg.setAttribute("stroke", "#EC4899");
+                btn.classList.add("heart-pulse");
+                setTimeout(() => btn.classList.remove("heart-pulse"), 450);
             } else {
                 btn.classList.remove("is-fav");
                 svg.setAttribute("fill", "none");
-                svg.setAttribute("stroke", "#94a3b8");
+                svg.setAttribute("stroke", "#817783");
             }
         }
     });
@@ -236,16 +238,15 @@ function isCreatorOnline(creator) {
 function createProfileCardHTML(creator, index) {
     const favIds = getFavorites();
     const isFav = favIds.includes(String(creator.id));
-    const isOnline = isCreatorOnline(creator);
 
     const image =
         (creator.profile_image && typeof creator.profile_image === "string" && creator.profile_image.startsWith("http"))
             ? creator.profile_image
             : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
 
-    const name = (creator.name && creator.name.trim()) || "Friend";
-    const category = (creator.category && creator.category.trim()) || "Conversations & Lifestyle";
-    const bio = (creator.bio && creator.bio.trim()) || "Open to friendly conversations, shared experiences and making new friends.";
+    const name = (creator.name && creator.name.trim()) || "Member";
+    const category = (creator.category && creator.category.trim()) || "Lifestyle & Conversations";
+    const bio = (creator.bio && creator.bio.trim()) || "Excited to meet lovely people, share meaningful stories and start great conversations.";
     const rawPrice = Number(creator.price);
     const price = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice.toLocaleString("en-IN") : "49";
     const profileLink = `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
@@ -259,16 +260,15 @@ function createProfileCardHTML(creator, index) {
             <div class="card-top-row">
                 <div class="avatar-ring-wrap">
                     <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                    ${isOnline ? `<span class="active-status-dot" title="Active now" aria-hidden="true"></span>` : ""}
                 </div>
 
                 <div class="card-identity">
                     <div class="name-line">
                         <span class="person-name">${escapeHTML(name)}</span>
                         <span class="verified-badge" title="Verified Member">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="10" fill="#2563eb"></circle>
-                                <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10" fill="#EC4899"></circle>
+                                <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
                         </span>
                     </div>
@@ -286,7 +286,7 @@ function createProfileCardHTML(creator, index) {
                     onclick="toggleCardFav(event, '${escapeHTML(creator.id)}')"
                     aria-label="Save ${escapeHTML(name)}"
                 >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFav ? '#ef4444' : 'none'}" stroke="${isFav ? '#ef4444' : '#94a3b8'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="${isFav ? '#EC4899' : 'none'}" stroke="${isFav ? '#EC4899' : '#817783'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -300,11 +300,11 @@ function createProfileCardHTML(creator, index) {
                     <span class="price-unit">${priceUnit}</span>
                 </div>
 
-                <a class="view-profile-btn" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View profile of ${escapeHTML(name)}">
-                    <span>View Profile</span>
-                    <svg class="chevron-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
+                <a class="say-hi-btn view-profile-btn" href="${profileLink}" onclick="event.stopPropagation();" aria-label="Say Hi to ${escapeHTML(name)}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
+                    <span>Say Hi</span>
                 </a>
             </div>
         </article>
@@ -407,7 +407,7 @@ function renderChatsFeed() {
                     </svg>
                 </div>
                 <h3 class="empty-title">Your conversations will appear here.</h3>
-                <p class="empty-desc">Connect with someone to start your first conversation.</p>
+                <p class="empty-desc">Say hi to someone special to start your first beautiful conversation.</p>
                 <button class="empty-action-btn" onclick="switchTab('discover')">Discover People</button>
             </div>
         `;
@@ -427,7 +427,7 @@ function renderChatsFeed() {
                             <div class="chat-info">
                                 <div class="chat-header-line">
                                     <span class="chat-name">${escapeHTML(conn.name)}</span>
-                                    <span class="chat-time">Active</span>
+                                    <span class="chat-time">Connected</span>
                                 </div>
                                 <div class="chat-preview">Connection confirmed · Tap to chat &amp; view session</div>
                             </div>

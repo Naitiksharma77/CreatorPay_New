@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="description" content="Discover people you'll click with, start meaningful conversations, and build real connections on FriendConnect.">
-    <title>FriendConnect</title>
+    <meta name="theme-color" content="#FFF7FA">
+    <meta name="description" content="Discover compatible people, explore profiles, and begin lovely conversations on Meet You Partner.">
+    <title>Meet You Partner — Lovely Conversations Start Here</title>
 
     <link rel="stylesheet" href="ios_app.css">
 
@@ -25,20 +25,17 @@
     <div class="app-shell">
 
         <!-- =========================================================
-             COMPACT iOS APP HEADER
+             COMPACT iOS APP HEADER — MEET YOU PARTNER
         ========================================================= -->
         <header class="app-header">
             <div class="header-inner">
-                <a href="#home" class="app-brand" onclick="switchTab('home')" aria-label="FriendConnect">
+                <a href="#home" class="app-brand" onclick="switchTab('home')" aria-label="Meet You Partner">
                     <span class="brand-glyph" aria-hidden="true">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                         </svg>
                     </span>
-                    <span class="brand-name">Friend<span>Connect</span></span>
+                    <span class="brand-name">Meet You <span>Partner</span></span>
                 </a>
 
                 <button type="button" class="header-avatar-btn" onclick="toggleProfileSheet()" aria-label="My Account" title="My Profile &amp; Settings">
@@ -46,7 +43,6 @@
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    <span class="avatar-online-dot" aria-hidden="true"></span>
                 </button>
             </div>
         </header>
@@ -62,28 +58,24 @@
                 <div class="home-intro-card">
                     <div class="intro-card-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                     </div>
                     <div class="intro-card-text">
-                        <h1 class="intro-card-title">Good conversations start here.</h1>
-                        <p class="intro-card-subtitle">Meet someone new. See where the conversation goes.</p>
+                        <h1 class="intro-card-title">Lovely Conversations Start Here</h1>
+                        <p class="intro-card-subtitle">Discover interesting people and make your next connection meaningful.</p>
                     </div>
                 </div>
 
                 <div class="app-section-header">
                     <div>
-                        <h2 class="section-title">People you might like</h2>
-                        <p class="section-sub">Discover new people and start a connection.</p>
+                        <h2 class="section-title">People You Might Like</h2>
+                        <p class="section-sub">Discover someone special you'll love talking to.</p>
                     </div>
 
                     <div class="people-stat-pill" aria-live="polite">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                         </svg>
                         <span id="homePeopleCount">Loading...</span>
                     </div>
@@ -92,7 +84,7 @@
                 <div id="homePeopleList" class="people-feed">
                     <div class="loading-state">
                         <span class="loading-spinner"></span>
-                        <p>Finding people to connect with...</p>
+                        <p>Finding lovely people to connect with...</p>
                     </div>
                 </div>
             </section>
@@ -102,16 +94,16 @@
             <section id="tab-discover" class="tab-view" aria-label="Discover People">
                 <div class="app-greeting">
                     <h1 class="greeting-title">Discover</h1>
-                    <p class="greeting-subtitle">Find someone new to talk to.</p>
+                    <p class="greeting-subtitle">Find someone special you'll love talking to.</p>
                 </div>
 
                 <!-- Instant Search -->
                 <div class="search-bar-wrap">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7.5"></circle>
                         <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
                     </svg>
-                    <input type="text" id="discoverSearchInput" class="search-input" placeholder="Search by name, interest or topic..." autocomplete="off">
+                    <input type="text" id="discoverSearchInput" class="search-input" placeholder="Search by name, interests or topic..." autocomplete="off">
                     <button id="clearSearchBtn" class="clear-search-btn" style="display:none;" aria-label="Clear search">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
@@ -120,16 +112,16 @@
                 <!-- Interest Filter Chips -->
                 <div id="filterChips" class="filter-chips-row">
                     <button type="button" class="filter-chip active" data-category="all">✨ All</button>
-                    <button type="button" class="filter-chip" data-category="content">🎥 Lifestyle &amp; Content</button>
-                    <button type="button" class="filter-chip" data-category="design">🎨 Design &amp; Creative</button>
-                    <button type="button" class="filter-chip" data-category="tech">💻 Tech &amp; Coding</button>
-                    <button type="button" class="filter-chip" data-category="conversation">💬 Conversations</button>
+                    <button type="button" class="filter-chip" data-category="content">🌸 Lifestyle &amp; Culture</button>
+                    <button type="button" class="filter-chip" data-category="design">🎨 Creative &amp; Design</button>
+                    <button type="button" class="filter-chip" data-category="tech">💻 Tech &amp; Ambition</button>
+                    <button type="button" class="filter-chip" data-category="conversation">💬 Deep Conversations</button>
                 </div>
 
                 <div id="discoverPeopleList" class="people-feed">
                     <div class="loading-state">
                         <span class="loading-spinner"></span>
-                        <p>Searching people...</p>
+                        <p>Searching lovely people...</p>
                     </div>
                 </div>
             </section>
@@ -139,7 +131,7 @@
             <section id="tab-chats" class="tab-view" aria-label="Chats and Connections">
                 <div class="app-greeting">
                     <h1 class="greeting-title">Chats</h1>
-                    <p class="greeting-subtitle">Your conversations and connections.</p>
+                    <p class="greeting-subtitle">Your beautiful conversations and connections.</p>
                 </div>
 
                 <div id="chatsContent">
@@ -212,7 +204,7 @@
                     </div>
                     <div class="sheet-user-info">
                         <h3>You</h3>
-                        <p>FriendConnect Member</p>
+                        <p>Meet You Partner Member</p>
                     </div>
                 </div>
 

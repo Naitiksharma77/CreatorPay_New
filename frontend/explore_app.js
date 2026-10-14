@@ -65,12 +65,14 @@ function toggleFavorite(event, creatorId) {
         if (svg) {
             if (isNowFav) {
                 btn.classList.add("is-favorited");
-                svg.setAttribute("fill", "#ef4444");
-                svg.setAttribute("stroke", "#ef4444");
+                svg.setAttribute("fill", "#EC4899");
+                svg.setAttribute("stroke", "#EC4899");
+                btn.classList.add("heart-pulse");
+                setTimeout(() => btn.classList.remove("heart-pulse"), 450);
             } else {
                 btn.classList.remove("is-favorited");
                 svg.setAttribute("fill", "none");
-                svg.setAttribute("stroke", "#94a3b8");
+                svg.setAttribute("stroke", "#817783");
             }
         }
     });
@@ -308,29 +310,28 @@ function displayCreators(creators) {
             const priceSub = isSpecific99Card ? "/ one time" : "/ connection";
 
     return `
-                <article class="person-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
-                    <div class="card-header-row">
-                        <div class="avatar-wrap">
+                <article class="person-card social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
+                    <div class="card-header-row card-top-row">
+                        <div class="avatar-wrap avatar-ring-wrap">
                             <img
                                 src="${escapeHTML(image)}"
                                 alt="${escapeHTML(name)}"
                                 loading="lazy"
                             >
-                            ${isOnline ? `<span class="status-indicator" title="Active now" aria-hidden="true"></span>` : ""}
                         </div>
 
-                        <div class="header-details">
-                            <div class="name-row">
+                        <div class="header-details card-identity">
+                            <div class="name-row name-line">
                                 <h2 class="person-name">${escapeHTML(name)}</h2>
-                                <span class="verified-glyph" title="Verified Member">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <circle cx="12" cy="12" r="10" fill="#2563eb"></circle>
-                                        <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <span class="verified-glyph verified-badge" title="Verified Member">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10" fill="#EC4899"></circle>
+                                        <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"></path>
                                     </svg>
                                 </span>
                             </div>
 
-                            <div class="interest-pill">
+                            <div class="interest-pill interest-badge">
                                 ${getCategoryIcon(category)}
                                 <span>${escapeHTML(category)}</span>
                             </div>
@@ -338,38 +339,38 @@ function displayCreators(creators) {
 
                         <button
                             type="button"
-                            class="favorite-btn ${isFav ? 'is-favorited' : ''}"
+                            class="favorite-btn card-fav-btn ${isFav ? 'is-favorited is-fav' : ''}"
                             data-fav-id="${creator.id}"
                             onclick="toggleFavorite(event, '${creator.id}')"
                             aria-label="Save ${escapeHTML(name)}"
                             title="Save person"
                         >
-                            <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="${isFav ? '#ef4444' : 'none'}" stroke="${isFav ? '#ef4444' : '#94a3b8'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <svg class="heart-icon" width="17" height="17" viewBox="0 0 24 24" fill="${isFav ? '#EC4899' : 'none'}" stroke="${isFav ? '#EC4899' : '#817783'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                         </button>
                     </div>
 
-                    <p class="person-bio">
+                    <p class="person-bio card-bio">
                         ${escapeHTML(bio)}
                     </p>
 
-                    <div class="card-footer-row">
-                        <div class="price-container">
-                            <span class="price-main">₹${price}</span>
-                            <span class="price-sub">${priceSub}</span>
+                    <div class="card-footer-row card-bottom-row">
+                        <div class="price-container card-price-group">
+                            <span class="price-main price-val">₹${price}</span>
+                            <span class="price-sub price-unit">${priceSub}</span>
                         </div>
 
                         <a
-                            class="view-profile-cta"
+                            class="say-hi-btn view-profile-btn view-profile-cta"
                             href="${profileLink}"
                             onclick="event.stopPropagation();"
-                            aria-label="View profile of ${escapeHTML(name)}"
+                            aria-label="Say Hi to ${escapeHTML(name)}"
                         >
-                            <span>View Profile</span>
-                            <svg class="cta-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <polyline points="9 18 15 12 9 6"></polyline>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
+                            <span>Say Hi</span>
                         </a>
                     </div>
                 </article>
