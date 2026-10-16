@@ -18,6 +18,7 @@
     gtag('config', 'G-3ZVP8Q457D');
 </script>
 
+    <script src="tracking.js" defer></script>
 </head>
 
 <body>
@@ -60,6 +61,12 @@
 
             </div>
 
+            <div id="chatActionWrap" style="display: none; margin-top: 26px;">
+                <a id="startChatBtn" href="chat.html" class="home-button" style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); box-shadow: 0 4px 16px rgba(236,72,153,0.35); margin-top: 0; margin-bottom: 12px; display: block;">
+                    Start Chat with <span id="chatCreatorBtnName">Partner</span>
+                </a>
+            </div>
+
             <a
                 href="explore.html"
                 class="home-button"
@@ -82,25 +89,54 @@
 
         const savedPayment =
             localStorage.getItem("creatorpay_payment");
+        let targetCreatorId = null;
 
         if (savedPayment) {
+            try {
+                const paymentDetails =
+                    JSON.parse(savedPayment);
 
-            const paymentDetails =
-                JSON.parse(savedPayment);
+                if (paymentDetails.creatorName) {
+                    document.getElementById(
+                        "creatorName"
+                    ).textContent =
+                        paymentDetails.creatorName;
+                }
 
-            document.getElementById(
-                "creatorName"
-            ).textContent =
-                paymentDetails.creatorName;
+                if (paymentDetails.amount) {
+                    document.getElementById(
+                        "paymentAmount"
+                    ).textContent =
+                        "₹" +
+                        Number(
+                            paymentDetails.amount
+                        ).toLocaleString("en-IN");
+                }
 
-            document.getElementById(
-                "paymentAmount"
-            ).textContent =
-                "₹" +
-                Number(
-                    paymentDetails.amount
-                ).toLocaleString("en-IN");
+                if (paymentDetails.creatorId) {
+                    targetCreatorId = paymentDetails.creatorId;
+                }
+            } catch (_) {}
+        }
 
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("id")) targetCreatorId = params.get("id");
+
+        if (targetCreatorId) {
+            try {
+                const sessRaw = localStorage.getItem(`fc_chat_session_${targetCreatorId}`);
+                if (sessRaw) {
+                    const sess = JSON.parse(sessRaw);
+                    if (sess && sess.token && sess.paymentId) {
+                        const chatWrap = document.getElementById("chatActionWrap");
+                        const chatBtn = document.getElementById("startChatBtn");
+                        const chatName = document.getElementById("chatCreatorBtnName");
+                        chatBtn.href = `chat.html?id=${encodeURIComponent(targetCreatorId)}&payment_id=${encodeURIComponent(sess.paymentId)}&token=${encodeURIComponent(sess.token)}`;
+                        if (sess.creatorName) chatName.textContent = sess.creatorName;
+                        chatWrap.style.display = "block";
+                    }
+                }
+            } catch (_) {}
         }
 
     </script>

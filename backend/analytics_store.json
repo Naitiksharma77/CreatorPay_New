@@ -1,6 +1,112 @@
 {
-  "payments": [],
-  "active_users": [],
+  "payments": [
+    {
+      "order_id": "order_dev_12345",
+      "payment_id": "pay_dev_12345",
+      "creator_id": "1",
+      "creator_name": null,
+      "amount": 49,
+      "token": "933a5c2826ec1da9c73e3e75f55965ab9516c3142b074027ace4f93c2a0fa62d",
+      "status": "verified",
+      "timestamp": "2026-10-16T14:10:51.182Z",
+      "id": "pay_dev_12345",
+      "created_at": "2026-10-16T14:10:51.182Z"
+    }
+  ],
+  "active_users": [
+    {
+      "userId": "v_test_101",
+      "date": "2026-10-16",
+      "timestamp": "2026-10-16T14:22:30.078Z"
+    },
+    {
+      "userId": "v_sim_1792160819980",
+      "date": "2026-10-16",
+      "timestamp": "2026-10-16T14:26:59.994Z"
+    }
+  ],
+  "active_sessions": {
+    "s_test_101": {
+      "visitorId": "v_test_101",
+      "lastSeen": "2026-10-16T14:22:30.078Z",
+      "page": "creator_home.html",
+      "creatorId": null,
+      "source": "Direct"
+    },
+    "s_sim_1792160819980": {
+      "visitorId": "v_sim_1792160819980",
+      "lastSeen": "2026-10-16T14:27:00.005Z",
+      "page": "creator_home.html",
+      "creatorId": "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
+      "source": "Direct"
+    }
+  },
+  "events": [
+    {
+      "id": "evt_1792160550078_91f63a",
+      "type": "page_view",
+      "visitorId": "v_test_101",
+      "sessionId": "s_test_101",
+      "isNewVisitor": true,
+      "page": "creator_home.html",
+      "title": "Meet You Partner",
+      "creatorId": null,
+      "creatorName": null,
+      "buttonName": null,
+      "amount": null,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-16T14:22:30.078Z"
+    },
+    {
+      "id": "evt_1792160819994_6845cf",
+      "type": "page_view",
+      "visitorId": "v_sim_1792160819980",
+      "sessionId": "s_sim_1792160819980",
+      "isNewVisitor": true,
+      "page": "creator_home.html",
+      "title": "Meet You Partner — Lovely Conversations",
+      "creatorId": null,
+      "creatorName": null,
+      "buttonName": null,
+      "amount": null,
+      "source": "Instagram",
+      "referrer": "",
+      "timestamp": "2026-10-16T14:26:59.994Z"
+    },
+    {
+      "id": "evt_1792160820001_bc5c46",
+      "type": "creator_view",
+      "visitorId": "v_sim_1792160819980",
+      "sessionId": "s_sim_1792160819980",
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
+      "creatorName": "Shalini Yadav",
+      "buttonName": null,
+      "amount": null,
+      "source": "Instagram",
+      "referrer": "",
+      "timestamp": "2026-10-16T14:27:00.001Z"
+    },
+    {
+      "id": "evt_1792160820004_e9598f",
+      "type": "button_click",
+      "visitorId": "v_sim_1792160819980",
+      "sessionId": "s_sim_1792160819980",
+      "isNewVisitor": false,
+      "page": "creator_home.html",
+      "title": "",
+      "creatorId": "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
+      "creatorName": "Shalini Yadav",
+      "buttonName": "Say Hi & Start Chat",
+      "amount": null,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-16T14:27:00.005Z"
+    }
+  ],
   "pending_orders": {
     "order_ToOPhwMEVzCLuU": {
       "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
@@ -9,5 +115,14 @@
       "created_at": "2026-10-16T01:08:14.199Z"
     }
   },
-  "messages": []
+  "messages": [
+    {
+      "id": "msg_1792159851885_467f13",
+      "creator_id": "1",
+      "payment_id": "pay_dev_12345",
+      "text": "Hello! Testing verified chat messaging.",
+      "timestamp": "2026-10-16T14:10:51.885Z"
+    }
+  ],
+  "tracking_started": "2026-10-16T14:22:30.078Z"
 }

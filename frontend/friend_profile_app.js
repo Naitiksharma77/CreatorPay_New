@@ -568,6 +568,15 @@ async function startRazorpayPayment() {
         const razorpayCheckout = new Razorpay(options);
 
         razorpayCheckout.on("payment.failed", function (response) {
+            try {
+                if (window.MYP_TRACK) {
+                    window.MYP_TRACK.trackEvent("payment_failed", {
+                        creatorId: selectedCreator.id,
+                        creatorName: selectedCreator.name,
+                        amount: Number(selectedCreator.price)
+                    });
+                }
+            } catch (_) {}
             console.error("Payment failed:", response.error);
             alert(response.error.description || "Connection payment failed. Please try again.");
             resetPayButton();
