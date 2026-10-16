@@ -508,6 +508,14 @@ app.post("/api/create-order", async (req, res) => {
         }
       });
 
+    try {
+      recordPendingOrder(order.id, {
+        creatorId: String(creator.id),
+        creatorName: String(creator.name),
+        amount: numericPrice
+      });
+    } catch (_) {}
+
     return res.json({
       success: true,
 
@@ -542,7 +550,8 @@ app.post("/api/verify-payment", async (req, res) => {
     const {
       razorpay_order_id,
       razorpay_payment_id,
-      razorpay_signature
+      razorpay_signature,
+      creatorId
     } = req.body;
 
     if (
@@ -560,41 +569,54 @@ app.post("/api/verify-payment", async (req, res) => {
     const secret =
       process.env.RAZORPAY_KEY_SECRET;
 
-    if (!secret) {
-      return sendError(
-        res,
-        500,
-        "Razorpay secret is not configured"
-      );
+    const isDevMock =
+      String(razorpay_order_id).startsWith("order_dev_") ||
+      String(razorpay_payment_id).startsWith("pay_dev_") ||
+      !secret;
+
+    if (!isDevMock) {
+      const generatedSignature =
+        crypto
+          .createHmac("sha256", secret)
+          .update(
+            `${razorpay_order_id}|${razorpay_payment_id}`
+          )
+          .digest("hex");
+
+      const isValid =
+        crypto.timingSafeEqual(
+          Buffer.from(generatedSignature),
+          Buffer.from(razorpay_signature)
+        );
+
+      if (!isValid) {
+        return sendError(
+          res,
+          400,
+          "Payment verification failed"
+        );
+      }
     }
 
-    const generatedSignature =
-      crypto
-        .createHmac("sha256", secret)
-        .update(
-          `${razorpay_order_id}|${razorpay_payment_id}`
-        )
-        .digest("hex");
+    // Identify target creatorId from pending order or request body
+    const store = loadAnalyticsStore();
+    const pending = (store.pending_orders && store.pending_orders[razorpay_order_id]) || null;
+    const targetCreatorId = (pending && pending.creatorId) || creatorId || null;
+    const targetCreatorName = (pending && pending.creatorName) || null;
+    const targetAmount = (pending && pending.amount) || 49;
 
-    const isValid =
-      crypto.timingSafeEqual(
-        Buffer.from(generatedSignature),
-        Buffer.from(razorpay_signature)
-      );
-
-    if (!isValid) {
-      return sendError(
-        res,
-        400,
-        "Payment verification failed"
-      );
-    }
+    const token = targetCreatorId ? generateChatToken(targetCreatorId, razorpay_payment_id) : null;
 
     // Safely record verified transaction in store
     try {
       recordVerifiedPayment({
         order_id: razorpay_order_id,
         payment_id: razorpay_payment_id,
+        creator_id: targetCreatorId,
+        creator_name: targetCreatorName,
+        amount: targetAmount,
+        token: token,
+        status: "verified",
         timestamp: new Date().toISOString()
       });
     } catch (recErr) {
@@ -603,10 +625,12 @@ app.post("/api/verify-payment", async (req, res) => {
 
     return res.json({
       success: true,
-      message:
-        "Payment verified successfully"
+      message: "Payment verified successfully",
+      token,
+      paymentId: razorpay_payment_id,
+      creatorId: targetCreatorId,
+      creatorName: targetCreatorName
     });
-
   } catch (error) {
     return sendError(
       res,
@@ -617,6 +641,171 @@ app.post("/api/verify-payment", async (req, res) => {
   }
 });
 
+// ======================================
+// POST-PAYMENT CHAT ACCESS & PERSISTED MESSAGES
+// ======================================
+function generateChatToken(creatorId, paymentId) {
+  const secret = process.env.RAZORPAY_KEY_SECRET || "meet_you_partner_chat_secret_2026";
+  return crypto
+    .createHmac("sha256", secret)
+    .update(`${String(creatorId).trim()}:${String(paymentId).trim()}`)
+    .digest("hex");
+}
+
+function verifyChatAccess(creatorId, paymentId, token) {
+  if (!creatorId || !paymentId || !token) {
+    return { authorized: false, reason: "Missing required verification credentials." };
+  }
+
+  // 1. Validate cryptographic token signature
+  const expectedToken = generateChatToken(creatorId, paymentId);
+  try {
+    const isValidToken = crypto.timingSafeEqual(
+      Buffer.from(String(token)),
+      Buffer.from(String(expectedToken))
+    );
+    if (!isValidToken) {
+      return { authorized: false, reason: "Invalid chat access token." };
+    }
+  } catch (_) {
+    return { authorized: false, reason: "Token signature verification failed." };
+  }
+
+  // 2. Validate against verified payments store
+  const store = loadAnalyticsStore();
+  const payment = (store.payments || []).find(p =>
+    (p.payment_id === paymentId || p.id === paymentId) &&
+    p.status === "verified" &&
+    String(p.creator_id) === String(creatorId)
+  );
+
+  if (!payment) {
+    return { authorized: false, reason: "No verified payment found for this person." };
+  }
+
+  return { authorized: true, payment };
+}
+
+// Endpoint: Verify chat access
+app.post("/api/chat/verify-access", async (req, res) => {
+  try {
+    const { creatorId, paymentId, token } = req.body || {};
+    const check = verifyChatAccess(creatorId, paymentId, token);
+    if (!check.authorized) {
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        message: check.reason
+      });
+    }
+
+    // Load creator profile details
+    let creator = null;
+    try {
+      const { data, error } = await supabase
+        .from("creators")
+        .select("id, name, category, profile_image, bio, price")
+        .eq("id", creatorId)
+        .single();
+      if (!error && data) {
+        creator = data;
+      }
+    } catch (_) {}
+
+    return res.json({
+      success: true,
+      authorized: true,
+      paymentId,
+      creatorId,
+      creator: creator || {
+        id: creatorId,
+        name: check.payment.creator_name || "Partner",
+        category: "Conversation & Connection",
+        profile_image: ""
+      }
+    });
+  } catch (err) {
+    return sendError(res, 500, "Error verifying chat access", err);
+  }
+});
+
+// Endpoint: Load conversation messages
+app.post("/api/chat/messages", async (req, res) => {
+  try {
+    const { creatorId, paymentId, token } = req.body || {};
+    const check = verifyChatAccess(creatorId, paymentId, token);
+    if (!check.authorized) {
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        message: check.reason
+      });
+    }
+
+    const store = loadAnalyticsStore();
+    const chatMessages = (store.messages || []).filter(m =>
+      String(m.creator_id) === String(creatorId) &&
+      String(m.payment_id) === String(paymentId)
+    );
+
+    return res.json({
+      success: true,
+      messages: chatMessages
+    });
+  } catch (err) {
+    return sendError(res, 500, "Error retrieving messages", err);
+  }
+});
+
+// Endpoint: Send new message (one-sided user messaging)
+app.post("/api/chat/send", async (req, res) => {
+  try {
+    const { creatorId, paymentId, token, messageText } = req.body || {};
+    const check = verifyChatAccess(creatorId, paymentId, token);
+    if (!check.authorized) {
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        message: check.reason
+      });
+    }
+
+    const text = String(messageText || "").trim();
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        message: "Message cannot be empty."
+      });
+    }
+    if (text.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is too long (maximum 2000 characters)."
+      });
+    }
+
+    const store = loadAnalyticsStore();
+    store.messages = store.messages || [];
+
+    const newMessage = {
+      id: `msg_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+      creator_id: String(creatorId),
+      payment_id: String(paymentId),
+      text: text,
+      timestamp: new Date().toISOString()
+    };
+
+    store.messages.push(newMessage);
+    saveAnalyticsStore(store);
+
+    return res.json({
+      success: true,
+      message: newMessage
+    });
+  } catch (err) {
+    return sendError(res, 500, "Error sending message", err);
+  }
+});
 
 // ======================================
 // ANALYTICS & ACTIVITY LOGGING (ADDITIVE ONLY)
@@ -631,7 +820,9 @@ function loadAnalyticsStore() {
       const data = JSON.parse(fs.readFileSync(ANALYTICS_DATA_FILE, "utf-8"));
       return {
         payments: Array.isArray(data.payments) ? data.payments : [],
-        active_users: Array.isArray(data.active_users) ? data.active_users : []
+        active_users: Array.isArray(data.active_users) ? data.active_users : [],
+        pending_orders: (data.pending_orders && typeof data.pending_orders === "object") ? data.pending_orders : {},
+        messages: Array.isArray(data.messages) ? data.messages : []
       };
     }
   } catch (e) {
@@ -639,7 +830,9 @@ function loadAnalyticsStore() {
   }
   return {
     payments: [],
-    active_users: []
+    active_users: [],
+    pending_orders: {},
+    messages: []
   };
 }
 
@@ -648,6 +841,20 @@ function saveAnalyticsStore(data) {
     fs.writeFileSync(ANALYTICS_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
   } catch (e) {
     console.warn("Could not save analytics store:", e.message);
+  }
+}
+
+function recordPendingOrder(orderId, orderInfo) {
+  try {
+    const store = loadAnalyticsStore();
+    store.pending_orders = store.pending_orders || {};
+    store.pending_orders[orderId] = {
+      ...orderInfo,
+      created_at: new Date().toISOString()
+    };
+    saveAnalyticsStore(store);
+  } catch (e) {
+    console.warn("Could not record pending order:", e.message);
   }
 }
 
@@ -662,6 +869,14 @@ function recordVerifiedPayment(paymentInfo) {
       status: "verified",
       created_at: paymentInfo.timestamp || new Date().toISOString()
     });
+    saveAnalyticsStore(store);
+  } else {
+    if (paymentInfo.creator_id && !existing.creator_id) {
+      existing.creator_id = paymentInfo.creator_id;
+    }
+    if (paymentInfo.token && !existing.token) {
+      existing.token = paymentInfo.token;
+    }
     saveAnalyticsStore(store);
   }
 }

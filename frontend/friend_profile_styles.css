@@ -525,3 +525,115 @@ button {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Post-Payment Verified Modal */
+.post-pay-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(37, 32, 42, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 9999;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.post-pay-card {
+    background: #FFFFFF;
+    border: 1px solid var(--myp-border);
+    border-radius: 24px;
+    padding: 30px 24px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 45px rgba(236, 72, 153, 0.16), 0 4px 16px rgba(0, 0, 0, 0.06);
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.post-pay-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FDF2F7 0%, #FCE7F3 100%);
+    color: #10B981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    border: 2px solid #D1FAE5;
+}
+
+.post-pay-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: #ECFDF5;
+    color: #065F46;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.post-pay-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--myp-text);
+    margin: 0 0 8px;
+}
+
+.post-pay-desc {
+    font-size: 13.5px;
+    color: var(--myp-text-muted);
+    line-height: 1.5;
+    margin: 0 0 22px;
+}
+
+.post-pay-start-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 750;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.35);
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.post-pay-start-btn:hover {
+    filter: brightness(1.06);
+}
+
+.post-pay-start-btn:active {
+    transform: scale(0.98);
+}
+
+.post-pay-close-link {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--myp-text-muted);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.post-pay-close-link:hover {
+    color: var(--myp-pink);
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}

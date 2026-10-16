@@ -317,9 +317,77 @@ function displayProfile(creator) {
         </article>
     `;
 
-    document
-        .getElementById("payButton")
-        .addEventListener("click", startRazorpayPayment);
+    const payButton = document.getElementById("payButton");
+    const verifiedSession = getVerifiedSession(creator.id);
+    if (verifiedSession) {
+        payButton.innerHTML = `
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Open Chat with ${escapeHTML(name)}</span>
+        `;
+        payButton.onclick = () => {
+            window.location.href = `chat.html?id=${encodeURIComponent(creator.id)}&payment_id=${encodeURIComponent(verifiedSession.paymentId)}&token=${encodeURIComponent(verifiedSession.token)}`;
+        };
+    } else {
+        payButton.addEventListener("click", startRazorpayPayment);
+    }
+}
+
+function getVerifiedSession(creatorId) {
+    try {
+        const raw = localStorage.getItem(`fc_chat_session_${creatorId}`);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (data && data.token && data.paymentId) return data;
+    } catch (_) {}
+    return null;
+}
+
+function showVerifiedPaymentModal(creator, sessionData) {
+    const existing = document.getElementById("postPayModal");
+    if (existing) existing.remove();
+
+    const chatUrl = `chat.html?id=${encodeURIComponent(creator.id)}&payment_id=${encodeURIComponent(sessionData.paymentId)}&token=${encodeURIComponent(sessionData.token)}`;
+
+    const modal = document.createElement("div");
+    modal.id = "postPayModal";
+    modal.className = "post-pay-modal-overlay";
+    modal.innerHTML = `
+        <div class="post-pay-card" role="dialog" aria-modal="true" aria-labelledby="postPayTitle">
+            <div class="post-pay-icon" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <span class="post-pay-badge">Payment Verified ✓</span>
+            <h2 id="postPayTitle" class="post-pay-title">You're Connected!</h2>
+            <p class="post-pay-desc">Your private connection with <strong>${escapeHTML(creator.name || "your partner")}</strong> is confirmed. You can now start chatting.</p>
+            <a href="${chatUrl}" class="post-pay-start-btn" id="modalStartChatBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Start Chat with ${escapeHTML(creator.name || "Partner")}</span>
+            </a>
+            <a href="creator_home.html#chats" class="post-pay-close-link">Go to All Chats</a>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const payButton = document.getElementById("payButton");
+    if (payButton) {
+        payButton.disabled = false;
+        payButton.innerHTML = `
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Open Chat with ${escapeHTML(creator.name || "Partner")}</span>
+        `;
+        payButton.onclick = () => {
+            window.location.href = chatUrl;
+        };
+    }
 }
 
 
@@ -410,28 +478,77 @@ async function startRazorpayPayment() {
             description: `Personal session with ${selectedCreator.name}`,
             order_id: result.order.id,
 
-            handler: function (paymentResponse) {
-                // Record confirmed connection in local storage so it shows in Chats tab
-                try {
-                    const conns = JSON.parse(localStorage.getItem("fc_connections") || "[]");
-                    if (!conns.some((c) => String(c.id) === String(selectedCreator.id))) {
-                        conns.unshift(selectedCreator);
-                        localStorage.setItem("fc_connections", JSON.stringify(conns));
-                    }
-                } catch (e) {
-                    console.warn("Unable to save connection locally:", e);
+            handler: async function (paymentResponse) {
+                const payButton = document.getElementById("payButton");
+                if (payButton) {
+                    payButton.disabled = true;
+                    payButton.innerHTML = `<span>Verifying payment...</span>`;
                 }
 
-                alert(
-                    "Connected with " +
-                    selectedCreator.name +
-                    "!\n\nYour chat is now open in Chats.\nPayment ID: " +
-                    paymentResponse.razorpay_payment_id
-                );
+                try {
+                    // 1. Verify payment status server-side
+                    let verifyRes;
+                    try {
+                        verifyRes = await fetch("/api/verify-payment", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_order_id: paymentResponse.razorpay_order_id,
+                                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                                razorpay_signature: paymentResponse.razorpay_signature,
+                                creatorId: selectedCreator.id
+                            })
+                        });
+                    } catch (_) {}
 
-                window.location.href = "creator_home.html#chats";
+                    if (!verifyRes || !verifyRes.ok) {
+                        verifyRes = await fetch(`${API_URL}/api/verify-payment`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_order_id: paymentResponse.razorpay_order_id,
+                                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                                razorpay_signature: paymentResponse.razorpay_signature,
+                                creatorId: selectedCreator.id
+                            })
+                        });
+                    }
+
+                    const verifyData = await verifyRes.json();
+                    if (!verifyRes.ok || !verifyData.success) {
+                        throw new Error(verifyData.message || "Payment verification could not be confirmed.");
+                    }
+
+                    // 2. Store secure session token tied to this person
+                    const sessionData = {
+                        token: verifyData.token,
+                        paymentId: paymentResponse.razorpay_payment_id,
+                        orderId: paymentResponse.razorpay_order_id,
+                        creatorId: selectedCreator.id,
+                        creatorName: selectedCreator.name,
+                        verifiedAt: Date.now()
+                    };
+                    localStorage.setItem(`fc_chat_session_${selectedCreator.id}`, JSON.stringify(sessionData));
+
+                    // 3. Record confirmed connection in local storage so it shows in Chats tab
+                    try {
+                        const conns = JSON.parse(localStorage.getItem("fc_connections") || "[]");
+                        if (!conns.some((c) => String(c.id) === String(selectedCreator.id))) {
+                            conns.unshift(selectedCreator);
+                            localStorage.setItem("fc_connections", JSON.stringify(conns));
+                        }
+                    } catch (e) {
+                        console.warn("Unable to save connection locally:", e);
+                    }
+
+                    // 4. Present verified success modal with Start Chat option
+                    showVerifiedPaymentModal(selectedCreator, sessionData);
+                } catch (err) {
+                    console.error("Payment verification failed:", err);
+                    alert("Payment verification error: " + (err.message || "Please contact support."));
+                    resetPayButton();
+                }
             },
-
             notes: {
                 creatorId: selectedCreator.id,
                 creatorName: selectedCreator.name

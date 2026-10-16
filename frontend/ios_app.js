@@ -418,9 +418,20 @@ function renderChatsFeed() {
         <div class="chats-list">
             ${connections
                 .map((conn) => {
-                    const profileLink = `friend_profile.html?id=${encodeURIComponent(conn.id)}`;
+                    let targetLink = `friend_profile.html?id=${encodeURIComponent(conn.id)}`;
+                    let chatSubtitle = "Connection confirmed · Tap to chat";
+                    try {
+                        const rawSession = localStorage.getItem(`fc_chat_session_${conn.id}`);
+                        if (rawSession) {
+                            const sess = JSON.parse(rawSession);
+                            if (sess && sess.token && sess.paymentId) {
+                                targetLink = `chat.html?id=${encodeURIComponent(conn.id)}&payment_id=${encodeURIComponent(sess.paymentId)}&token=${encodeURIComponent(sess.token)}`;
+                                chatSubtitle = "Private Chat Unlocked · Tap to message";
+                            }
+                        }
+                    } catch (_) {}
                     return `
-                        <div class="chat-row" onclick="window.location.href='${profileLink}'">
+                        <div class="chat-row" onclick="window.location.href='${targetLink}'">
                             <div class="chat-avatar-wrap">
                                 <img src="${escapeHTML(conn.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80')}" alt="${escapeHTML(conn.name)}">
                             </div>
@@ -429,7 +440,7 @@ function renderChatsFeed() {
                                     <span class="chat-name">${escapeHTML(conn.name)}</span>
                                     <span class="chat-time">Connected</span>
                                 </div>
-                                <div class="chat-preview">Connection confirmed · Tap to chat &amp; view session</div>
+                                <div class="chat-preview">${chatSubtitle}</div>
                             </div>
                         </div>
                     `;
