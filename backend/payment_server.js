@@ -344,19 +344,27 @@ app.put("/api/creators/:id", async (req, res) => {
       );
     }
 
+    const updatePayload = {
+      name: String(name).trim(),
+      category: category !== undefined ? category : "",
+      bio: bio !== undefined ? bio : "",
+      price: numericPrice,
+      instagram_url: instagram_url !== undefined ? instagram_url : ""
+    };
+
+    if (profile_image !== undefined && profile_image !== null && String(profile_image).trim() !== "") {
+      updatePayload.profile_image = String(profile_image).trim();
+    }
+    if (req.body.upi_id !== undefined) {
+      updatePayload.upi_id = req.body.upi_id;
+    }
+
     const {
       data,
       error
     } = await supabase
       .from("creators")
-      .update({
-        name: String(name).trim(),
-        category: category || "",
-        bio: bio || "",
-        price: numericPrice,
-        instagram_url: instagram_url || "",
-        profile_image: profile_image || ""
-      })
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();
