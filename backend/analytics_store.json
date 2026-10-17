@@ -23,9 +23,16 @@
   "active_sessions": {
     "s_mvbnerbp_o19i4i": {
       "visitorId": "v_mvb2b0vn_ufptm4",
-      "lastSeen": "2026-10-17T00:34:00.637Z",
+      "lastSeen": "2026-10-17T00:44:38.402Z",
       "page": "creator_home.html",
       "creatorId": null,
+      "source": "Direct"
+    },
+    "v_anon": {
+      "visitorId": "v_anon",
+      "lastSeen": "2026-10-17T00:48:48.202Z",
+      "page": "friend_profile.html",
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
       "source": "Direct"
     }
   },
@@ -45,6 +52,54 @@
       "source": "Direct",
       "referrer": "https://ais-dev-i7rt4gmlj5bufnqg6zsl5g-177463027585.asia-southeast1.run.app/",
       "timestamp": "2026-10-17T00:18:30.230Z"
+    },
+    {
+      "id": "evt_1792197518590_f90201",
+      "type": "page_view",
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "sessionId": "s_mvbnerbp_o19i4i",
+      "isNewVisitor": false,
+      "page": "creator_home.html",
+      "title": "Meet You Partner — Lovely Conversations Start Here",
+      "creatorId": null,
+      "creatorName": null,
+      "buttonName": null,
+      "amount": null,
+      "source": "Direct",
+      "referrer": "https://ais-dev-i7rt4gmlj5bufnqg6zsl5g-177463027585.asia-southeast1.run.app/",
+      "timestamp": "2026-10-17T00:38:38.392Z"
+    },
+    {
+      "id": "evt_1792198020098_13e6e2",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
+      "creatorName": "Shalini Yadav",
+      "buttonName": null,
+      "amount": 29,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-17T00:47:00.098Z"
+    },
+    {
+      "id": "evt_1792198128201_3bbe63",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "buttonName": null,
+      "amount": 8,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-17T00:48:48.202Z"
     }
   ],
   "pending_orders": {
@@ -53,6 +108,18 @@
       "creatorName": "Tanvi Thakur",
       "amount": 8,
       "created_at": "2026-10-16T01:08:14.199Z"
+    },
+    "order_TomaOeUe5HqHbj": {
+      "creatorId": "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
+      "creatorName": "Shalini Yadav",
+      "amount": 29,
+      "created_at": "2026-10-17T00:47:00.098Z"
+    },
+    "order_TomcIgRhKfgt8T": {
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "amount": 8,
+      "created_at": "2026-10-17T00:48:48.201Z"
     }
   },
   "messages": [

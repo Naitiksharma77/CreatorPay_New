@@ -6,7 +6,7 @@
 // ===============================
 // STATE & CONFIG
 // ===============================
-const API_URL = window.location.origin;
+const API_URL = "https://creatorpay-backend.onrender.com";
 let allCreators = [];
 let currentFilterText = "";
 let currentPeriod = "7d";
@@ -488,31 +488,55 @@ window.deleteCreator = async function (id) {
 };
 
 // ===============================
-// LOAD & RENDER CREATORS
+// LOAD & RENDER CREATORS (RESILIENT CACHE + FALLBACK)
 // ===============================
 
+const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
+
 async function loadCreators() {
+    // 1. Immediately hydrate from cache so table renders in 0ms without waiting
+    try {
+        const cached = localStorage.getItem("fc_cached_creators");
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                allCreators = parsed;
+                filterAndDisplayCreators();
+                try { renderCategoryDonut(allCreators); } catch (_) {}
+            }
+        }
+    } catch (_) {}
+
+    // 2. Fetch fresh live data from database
     try {
         let fetched = [];
         let success = false;
 
+        // Try same-origin /api/creators first
         try {
-            const res = await fetch("/api/creators");
+            const localController = new AbortController();
+            const localTimeout = setTimeout(() => localController.abort(), 4000);
+            const res = await fetch("/api/creators", { signal: localController.signal });
+            clearTimeout(localTimeout);
             if (res.ok) {
                 const data = await res.json();
-                if (data && data.success && Array.isArray(data.creators)) {
+                if (data && data.success && Array.isArray(data.creators) && data.creators.length > 0) {
                     fetched = data.creators;
                     success = true;
                 }
             }
         } catch (_) {}
 
+        // Fallback to Render production backend if same-origin is slow or paused
         if (!success) {
             try {
-                const res = await fetch(`${API_URL}/api/creators`);
+                const remoteController = new AbortController();
+                const remoteTimeout = setTimeout(() => remoteController.abort(), 5000);
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/creators`, { signal: remoteController.signal });
+                clearTimeout(remoteTimeout);
                 if (res.ok) {
                     const data = await res.json();
-                    if (data && data.success && Array.isArray(data.creators)) {
+                    if (data && data.success && Array.isArray(data.creators) && data.creators.length > 0) {
                         fetched = data.creators;
                         success = true;
                     }
@@ -520,16 +544,27 @@ async function loadCreators() {
             } catch (_) {}
         }
 
-        if (success) {
+        if (success && fetched.length > 0) {
             allCreators = fetched;
+            try {
+                localStorage.setItem("fc_cached_creators", JSON.stringify(fetched));
+            } catch (_) {}
             filterAndDisplayCreators();
-            renderCategoryDonut(allCreators);
-        } else {
+            try { renderCategoryDonut(allCreators); } catch (_) {}
+        } else if (allCreators.length === 0) {
             if (creatorListTableBody) {
                 creatorListTableBody.innerHTML = `
                     <tr>
                         <td colspan="6" style="text-align: center; color: var(--dash-text-tertiary); padding: 40px;">
-                            Unable to load partners from database.
+                            <div style="font-size: 14px; font-weight: 700; color: var(--dash-text-primary); margin-bottom: 6px;">
+                                Database Connection Paused
+                            </div>
+                            <div style="font-size: 12px; color: var(--dash-text-secondary); margin-bottom: 12px;">
+                                Could not load partner records. Click below to reconnect.
+                            </div>
+                            <button type="button" class="action-icon-btn" onclick="loadCreators()" style="display: inline-block; cursor: pointer; padding: 6px 16px;">
+                                ↻ Try Again
+                            </button>
                         </td>
                     </tr>
                 `;
