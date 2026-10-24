@@ -360,6 +360,10 @@ app.post("/api/creators", async (req, res) => {
       );
     }
 
+    if (data && Array.isArray(memoryCreatorsCache)) {
+      memoryCreatorsCache.unshift(data);
+    }
+
     return res.json({
       success: true,
       message: "Creator added successfully",
@@ -378,63 +382,67 @@ app.post("/api/creators", async (req, res) => {
 
 
 // ======================================
-// UPDATE CREATOR
+// UPDATE CREATOR (ROBUST DIAGNOSTIC LOGGING & FLEXIBLE PAYLOADS)
 // ======================================
 
-app.put("/api/creators/:id", async (req, res) => {
+const handleUpdateCreator = async (req, res) => {
+  const method = req.method;
+  const url = req.originalUrl || req.url;
+  const rawId = req.params.id || req.body.id || req.body.creatorId;
+  const cleanId = rawId ? String(rawId).trim() : "";
+
+  const {
+    name,
+    category,
+    bio,
+    price,
+    amount,
+    instagram_url,
+    profile_image
+  } = req.body;
+
+  const rawPrice = (price !== undefined && price !== null && price !== "") ? price : amount;
+
+  console.log(`[Admin Update] Received ${method} ${url} - ID: "${cleanId}", Price: "${rawPrice}"`);
+
+  if (!cleanId) {
+    console.warn("[Admin Update] Rejected: Missing creator ID");
+    return sendError(res, 400, "Creator ID is required");
+  }
+
+  if (rawPrice === undefined || rawPrice === null || rawPrice === "") {
+    console.warn("[Admin Update] Rejected: Missing price value");
+    return sendError(res, 400, "Price is required");
+  }
+
+  const numericPrice = getNumericPrice(rawPrice);
+  if (numericPrice === null) {
+    console.warn(`[Admin Update] Rejected: Invalid price value "${rawPrice}"`);
+    return sendError(res, 400, "Price must be a valid positive number");
+  }
+
   try {
-    const {
-      id
-    } = req.params;
-
-    const {
-      name,
-      category,
-      bio,
-      price,
-      instagram_url,
-      profile_image
-    } = req.body;
-
-    if (
-      !name ||
-      !String(name).trim() ||
-      price === undefined ||
-      price === null ||
-      price === ""
-    ) {
-      return sendError(
-        res,
-        400,
-        "Name and price are required"
-      );
-    }
-
-    const numericPrice =
-      getNumericPrice(price);
-
-    if (numericPrice === null) {
-      return sendError(
-        res,
-        400,
-        "Price must be a valid positive number"
-      );
-    }
-
     const updatePayload = {
-      name: String(name).trim(),
-      category: category !== undefined ? category : "",
-      bio: bio !== undefined ? bio : "",
-      price: numericPrice,
-      instagram_url: instagram_url !== undefined ? instagram_url : ""
+      price: numericPrice
     };
 
+    if (name !== undefined && String(name).trim() !== "") {
+      updatePayload.name = String(name).trim();
+    }
+    if (category !== undefined) {
+      updatePayload.category = String(category).trim();
+    }
+    if (bio !== undefined) {
+      updatePayload.bio = String(bio).trim();
+    }
+    if (instagram_url !== undefined) {
+      updatePayload.instagram_url = String(instagram_url).trim();
+    }
     if (profile_image !== undefined && profile_image !== null && String(profile_image).trim() !== "") {
       updatePayload.profile_image = String(profile_image).trim();
     }
-    if (req.body.upi_id !== undefined) {
-      updatePayload.upi_id = req.body.upi_id;
-    }
+
+    console.log(`[Admin Update] Executing Supabase update on "creators" where id="${cleanId}" with fields:`, Object.keys(updatePayload));
 
     const {
       data,
@@ -442,17 +450,29 @@ app.put("/api/creators/:id", async (req, res) => {
     } = await supabase
       .from("creators")
       .update(updatePayload)
-      .eq("id", id)
+      .eq("id", cleanId)
       .select()
       .single();
 
     if (error) {
-      return sendError(
-        res,
-        500,
-        "Unable to update creator",
-        error
-      );
+      console.error(`[Admin Update] Supabase returned error:`, { code: error.code, message: error.message });
+      const statusCode = error.code === "PGRST116" ? 404 : 500;
+      const message = error.code === "PGRST116" ? "Creator not found" : `Unable to update creator: ${error.message || "Database error"}`;
+      return sendError(res, statusCode, message, error);
+    }
+
+    if (!data) {
+      console.warn(`[Admin Update] No record returned from Supabase for ID: "${cleanId}"`);
+      return sendError(res, 404, "Creator record not found");
+    }
+
+    console.log(`[Admin Update] SUCCESS: Creator "${data.name}" (${data.id}) price updated to ₹${data.price}`);
+
+    if (data && Array.isArray(memoryCreatorsCache)) {
+      const idx = memoryCreatorsCache.findIndex(c => String(c.id) === String(cleanId));
+      if (idx !== -1) {
+        memoryCreatorsCache[idx] = { ...memoryCreatorsCache[idx], ...data };
+      }
     }
 
     return res.json({
@@ -462,14 +482,15 @@ app.put("/api/creators/:id", async (req, res) => {
     });
 
   } catch (error) {
-    return sendError(
-      res,
-      500,
-      "Creator update failed",
-      error
-    );
+    console.error("[Admin Update] Exception during creator update:", error);
+    return sendError(res, 500, "Creator update failed due to server error", error);
   }
-});
+};
+
+app.put("/api/creators/:id", handleUpdateCreator);
+app.patch("/api/creators/:id", handleUpdateCreator);
+app.put("/api/creators", handleUpdateCreator);
+app.patch("/api/creators", handleUpdateCreator);
 
 
 // ======================================
@@ -499,6 +520,10 @@ app.delete("/api/creators/:id", async (req, res) => {
         "Unable to delete creator",
         error
       );
+    }
+
+    if (Array.isArray(memoryCreatorsCache)) {
+      memoryCreatorsCache = memoryCreatorsCache.filter(c => String(c.id) !== String(id));
     }
 
     return res.json({
@@ -668,10 +693,14 @@ app.post("/api/verify-payment", async (req, res) => {
           )
           .digest("hex");
 
+      const generatedBuffer = Buffer.from(generatedSignature);
+      const signatureBuffer = Buffer.from(razorpay_signature);
+
       const isValid =
+        generatedBuffer.length === signatureBuffer.length &&
         crypto.timingSafeEqual(
-          Buffer.from(generatedSignature),
-          Buffer.from(razorpay_signature)
+          generatedBuffer,
+          signatureBuffer
         );
 
       if (!isValid) {
@@ -725,6 +754,211 @@ app.post("/api/verify-payment", async (req, res) => {
     );
   }
 });
+
+
+// ======================================
+// RAZORPAY WEBHOOK ROUTE & ACCESS GRANT
+// ======================================
+
+async function grantProductAccess({ orderId, paymentId, amount, notes, email, contact }) {
+  try {
+    const store = loadAnalyticsStore();
+    const pending = (orderId && store.pending_orders && store.pending_orders[orderId]) || null;
+
+    const creatorId =
+      (notes && (notes.creatorId || notes.productId || notes.courseId || notes.creator_id)) ||
+      (pending && pending.creatorId) ||
+      null;
+
+    const creatorName =
+      (notes && (notes.creatorName || notes.productName || notes.courseName || notes.creator_name)) ||
+      (pending && pending.creatorName) ||
+      null;
+
+    const paymentAmount =
+      amount !== undefined && amount !== null
+        ? amount
+        : (pending && pending.amount) || 49;
+
+    const token = creatorId && paymentId ? generateChatToken(creatorId, paymentId) : null;
+
+    // 1. Record verified payment and grant access in the primary application store
+    recordVerifiedPayment({
+      order_id: orderId,
+      payment_id: paymentId,
+      creator_id: creatorId,
+      creator_name: creatorName,
+      amount: paymentAmount,
+      token: token,
+      status: "verified",
+      hasAccess: true,
+      access_granted: true,
+      customer_email: email || null,
+      customer_contact: contact || null,
+      timestamp: new Date().toISOString()
+    });
+
+    // 2. Update Supabase database tables if present in schema
+    if (email) {
+      try {
+        await supabase
+          .from("users")
+          .update({
+            hasAccess: true,
+            status: "active",
+            updated_at: new Date().toISOString()
+          })
+          .eq("email", email);
+      } catch (_) {}
+    }
+
+    try {
+      await supabase
+        .from("payments")
+        .upsert(
+          {
+            order_id: orderId,
+            payment_id: paymentId,
+            amount: paymentAmount,
+            status: "captured",
+            has_access: true,
+            customer_email: email || null,
+            created_at: new Date().toISOString()
+          },
+          { onConflict: "payment_id" }
+        );
+    } catch (_) {}
+
+    try {
+      if (orderId) {
+        await supabase
+          .from("orders")
+          .update({
+            status: "paid",
+            has_access: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", orderId);
+      }
+    } catch (_) {}
+
+    console.log(`[Webhook] Database updated: access granted (hasAccess: true) for order: ${orderId}, payment: ${paymentId}`);
+  } catch (err) {
+    console.error("[Webhook] Error granting product access in database:", err);
+  }
+}
+
+app.post("/api/razorpay-webhook", async (req, res) => {
+  try {
+    const signature = req.headers["x-razorpay-signature"];
+    const webhookSecret =
+      process.env.RAZORPAY_WEBHOOK_SECRET ||
+      process.env.RAZORPAY_KEY_SECRET;
+
+    if (!signature || !webhookSecret) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing webhook signature or webhook secret configuration"
+      });
+    }
+
+    const payload = Buffer.isBuffer(req.body)
+      ? req.body.toString("utf8")
+      : (req.rawBody || JSON.stringify(req.body));
+
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(payload)
+      .digest("hex");
+
+    const isAuthentic =
+      expectedSignature.length === signature.length &&
+      crypto.timingSafeEqual(
+        Buffer.from(expectedSignature),
+        Buffer.from(signature)
+      );
+
+    if (!isAuthentic) {
+      console.warn("[Webhook] Invalid Razorpay webhook signature");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook signature"
+      });
+    }
+
+    const eventData = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const eventType = eventData.event;
+
+    console.log(`[Webhook] Verified Razorpay event received: ${eventType}`);
+
+    switch (eventType) {
+      case "payment.captured": {
+        const payment = eventData.payload?.payment?.entity || {};
+        const orderId = payment.order_id || null;
+        const paymentId = payment.id;
+        const amount = payment.amount ? payment.amount / 100 : null;
+        const notes = payment.notes || {};
+        const email = payment.email || null;
+        const contact = payment.contact || null;
+
+        console.log(`[Webhook] Payment captured: ${paymentId} for amount ₹${amount || 0}`);
+
+        await grantProductAccess({
+          orderId,
+          paymentId,
+          amount,
+          notes,
+          email,
+          contact
+        });
+        break;
+      }
+      case "order.paid": {
+        const order = eventData.payload?.order?.entity || {};
+        const payment = eventData.payload?.payment?.entity || {};
+        const orderId = order.id || payment.order_id || null;
+        const paymentId = payment.id || (orderId ? `pay_${orderId}` : null);
+        const amount = order.amount ? order.amount / 100 : (payment.amount ? payment.amount / 100 : null);
+        const notes = { ...(order.notes || {}), ...(payment.notes || {}) };
+        const email = payment.email || null;
+        const contact = payment.contact || null;
+
+        console.log(`[Webhook] Order paid: ${orderId}`);
+
+        await grantProductAccess({
+          orderId,
+          paymentId,
+          amount,
+          notes,
+          email,
+          contact
+        });
+        break;
+      }
+      case "payment.failed": {
+        const payment = eventData.payload?.payment?.entity || {};
+        console.log(`[Webhook] Payment failed: ${payment.id}`);
+        logAnalyticsEvent("payment_failed", {
+          page: "checkout",
+          amount: payment.amount ? payment.amount / 100 : null,
+          details: payment.error_description || "Payment failed"
+        });
+        break;
+      }
+      default:
+        break;
+    }
+
+    return res.status(200).json({ status: "ok" });
+  } catch (error) {
+    console.error("[Webhook] Error processing webhook:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Webhook processing error"
+    });
+  }
+});
+
 
 // ======================================
 // POST-PAYMENT CHAT ACCESS & PERSISTED MESSAGES
@@ -1030,6 +1264,7 @@ function recordVerifiedPayment(paymentInfo) {
       ...paymentInfo,
       id: paymentInfo.payment_id,
       status: "verified",
+      hasAccess: true,
       created_at: paymentInfo.timestamp || new Date().toISOString()
     });
     saveAnalyticsStore(store);
@@ -1040,6 +1275,8 @@ function recordVerifiedPayment(paymentInfo) {
     if (paymentInfo.token && !existing.token) {
       existing.token = paymentInfo.token;
     }
+    existing.status = "verified";
+    existing.hasAccess = true;
     saveAnalyticsStore(store);
   }
 

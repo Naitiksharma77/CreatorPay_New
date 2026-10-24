@@ -94,6 +94,27 @@ function formatINR(val) {
     return "₹" + Number(val || 0).toLocaleString("en-IN");
 }
 
+function showToast(message, isError = false) {
+    let toast = document.getElementById("adminActionToast");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "adminActionToast";
+        toast.style.cssText = "position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.18); transition: opacity 0.25s ease, transform 0.25s ease; display: flex; align-items: center; gap: 8px;";
+        document.body.appendChild(toast);
+    }
+    toast.style.background = isError ? "#EF4444" : "#10B981";
+    toast.style.color = "#FFFFFF";
+    toast.innerHTML = (isError ? "⚠️ " : "✓ ") + escapeHTML(message);
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(10px)";
+    }, 3200);
+}
+
 // Update Topbar Date
 function updateTopbarDate() {
     if (!datePillText) return;
@@ -263,13 +284,14 @@ if (editCreatorForm) {
         const bio = document.getElementById("editCreatorBio").value.trim();
         const price = document.getElementById("editCreatorPrice").value;
         const instagram_url = document.getElementById("editCreatorInstagram").value.trim();
-        const upi_id = document.getElementById("editCreatorUpi").value.trim();
 
         // Safe existing image fallback
         const creator = allCreators.find((c) => String(c.id) === String(id));
         const existingImage = (editExistingProfileImage && editExistingProfileImage.value) || (creator && creator.profile_image) || "";
 
         try {
+            console.log(`[Admin Edit] Initiating save for creator ID: "${id}", Name: "${name}", Price: ${price}`);
+
             let finalProfileImage = existingImage;
 
             // Only upload if the user deliberately chose a new file
@@ -278,35 +300,43 @@ if (editCreatorForm) {
                 const imageFormData = new FormData();
                 imageFormData.append("profile_image", editProfileImage.files[0]);
 
-                let imageResponse = await fetch("/api/upload-creator-image", {
-                    method: "POST",
-                    body: imageFormData
-                });
-
-                if (!imageResponse.ok) {
-                    imageResponse = await fetch(`${API_URL}/api/upload-creator-image`, {
+                let imgUploaded = false;
+                try {
+                    let imageResponse = await fetch("/api/upload-creator-image", {
                         method: "POST",
                         body: imageFormData
                     });
-                }
+                    if (imageResponse.ok) {
+                        const imageResult = await imageResponse.json();
+                        if (imageResult && imageResult.success && imageResult.image_url) {
+                            finalProfileImage = imageResult.image_url;
+                            imgUploaded = true;
+                        }
+                    }
+                } catch (_) {}
 
-                const imageResult = await imageResponse.json();
-                if (!imageResponse.ok || !imageResult.success) {
-                    throw new Error(imageResult.message || "Image upload failed");
+                if (!imgUploaded) {
+                    let remoteImgRes = await fetch(`${API_URL}/api/upload-creator-image`, {
+                        method: "POST",
+                        body: imageFormData
+                    });
+                    const remoteResult = await remoteImgRes.json();
+                    if (!remoteImgRes.ok || !remoteResult.success) {
+                        throw new Error(remoteResult.message || "Image upload failed");
+                    }
+                    finalProfileImage = remoteResult.image_url;
                 }
-
-                finalProfileImage = imageResult.image_url;
             }
 
             if (submitBtn) submitBtn.textContent = "Saving partner...";
 
             const updatedCreatorData = {
+                id,
                 name,
                 category,
                 bio,
                 price: Number(price),
-                instagram_url,
-                upi_id
+                instagram_url
             };
 
             // Explicitly pass profile_image to preserve it completely
@@ -314,24 +344,53 @@ if (editCreatorForm) {
                 updatedCreatorData.profile_image = finalProfileImage;
             }
 
-            let response = await fetch(`/api/creators/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedCreatorData)
-            });
+            let result = null;
 
-            if (!response.ok) {
-                response = await fetch(`${API_URL}/api/creators/${id}`, {
+            // 1. First attempt same-origin route
+            try {
+                const response = await fetch(`/api/creators/${id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(updatedCreatorData)
                 });
+                console.log(`[Admin Edit] Relative PUT /api/creators/${id} status: ${response.status}`);
+                if (response.ok) {
+                    result = await response.json();
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    console.warn("[Admin Edit] Relative PUT returned non-ok:", response.status, errData);
+                    if (response.status === 400 || response.status === 404) {
+                        throw new Error(errData.message || `Server returned ${response.status}`);
+                    }
+                }
+            } catch (localErr) {
+                console.warn("[Admin Edit] Relative update error:", localErr.message);
+                if (localErr.message && localErr.message.includes("Price")) {
+                    throw localErr;
+                }
             }
 
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Unable to update creator");
+            // 2. Fallback to API_URL if relative route did not yield successful result
+            if (!result || !result.success) {
+                console.log(`[Admin Edit] Attempting fallback to ${API_URL}/api/creators/${id}`);
+                const remoteResponse = await fetch(`${API_URL}/api/creators/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedCreatorData)
+                });
+                console.log(`[Admin Edit] Remote PUT status: ${remoteResponse.status}`);
+                const remoteData = await remoteResponse.json();
+                if (!remoteResponse.ok || !remoteData.success) {
+                    throw new Error(remoteData.message || `Update failed with status ${remoteResponse.status}`);
+                }
+                result = remoteData;
             }
+
+            if (!result || !result.success) {
+                throw new Error((result && result.message) || "Unable to update creator");
+            }
+
+            console.log("[Admin Edit] Success response verified from database:", result.creator);
 
             // Immediately update local array
             const idx = allCreators.findIndex((c) => String(c.id) === String(id));
@@ -339,20 +398,32 @@ if (editCreatorForm) {
                 allCreators[idx] = {
                     ...allCreators[idx],
                     ...updatedCreatorData,
+                    ...(result.creator || {}),
+                    price: result.creator && result.creator.price !== undefined ? Number(result.creator.price) : Number(price),
                     profile_image: finalProfileImage || allCreators[idx].profile_image
                 };
             }
 
+            // Immediately persist updated list to localStorage cache so refresh or background load never reverts
+            try {
+                localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
+            } catch (_) {}
+
             editCreatorModal.classList.remove("active");
             filterAndDisplayCreators();
-            renderCategoryDonut(allCreators);
+            try {
+                renderCategoryDonut(allCreators);
+            } catch (_) {}
 
-            // Background reload to keep in sync
+            showToast(`Partner "${name}" updated successfully (₹${price})!`);
+
+            // Background reload from DB to ensure complete alignment
             loadCreators();
 
         } catch (error) {
-            console.error("Update creator error:", error);
-            alert(error.message || "Unable to update creator.");
+            console.error("[Admin Edit] Update creator error:", error);
+            showToast(error.message || "Unable to update creator.", true);
+            alert("Save failed: " + (error.message || "Unable to update creator."));
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -416,7 +487,6 @@ if (creatorForm) {
                 bio,
                 price: Number(price),
                 instagram_url,
-                upi_id,
                 profile_image: uploadedImageUrl
             };
 
@@ -439,12 +509,25 @@ if (creatorForm) {
                 throw new Error(data.message || "Failed to add creator");
             }
 
+            if (data.creator) {
+                allCreators.unshift(data.creator);
+                try {
+                    localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
+                } catch (_) {}
+                filterAndDisplayCreators();
+                try {
+                    renderCategoryDonut(allCreators);
+                } catch (_) {}
+            }
+
             creatorForm.reset();
             creatorModal.classList.remove("active");
+            showToast(`Partner "${name}" added successfully!`);
             loadCreators();
 
         } catch (err) {
             console.error("Add creator error:", err);
+            showToast(err.message || "Failed to add partner", true);
             alert(err.message || "Failed to add partner");
         } finally {
             if (submitBtn) {
@@ -478,11 +561,18 @@ window.deleteCreator = async function (id) {
         }
 
         allCreators = allCreators.filter((c) => String(c.id) !== String(id));
+        try {
+            localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
+        } catch (_) {}
         filterAndDisplayCreators();
-        renderCategoryDonut(allCreators);
+        try {
+            renderCategoryDonut(allCreators);
+        } catch (_) {}
+        showToast(`Partner "${creatorName}" removed.`);
 
     } catch (err) {
         console.error("Delete error:", err);
+        showToast(err.message || "Unable to remove partner.", true);
         alert(err.message || "Unable to remove partner.");
     }
 };

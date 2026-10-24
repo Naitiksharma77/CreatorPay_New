@@ -18,6 +18,11 @@
       "userId": "v_mvb2b0vn_ufptm4",
       "date": "2026-10-17",
       "timestamp": "2026-10-17T00:18:30.230Z"
+    },
+    {
+      "userId": "v_mvb2b0vn_ufptm4",
+      "date": "2026-10-24",
+      "timestamp": "2026-10-24T13:41:15.063Z"
     }
   ],
   "active_sessions": {
@@ -30,9 +35,23 @@
     },
     "v_anon": {
       "visitorId": "v_anon",
-      "lastSeen": "2026-10-17T00:48:48.202Z",
+      "lastSeen": "2026-10-24T14:39:53.902Z",
       "page": "friend_profile.html",
       "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "source": "Direct"
+    },
+    "s_mvmf6rrq_ajv8i4": {
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "lastSeen": "2026-10-24T13:57:49.868Z",
+      "page": "creator_home.html",
+      "creatorId": null,
+      "source": "Direct"
+    },
+    "s_mvmhu90d_i8l742": {
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "lastSeen": "2026-10-24T14:39:37.801Z",
+      "page": "creator_home.html",
+      "creatorId": null,
       "source": "Direct"
     }
   },
@@ -100,6 +119,86 @@
       "source": "Direct",
       "referrer": "",
       "timestamp": "2026-10-17T00:48:48.202Z"
+    },
+    {
+      "id": "evt_1792849486613_c72b33",
+      "type": "payment_success",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
+      "creatorName": "Shalini Yadav",
+      "buttonName": null,
+      "amount": 49,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-24T13:44:46.613Z"
+    },
+    {
+      "id": "evt_1792850434010_f17186",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "buttonName": null,
+      "amount": 89,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-24T14:00:34.010Z"
+    },
+    {
+      "id": "evt_1792852228707_85195e",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "buttonName": null,
+      "amount": 55,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-24T14:30:28.707Z"
+    },
+    {
+      "id": "evt_1792852270727_3b49bb",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "buttonName": null,
+      "amount": 55,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-24T14:31:10.728Z"
+    },
+    {
+      "id": "evt_1792852793902_375f2d",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "buttonName": null,
+      "amount": 90,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-24T14:39:53.902Z"
     }
   ],
   "pending_orders": {
@@ -120,6 +219,30 @@
       "creatorName": "Zoya Khan",
       "amount": 8,
       "created_at": "2026-10-17T00:48:48.201Z"
+    },
+    "order_TrlqVdyP8Q1rwn": {
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "amount": 89,
+      "created_at": "2026-10-24T14:00:34.009Z"
+    },
+    "order_TrmM6dgfXSallT": {
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "amount": 55,
+      "created_at": "2026-10-24T14:30:28.707Z"
+    },
+    "order_TrmMqW9alvLZWh": {
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "amount": 55,
+      "created_at": "2026-10-24T14:31:10.727Z"
+    },
+    "order_TrmW3aKTlBKpq6": {
+      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorName": "Zoya Khan",
+      "amount": 90,
+      "created_at": "2026-10-24T14:39:53.902Z"
     }
   },
   "messages": [
