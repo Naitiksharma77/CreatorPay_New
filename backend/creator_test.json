@@ -3,6 +3,7 @@
   "category": "Fashion & Lifestyle",
   "bio": "This is a test creator profile.",
   "price": 999,
-  "instagram_url": "https://instagram.com/testcreator",
+  "creator_age": "24",
+  "creator_location": "Delhi, India",
   "profile_image": ""
 }

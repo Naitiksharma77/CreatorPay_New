@@ -308,6 +308,8 @@ function displayCreators(creators) {
             const isOnline = isCreatorOnline(creator);
             const isSpecific99Card = (String(creator.id) === "3faaf9a9-c333-4d78-b481-7cb2417aa2da") || (index === 1 && rawPrice === 99);
             const priceSub = isSpecific99Card ? "/ one time" : "/ connection";
+            const age = creator.creator_age || creator.age;
+            const location = creator.creator_location || creator.location;
 
     return `
                 <article class="person-card social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
@@ -335,6 +337,14 @@ function displayCreators(creators) {
                                 ${getCategoryIcon(category)}
                                 <span>${escapeHTML(category)}</span>
                             </div>
+
+                            ${(age || location) ? `
+                            <div class="card-meta-row" style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #817783; margin-top: 3px; font-weight: 500;">
+                                ${age ? `<span class="meta-age" style="display: inline-flex; align-items: center; gap: 3px;"><strong style="color: #25202A; font-weight: 650;">${escapeHTML(age)}</strong> yrs</span>` : ""}
+                                ${(age && location) ? `<span style="opacity: 0.4;">•</span>` : ""}
+                                ${location ? `<span class="meta-location" style="display: inline-flex; align-items: center; gap: 3px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><svg width="10.5" height="10.5" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${escapeHTML(location)}</span>` : ""}
+                            </div>
+                            ` : ""}
                         </div>
 
                         <button

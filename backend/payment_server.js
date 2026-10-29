@@ -184,7 +184,8 @@ app.get("/api/creators", async (req, res) => {
         category: "Social Science Student",
         bio: "19 years old student preparing for her 20s👻🎀",
         price: 29,
-        instagram_url: "",
+        creator_age: "19",
+        creator_location: "Delhi, India",
         profile_image: "https://dsmwqjgekxroorgxgfqh.supabase.co/storage/v1/object/public/creator-images/creator_1791988035435_d8433a08.jpg",
         created_at: new Date().toISOString()
       }
@@ -304,7 +305,10 @@ app.post("/api/creators", async (req, res) => {
       category,
       bio,
       price,
-      instagram_url,
+      creator_age,
+      age,
+      creator_location,
+      location,
       profile_image
     } = req.body;
 
@@ -333,21 +337,25 @@ app.post("/api/creators", async (req, res) => {
       );
     }
 
+    const finalAge = creator_age !== undefined ? creator_age : (age !== undefined ? age : "");
+    const finalLocation = creator_location !== undefined ? creator_location : (location !== undefined ? location : "");
+
+    const insertPayload = {
+      name: String(name).trim(),
+      category: category ? String(category).trim() : "",
+      bio: bio ? String(bio).trim() : "",
+      price: numericPrice,
+      creator_age: finalAge !== null && finalAge !== "" ? String(finalAge).trim() : "",
+      creator_location: finalLocation !== null && finalLocation !== "" ? String(finalLocation).trim() : "",
+      profile_image: profile_image || ""
+    };
+
     const {
       data,
       error
     } = await supabase
       .from("creators")
-      .insert([
-        {
-          name: String(name).trim(),
-          category: category || "",
-          bio: bio || "",
-          price: numericPrice,
-          instagram_url: instagram_url || "",
-          profile_image: profile_image || ""
-        }
-      ])
+      .insert([insertPayload])
       .select()
       .single();
 
@@ -397,7 +405,10 @@ const handleUpdateCreator = async (req, res) => {
     bio,
     price,
     amount,
-    instagram_url,
+    creator_age,
+    age,
+    creator_location,
+    location,
     profile_image
   } = req.body;
 
@@ -435,8 +446,13 @@ const handleUpdateCreator = async (req, res) => {
     if (bio !== undefined) {
       updatePayload.bio = String(bio).trim();
     }
-    if (instagram_url !== undefined) {
-      updatePayload.instagram_url = String(instagram_url).trim();
+    if (creator_age !== undefined || age !== undefined) {
+      const val = creator_age !== undefined ? creator_age : age;
+      updatePayload.creator_age = val !== null && val !== "" ? String(val).trim() : "";
+    }
+    if (creator_location !== undefined || location !== undefined) {
+      const val = creator_location !== undefined ? creator_location : location;
+      updatePayload.creator_location = val !== null && val !== "" ? String(val).trim() : "";
     }
     if (profile_image !== undefined && profile_image !== null && String(profile_image).trim() !== "") {
       updatePayload.profile_image = String(profile_image).trim();
@@ -1023,7 +1039,7 @@ app.post("/api/chat/verify-access", async (req, res) => {
     try {
       const { data, error } = await supabase
         .from("creators")
-        .select("id, name, category, profile_image, bio, price")
+        .select("id, name, category, profile_image, bio, price, creator_age, creator_location")
         .eq("id", creatorId)
         .single();
       if (!error && data) {

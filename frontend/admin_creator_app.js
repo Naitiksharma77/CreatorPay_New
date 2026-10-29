@@ -177,8 +177,10 @@ window.openEditModal = function (id) {
     document.getElementById("editCreatorCategory").value = creator.category || "";
     document.getElementById("editCreatorBio").value = creator.bio || "";
     document.getElementById("editCreatorPrice").value = creator.price || "";
-    document.getElementById("editCreatorInstagram").value = creator.instagram_url || "";
-    document.getElementById("editCreatorUpi").value = creator.upi_id || "";
+    const editAgeEl = document.getElementById("editCreatorAge");
+    if (editAgeEl) editAgeEl.value = creator.creator_age || creator.age || "";
+    const editLocEl = document.getElementById("editCreatorLocation");
+    if (editLocEl) editLocEl.value = creator.creator_location || creator.location || "";
 
     // Save existing photo URL so it is NEVER lost
     const existingPhoto = creator.profile_image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
@@ -283,14 +285,17 @@ if (editCreatorForm) {
         const category = document.getElementById("editCreatorCategory").value.trim();
         const bio = document.getElementById("editCreatorBio").value.trim();
         const price = document.getElementById("editCreatorPrice").value;
-        const instagram_url = document.getElementById("editCreatorInstagram").value.trim();
+        const ageEl = document.getElementById("editCreatorAge");
+        const locEl = document.getElementById("editCreatorLocation");
+        const creator_age = ageEl ? ageEl.value.trim() : "";
+        const creator_location = locEl ? locEl.value.trim() : "";
 
         // Safe existing image fallback
         const creator = allCreators.find((c) => String(c.id) === String(id));
         const existingImage = (editExistingProfileImage && editExistingProfileImage.value) || (creator && creator.profile_image) || "";
 
         try {
-            console.log(`[Admin Edit] Initiating save for creator ID: "${id}", Name: "${name}", Price: ${price}`);
+            console.log(`[Admin Edit] Initiating save for creator ID: "${id}", Name: "${name}", Price: ${price}, Age: "${creator_age}", Loc: "${creator_location}"`);
 
             let finalProfileImage = existingImage;
 
@@ -336,7 +341,8 @@ if (editCreatorForm) {
                 category,
                 bio,
                 price: Number(price),
-                instagram_url
+                creator_age,
+                creator_location
             };
 
             // Explicitly pass profile_image to preserve it completely
@@ -451,8 +457,10 @@ if (creatorForm) {
         const category = document.getElementById("creatorCategory").value.trim();
         const bio = document.getElementById("creatorBio").value.trim();
         const price = document.getElementById("creatorPrice").value;
-        const instagram_url = document.getElementById("creatorInstagram").value.trim();
-        const upi_id = document.getElementById("creatorUpi").value.trim();
+        const ageEl = document.getElementById("creatorAge");
+        const locEl = document.getElementById("creatorLocation");
+        const creator_age = ageEl ? ageEl.value.trim() : "";
+        const creator_location = locEl ? locEl.value.trim() : "";
         const imageInput = document.getElementById("creatorImage");
 
         try {
@@ -486,7 +494,8 @@ if (creatorForm) {
                 category,
                 bio,
                 price: Number(price),
-                instagram_url,
+                creator_age,
+                creator_location,
                 profile_image: uploadedImageUrl
             };
 
@@ -719,7 +728,12 @@ function filterAndDisplayCreators() {
             const category = creator.category || "General";
             const bio = creator.bio || "No introduction provided.";
             const price = creator.price || 49;
-            const subText = creator.instagram_url ? `@${creator.instagram_url.split("/").filter(Boolean).pop() || "partner"}` : `ID: #${String(creator.id).substring(0, 8)}`;
+            const ageVal = creator.creator_age || creator.age;
+            const locVal = creator.creator_location || creator.location;
+            const metaParts = [];
+            if (ageVal) metaParts.push(`${ageVal} yrs`);
+            if (locVal) metaParts.push(locVal);
+            const subText = metaParts.length > 0 ? metaParts.join(" • ") : `ID: #${String(creator.id).substring(0, 8)}`;
 
             return `
                 <tr data-id="${escapeHTML(creator.id)}">

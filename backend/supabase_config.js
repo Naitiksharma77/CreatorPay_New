@@ -9,7 +9,8 @@ const seedCreators = [
     category: "Lifestyle & Content",
     bio: "Love good conversations, new experiences and meeting interesting people.",
     price: 49,
-    instagram_url: "https://instagram.com/aayushi",
+    creator_age: "23",
+    creator_location: "Delhi, India",
     profile_image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
     created_at: new Date(Date.now() - 86400000 * 5).toISOString()
   },
@@ -19,7 +20,8 @@ const seedCreators = [
     category: "UI/UX & Product Design",
     bio: "Lead Product Designer. Great conversations on design, tech, and creative ideas.",
     price: 99,
-    instagram_url: "https://instagram.com/priyadesigns",
+    creator_age: "26",
+    creator_location: "Bengaluru, India",
     profile_image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&auto=format&fit=crop&q=80",
     created_at: new Date(Date.now() - 86400000 * 4).toISOString()
   },
@@ -29,7 +31,8 @@ const seedCreators = [
     category: "Startup Growth & Tech",
     bio: "Tech enthusiast and builder. Passionate about AI, podcasts, and deep conversations.",
     price: 149,
-    instagram_url: "https://instagram.com/rohan_growth",
+    creator_age: "28",
+    creator_location: "Hyderabad, India",
     profile_image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80",
     created_at: new Date(Date.now() - 86400000 * 3).toISOString()
   },
@@ -39,7 +42,8 @@ const seedCreators = [
     category: "Conversations & Mentorship",
     bio: "Warm, empathetic listener. Looking to connect, share life stories, and guide people.",
     price: 49,
-    instagram_url: "https://instagram.com/ananya_career",
+    creator_age: "24",
+    creator_location: "Kolkata, India",
     profile_image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80",
     created_at: new Date(Date.now() - 86400000 * 2).toISOString()
   },
@@ -49,7 +53,8 @@ const seedCreators = [
     category: "Tech & Coding",
     bio: "Software developer into indie hacking, coffee, gaming, and curious minds.",
     price: 99,
-    instagram_url: "https://instagram.com/kabir_codes",
+    creator_age: "27",
+    creator_location: "Pune, India",
     profile_image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=80",
     created_at: new Date(Date.now() - 86400000 * 1).toISOString()
   },
@@ -59,7 +64,8 @@ const seedCreators = [
     category: "Lifestyle & Travel",
     bio: "Travel lover, foodie, and storyteller. Always excited to meet new friends.",
     price: 49,
-    instagram_url: "https://instagram.com/snehacreates",
+    creator_age: "25",
+    creator_location: "Mumbai, India",
     profile_image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=80",
     created_at: new Date().toISOString()
   }

@@ -787,11 +787,16 @@
             creatorName.textContent = name;
             creatorAvatar.src = avatar;
             creatorAvatar.alt = name;
+            const metaInfo = [
+                creator.creator_age || creator.age ? `${creator.creator_age || creator.age} yrs` : "",
+                creator.creator_location || creator.location || ""
+            ].filter(Boolean).join(" · ");
+
             chatSubstatus.innerHTML = `
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span>Active Connection · Private</span>
+                <span>Active Connection · Private${metaInfo ? ` · ${escapeHTML(metaInfo)}` : ""}</span>
             `;
 
             document.title = `Chat with ${name} | Meet You Partner`;

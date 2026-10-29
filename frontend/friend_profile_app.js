@@ -232,6 +232,20 @@ function displayProfile(creator) {
                             </svg>
                             <span>${escapeHTML(category)}</span>
                         </div>
+                        ${(creator.creator_age || creator.age) ? `
+                        <div class="profile-interest-pill" style="background: rgba(236, 72, 153, 0.08); color: #BE185D;">
+                            <span>${escapeHTML(creator.creator_age || creator.age)} years old</span>
+                        </div>
+                        ` : ""}
+                        ${(creator.creator_location || creator.location) ? `
+                        <div class="profile-interest-pill" style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <span>${escapeHTML(creator.creator_location || creator.location)}</span>
+                        </div>
+                        ` : ""}
                     </div>
                 </div>
             </div>
