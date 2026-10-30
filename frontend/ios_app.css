@@ -1292,3 +1292,51 @@ a:focus-visible {
         scroll-behavior: auto !important;
     }
 }
+
+
+/* =========================================================
+   MOBILE RESPONSIVE ALIGNMENT FIX
+   Preserve existing design and functionality
+========================================================= */
+
+@media (max-width: 679px) {
+
+    .app-viewport {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        min-width: 0;
+    }
+
+    .people-feed {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .roseia-card,
+    .social-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .card-image-wrap {
+        width: 100%;
+    }
+
+    .card-content-wrap {
+        min-width: 0;
+    }
+
+    .card-actions-row {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .btn-view-profile,
+    .btn-book-date {
+        min-width: 0;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
