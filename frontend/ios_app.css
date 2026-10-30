@@ -406,51 +406,87 @@ a:focus-visible {
 
 
 /* =========================================================
-   DISCOVER TAB: SEARCH & FILTER BAR
+   SEARCH & FILTERS TAB (IMAGE_F4877EA7.PNG SPECIFICATION)
 ========================================================= */
+
+.search-page-header {
+    padding: 6px 0 16px 0;
+}
+
+.search-page-title {
+    font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #29232A;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.search-page-subtitle {
+    font-size: 14px;
+    color: #6B7280;
+    margin-top: 4px;
+    line-height: 1.45;
+}
+
+.search-filter-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid #F6EAF0;
+    box-shadow: 0 4px 24px rgba(217, 59, 120, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
+    margin-bottom: 8px;
+}
+
+@media (max-width: 679px) {
+    .search-filter-card {
+        padding: 18px 14px;
+        border-radius: 20px;
+    }
+}
 
 .search-bar-wrap {
     position: relative;
     display: flex;
     align-items: center;
     width: 100%;
-    margin-bottom: 12px;
 }
 
 .search-input {
     width: 100%;
-    height: 42px;
-    padding: 0 34px 0 38px;
-    border-radius: 14px;
-    background: #ffffff;
+    height: 48px;
+    padding: 0 38px 0 44px;
+    border-radius: 16px;
+    background: #FFF8FA;
     border: 1px solid #F6DCE8;
     font-family: inherit;
-    font-size: 13.5px;
-    color: var(--fc-dark);
+    font-size: 14px;
+    color: #29232A;
     outline: none;
     transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .search-input::placeholder {
-    color: #817783;
+    color: #8E8A93;
 }
 
 .search-input:focus {
-    background: #ffffff;
-    border-color: #EC4899;
-    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.12);
+    background: #FFFFFF;
+    border-color: #D93B78;
+    box-shadow: 0 0 0 3px rgba(217, 59, 120, 0.12);
 }
 
 .search-icon {
     position: absolute;
-    left: 13px;
+    left: 14px;
     pointer-events: none;
-    color: #817783;
+    color: #D93B78;
 }
 
 .clear-search-btn {
     position: absolute;
-    right: 9px;
+    right: 12px;
     width: 26px;
     height: 26px;
     border-radius: 50%;
@@ -458,8 +494,9 @@ a:focus-visible {
     align-items: center;
     justify-content: center;
     color: #817783;
-    background: #FDF2F7;
+    background: #FFF0F5;
     border: 1px solid #F6DCE8;
+    cursor: pointer;
     transition: transform 0.15s ease;
 }
 
@@ -467,51 +504,158 @@ a:focus-visible {
     transform: scale(0.9);
 }
 
-/* Category Filter Chips */
-.filter-chips-row {
+/* 3-Column Inputs: City, Available Date, Sort By */
+.filter-three-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 18px;
+}
+
+@media (max-width: 768px) {
+    .filter-three-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+.filter-field-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filter-field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    letter-spacing: -0.1px;
+}
+
+.filter-select-wrap,
+.filter-date-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.filter-field-select,
+.filter-field-date {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #F0D9E5;
+    background: #FFFFFF;
+    padding: 0 32px 0 14px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: #29232A;
+    font-weight: 500;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.filter-field-date {
+    padding-right: 14px;
+}
+
+.filter-field-select:focus,
+.filter-field-date:focus {
+    border-color: #D93B78;
+    box-shadow: 0 0 0 3px rgba(217, 59, 120, 0.1);
+}
+
+.filter-select-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #817783;
+}
+
+/* Slider Section */
+.filter-slider-wrap {
+    margin-top: 20px;
+}
+
+.filter-slider-header {
     display: flex;
     align-items: center;
-    gap: 7px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    margin-bottom: 14px;
-    scrollbar-width: none;
+    justify-content: space-between;
+    margin-bottom: 8px;
 }
 
-.filter-chips-row::-webkit-scrollbar {
-    display: none;
+.filter-slider-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6B7280;
 }
 
-.filter-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4.5px;
-    padding: 6px 13px;
-    border-radius: 999px;
-    background: #ffffff;
-    border: 1px solid #F6DCE8;
-    font-size: 12px;
+.filter-slider-val {
+    font-size: 13px;
     font-weight: 650;
-    color: #817783;
-    white-space: nowrap;
-    transition: all 0.16s ease;
+    color: #29232A;
+}
+
+.filter-range-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #FCE7F3;
+    outline: none;
+    accent-color: #D93B78;
+    cursor: pointer;
+}
+
+/* Interests Section */
+.filter-interests-section {
+    margin-top: 18px;
+}
+
+.filter-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.interest-tag-btn {
+    padding: 7px 15px;
+    border-radius: 999px;
+    background: #FFF8FA;
+    border: 1px solid #F6DCE8;
+    color: #5A525E;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 550;
+    cursor: pointer;
+    transition: all 0.15s ease;
     user-select: none;
 }
 
-.filter-chip:hover {
-    color: #25202A;
+.interest-tag-btn:hover {
+    background: #FFF0F5;
     border-color: #F472B6;
+    color: #D93B78;
 }
 
-.filter-chip.active {
-    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
-    color: #ffffff;
-    border-color: #EC4899;
-    box-shadow: 0 3px 10px rgba(236, 72, 153, 0.28);
+.interest-tag-btn.active {
+    background: #D93B78;
+    color: #FFFFFF;
+    border-color: #D93B78;
+    box-shadow: 0 2px 8px rgba(217, 59, 120, 0.28);
 }
 
-.filter-chip:active {
-    transform: scale(0.95);
+.results-meta-row {
+    padding: 14px 2px 6px;
+}
+
+.results-count-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6B7280;
 }
 
 
@@ -1366,12 +1510,12 @@ a:focus-visible {
     padding-right: 16px;
 }
 
-/* Give the main content a small, consistent side margin */
+/* Give the main content a consistent 16px side margin matching mobile bezel */
 .app-viewport {
     width: 100%;
     max-width: 100%;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 16px;
+    padding-right: 16px;
     margin-left: 0;
     margin-right: 0;
 }

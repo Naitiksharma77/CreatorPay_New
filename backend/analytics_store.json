@@ -58,7 +58,7 @@
     },
     "v_anon": {
       "visitorId": "v_anon",
-      "lastSeen": "2026-10-30T03:00:41.923Z",
+      "lastSeen": "2026-10-30T15:12:47.977Z",
       "page": "friend_profile.html",
       "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
       "source": "Direct"
@@ -87,6 +87,13 @@
     "s_mvud7540_bb86m3": {
       "visitorId": "v_mvb2b0vn_ufptm4",
       "lastSeen": "2026-10-30T02:43:46.199Z",
+      "page": "creator_home.html",
+      "creatorId": null,
+      "source": "Direct"
+    },
+    "s_mvv3jk9o_qcri1o": {
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "lastSeen": "2026-10-30T15:12:45.570Z",
       "page": "creator_home.html",
       "creatorId": null,
       "source": "Direct"
@@ -316,6 +323,22 @@
       "source": "Direct",
       "referrer": "",
       "timestamp": "2026-10-30T03:00:41.923Z"
+    },
+    {
+      "id": "evt_1793373167977_942b1c",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "buttonName": null,
+      "amount": 58,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-30T15:12:47.977Z"
     }
   ],
   "pending_orders": {
@@ -408,6 +431,20 @@
       "timeSlot": "04:30 PM",
       "userNote": "Coffee & conversation",
       "created_at": "2026-10-30T03:00:41.922Z"
+    },
+    "order_TuAHXAuDojNoue": {
+      "type": "date_booking",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "basePrice": 49,
+      "platformFee": 5,
+      "tax": 4,
+      "amount": 58,
+      "totalPayable": 58,
+      "bookingDate": "2026-10-31",
+      "timeSlot": "07:00 PM",
+      "userNote": "",
+      "created_at": "2026-10-30T15:12:47.977Z"
     }
   },
   "messages": [

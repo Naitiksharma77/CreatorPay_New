@@ -1,0 +1,658 @@
+/* =========================================================
+   ROSÉIA — 4-STEP BOOKING WIZARD & MODAL
+   Matches reference images:
+   - Step 1: image_230f091a.png ("Plan Something Beautiful")
+   - Step 2: image_cee10c3b.png ("What Time Works Best?")
+   - Step 3: image_d21b3975.png ("Review Your Date")
+   - Step 4: Razorpay Payment & Confirmation
+========================================================= */
+
+.roseia-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #FFF4F7;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top, 16px) 16px calc(24px + env(safe-area-inset-bottom, 16px)) 16px;
+    animation: roseiaFadeIn 0.22s ease-out;
+}
+
+@keyframes roseiaFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.roseia-modal-shell {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* =========================================================
+   TOP NAV BAR (Back, Step X of 4, Cancel)
+========================================================= */
+
+.roseia-wizard-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 20px 0;
+    width: 100%;
+}
+
+.wizard-back-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #29232A;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+    padding: 0;
+}
+
+.wizard-back-icon-btn:hover {
+    background: rgba(217, 59, 120, 0.08);
+}
+
+.wizard-back-icon-btn:active {
+    transform: scale(0.92);
+}
+
+.wizard-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.wizard-step-label {
+    font-size: 13.5px;
+    font-weight: 650;
+    color: #D93B78;
+    letter-spacing: -0.2px;
+}
+
+.wizard-step-bars {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wizard-step-bar {
+    width: 22px;
+    height: 4px;
+    border-radius: 2px;
+    background: #FCE7F3;
+    transition: background 0.25s ease;
+}
+
+.wizard-step-bar.active {
+    background: #D93B78;
+}
+
+.wizard-cancel-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #817783;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: color 0.15s ease;
+}
+
+.wizard-cancel-link:hover {
+    color: #D93B78;
+}
+
+/* =========================================================
+   HEADINGS (Playfair Display)
+========================================================= */
+
+.wizard-heading-wrap {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.wizard-page-title {
+    font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+    font-size: clamp(26px, 5.5vw, 32px);
+    font-weight: 700;
+    color: #29232A;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.wizard-page-sub {
+    font-size: 14px;
+    color: #817783;
+    margin-top: 6px;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   WHITE CONTAINER CARDS
+========================================================= */
+
+.roseia-wizard-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: 0 4px 24px rgba(217, 59, 120, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02);
+    border: 1px solid #F8E6EE;
+    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .roseia-wizard-card {
+        padding: 18px 16px;
+        border-radius: 20px;
+    }
+}
+
+/* =========================================================
+   STEP 1: CALENDAR (Plan Something Beautiful)
+========================================================= */
+
+.cal-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 0 4px;
+}
+
+.cal-month-title {
+    font-size: 16px;
+    font-weight: 650;
+    color: #29232A;
+    letter-spacing: -0.2px;
+}
+
+.cal-nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid #F0D9E5;
+    color: #817783;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cal-nav-btn:hover {
+    background: #FFF0F5;
+    color: #D93B78;
+    border-color: #D93B78;
+}
+
+.cal-weekdays-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #8E8A93;
+    margin-bottom: 12px;
+}
+
+.cal-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.cal-day-cell {
+    aspect-ratio: 1;
+    min-height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: #29232A;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    user-select: none;
+}
+
+/* Unavailable / Past Days */
+.cal-day-cell.unavailable {
+    color: #BDB4BF;
+    text-decoration: line-through;
+    cursor: not-allowed;
+    background: transparent;
+    pointer-events: none;
+}
+
+/* Available Days */
+.cal-day-cell.available {
+    background: #FFF0F5;
+    color: #29232A;
+    font-weight: 600;
+}
+
+.cal-day-cell.available:hover {
+    background: #FCE7F3;
+    transform: translateY(-1px);
+}
+
+/* Selected Day */
+.cal-day-cell.selected {
+    background: #D93B78 !important;
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(217, 59, 120, 0.35);
+}
+
+.cal-day-subtext {
+    font-size: 9.5px;
+    font-weight: 600;
+    margin-top: 1px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Status Legend */
+.cal-legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #FAF0F4;
+    font-size: 12px;
+    color: #817783;
+}
+
+.cal-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.available {
+    background: #FCE7F3;
+    border: 1px solid #F472B6;
+}
+
+.legend-dot.selected {
+    background: #D93B78;
+}
+
+.legend-dot.unavailable {
+    background: transparent;
+    border: 1.5px solid #CBD5E1;
+}
+
+/* Bottom Preview Bar (Step 1) */
+.cal-bottom-preview-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    box-shadow: 0 4px 20px rgba(217, 59, 120, 0.05);
+    border: 1px solid #F8E6EE;
+    width: 100%;
+}
+
+.cal-preview-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cal-preview-label {
+    font-size: 12px;
+    color: #817783;
+    font-weight: 450;
+}
+
+.cal-preview-date {
+    font-size: 16px;
+    font-weight: 700;
+    color: #29232A;
+    letter-spacing: -0.2px;
+}
+
+.cal-choose-time-btn {
+    background: #D93B78;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 14px;
+    padding: 13px 24px;
+    font-size: 14.5px;
+    font-weight: 650;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(217, 59, 120, 0.32);
+    transition: transform 0.15s ease, filter 0.15s ease;
+    white-space: nowrap;
+}
+
+.cal-choose-time-btn:hover {
+    filter: brightness(1.05);
+}
+
+.cal-choose-time-btn:active {
+    transform: scale(0.97);
+}
+
+.cal-choose-time-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* =========================================================
+   STEP 2: TIME SLOTS & NOTE (What Time Works Best?)
+========================================================= */
+
+.wizard-timezone-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #817783;
+    margin-bottom: 16px;
+}
+
+.wizard-timezone-notice svg {
+    color: #D93B78;
+}
+
+.wizard-time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 440px) {
+    .wizard-time-slots-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.wizard-time-pill {
+    padding: 14px 10px;
+    border-radius: 14px;
+    background: #FFF4F7;
+    border: 1px solid transparent;
+    color: #29232A;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.16s ease;
+}
+
+.wizard-time-pill:hover {
+    background: #FCE7F3;
+}
+
+.wizard-time-pill.selected {
+    background: #D93B78 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(217, 59, 120, 0.3);
+}
+
+.wizard-card-divider {
+    height: 1px;
+    background: #F8E6EE;
+    margin: 20px 0;
+    width: 100%;
+}
+
+.wizard-note-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 8px;
+}
+
+.wizard-note-textarea {
+    width: 100%;
+    min-height: 84px;
+    border-radius: 14px;
+    background: #FFF8FA;
+    border: 1px solid #F6DCE8;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: #29232A;
+    resize: none;
+    outline: none;
+    transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.wizard-note-textarea:focus {
+    border-color: #D93B78;
+    background: #FFFFFF;
+}
+
+.wizard-note-textarea::placeholder {
+    color: #A39BA5;
+}
+
+/* Full-width Pink Button */
+.wizard-full-pink-btn {
+    width: 100%;
+    height: 52px;
+    border-radius: 16px;
+    background: #D93B78;
+    color: #FFFFFF;
+    font-size: 15.5px;
+    font-weight: 650;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(217, 59, 120, 0.35);
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.wizard-full-pink-btn:hover {
+    filter: brightness(1.05);
+}
+
+.wizard-full-pink-btn:active {
+    transform: scale(0.98);
+}
+
+/* =========================================================
+   STEP 3: REVIEW YOUR DATE & TRANSPARENT PRICING
+========================================================= */
+
+.review-creator-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #F8E6EE;
+    margin-bottom: 18px;
+}
+
+.review-creator-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #FCE7F3;
+    background: #FFF0F5;
+}
+
+.review-creator-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.review-creator-name {
+    font-size: 18px;
+    font-weight: 750;
+    color: #29232A;
+    letter-spacing: -0.3px;
+}
+
+.review-creator-loc {
+    font-size: 13px;
+    color: #817783;
+}
+
+.review-details-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.review-detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: #6B7280;
+}
+
+.review-detail-val {
+    font-weight: 650;
+    color: #29232A;
+}
+
+.review-price-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid #F8E6EE;
+}
+
+.review-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: #6B7280;
+}
+
+.review-price-row.total {
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1.5px solid #F6DCE8;
+    font-size: 16px;
+    font-weight: 750;
+    color: #29232A;
+}
+
+.review-total-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: #29232A;
+}
+
+.review-policy-link-row {
+    margin-top: 18px;
+    text-align: left;
+}
+
+.review-policy-link {
+    font-size: 13px;
+    color: #D93B78;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* =========================================================
+   STEP 4: CONFIRMATION CELEBRATION
+========================================================= */
+
+.booking-success-box {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.success-heart-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #FFF0F5;
+    border: 2px solid #FCE7F3;
+    color: #D93B78;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(217, 59, 120, 0.15);
+}
+
+.success-booking-title {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #29232A;
+    margin-bottom: 6px;
+}
+
+.success-booking-desc {
+    font-size: 14px;
+    color: #6B7280;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.success-booking-receipt {
+    background: #FFF8FA;
+    border: 1px solid #F6DCE8;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: left;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13.5px;
+    color: #475569;
+}

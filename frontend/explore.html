@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#FFF7FA">
-    <meta name="description" content="Discover compatible people, explore profiles, and book memorable dates on Roséia.">
+    <meta name="description" content="Discover compatible people, explore profiles, and book personal dates on Roséia.">
     <title>Roséia — Curated In-Person Dating</title>
 
     <!-- Google Fonts for Editorial Roséia Typography -->
@@ -14,6 +14,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="ios_app.css">
+    <link rel="stylesheet" href="roseia_booking_modal.css">
+
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
@@ -55,10 +59,13 @@
             </div>
         </header>
 
-        <!-- App Viewport with Primary Tabs -->
+
+        <!-- =========================================================
+             APP VIEWPORT (PRIMARY TABS)
+        ========================================================= -->
         <main class="app-viewport">
 
-            <!-- TAB 1: EXPLORE -->
+            <!-- TAB 1: EXPLORE (HOME FEED) -->
             <section id="tab-home" class="tab-view active" aria-label="Explore Feed">
                 <div id="homePeopleList" class="people-feed">
                     <div class="loading-state">
@@ -68,32 +75,91 @@
                 </div>
             </section>
 
+
             <!-- TAB 2: SEARCH (DISCOVER) -->
-            <section id="tab-discover" class="tab-view" aria-label="Search People">
-                <div class="app-greeting">
-                    <h1 class="greeting-title">Search</h1>
-                    <p class="greeting-subtitle">Find someone special you'll love talking to.</p>
+            <section id="tab-discover" class="tab-view" aria-label="Search & Filters">
+                <div class="search-page-header">
+                    <h1 class="search-page-title">Search &amp; Filters</h1>
+                    <p class="search-page-subtitle">Find creators by city, date availability, interests, or budget.</p>
                 </div>
 
-                <!-- Instant Search -->
-                <div class="search-bar-wrap">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="11" cy="11" r="7.5"></circle>
-                        <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
-                    </svg>
-                    <input type="text" id="discoverSearchInput" class="search-input" placeholder="Search by name, interests or topic..." autocomplete="off">
-                    <button id="clearSearchBtn" class="clear-search-btn" style="display:none;" aria-label="Clear search">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
+                <!-- Comprehensive Search & Filter Card (image_f4877ea7.png) -->
+                <div class="search-filter-card">
+                    <!-- Top Search Bar -->
+                    <div class="search-bar-wrap">
+                        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D93B78" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7.5"></circle>
+                            <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+                        </svg>
+                        <input type="text" id="discoverSearchInput" class="search-input" placeholder="Search by creator name or city..." autocomplete="off">
+                        <button id="clearSearchBtn" class="clear-search-btn" style="display:none;" aria-label="Clear search">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+
+                    <!-- 3-Column Dropdowns: City, Available Date, Sort By -->
+                    <div class="filter-three-grid">
+                        <div class="filter-field-col">
+                            <label class="filter-field-label" for="filterCitySelect">City</label>
+                            <div class="filter-select-wrap">
+                                <select id="filterCitySelect" class="filter-field-select">
+                                    <option value="all">All Cities</option>
+                                </select>
+                                <svg class="filter-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="filter-field-col">
+                            <label class="filter-field-label" for="filterDateInput">Available Date</label>
+                            <div class="filter-date-wrap">
+                                <input type="date" id="filterDateInput" class="filter-field-date" placeholder="mm/dd/yyyy">
+                            </div>
+                        </div>
+
+                        <div class="filter-field-col">
+                            <label class="filter-field-label" for="filterSortSelect">Sort By</label>
+                            <div class="filter-select-wrap">
+                                <select id="filterSortSelect" class="filter-field-select">
+                                    <option value="popularity">Popularity</option>
+                                    <option value="price_low">Price: Low to High</option>
+                                    <option value="price_high">Price: High to Low</option>
+                                    <option value="age_young">Age: Young to Old</option>
+                                </select>
+                                <svg class="filter-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maximum Date Price Slider -->
+                    <div class="filter-slider-wrap">
+                        <div class="filter-slider-header">
+                            <span class="filter-slider-title">Maximum Date Price</span>
+                            <span id="priceSliderReadout" class="filter-slider-val">Up to ₹500</span>
+                        </div>
+                        <input type="range" id="priceRangeSlider" min="0" max="1000" step="10" value="500" class="filter-range-track">
+                    </div>
+
+                    <!-- Interests Filter Chips -->
+                    <div class="filter-interests-section">
+                        <span class="filter-field-label">Interests</span>
+                        <div id="filterInterestsChips" class="filter-chips-list">
+                            <button type="button" class="interest-tag-btn" data-interest="Coffee & Conversation">Coffee &amp; Conversation</button>
+                            <button type="button" class="interest-tag-btn" data-interest="Fine Dining">Fine Dining</button>
+                            <button type="button" class="interest-tag-btn" data-interest="Casual Walk">Casual Walk</button>
+                            <button type="button" class="interest-tag-btn" data-interest="Art & Museums">Art &amp; Museums</button>
+                            <button type="button" class="interest-tag-btn" data-interest="Startup & Tech">Startup &amp; Tech</button>
+                            <button type="button" class="interest-tag-btn" data-interest="Campus Walks">Campus Walks</button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Interest Filter Chips -->
-                <div id="filterChips" class="filter-chips-row">
-                    <button type="button" class="filter-chip active" data-category="all">✨ All</button>
-                    <button type="button" class="filter-chip" data-category="content">🌸 Lifestyle &amp; Culture</button>
-                    <button type="button" class="filter-chip" data-category="design">🎨 Creative &amp; Design</button>
-                    <button type="button" class="filter-chip" data-category="tech">💻 Tech &amp; Ambition</button>
-                    <button type="button" class="filter-chip" data-category="conversation">💬 Deep Conversations</button>
+                <!-- Showing count text -->
+                <div class="results-meta-row">
+                    <span id="discoverResultCount" class="results-count-text">Showing 26 creator profiles</span>
                 </div>
 
                 <div id="discoverPeopleList" class="people-feed">
@@ -103,6 +169,7 @@
                     </div>
                 </div>
             </section>
+
 
             <!-- TAB 3: BOOKINGS (CHATS) -->
             <section id="tab-chats" class="tab-view" aria-label="My Bookings">
@@ -118,7 +185,10 @@
 
         </main>
 
-        <!-- Fixed 5-Item Bottom Navigation Bar (Roséia) -->
+
+        <!-- =========================================================
+             FIXED 5-ITEM BOTTOM NAVIGATION BAR (ROSÉIA)
+        ========================================================= -->
         <nav class="bottom-tab-bar" aria-label="Main App Navigation">
             <button type="button" class="tab-btn active" data-tab="explore" onclick="switchTab('explore')" aria-label="Explore Tab">
                 <span class="tab-icon-wrap">
@@ -163,7 +233,7 @@
 
             <button type="button" class="tab-btn" data-tab="profile" onclick="toggleProfileSheet()" aria-label="Profile Tab">
                 <span class="tab-icon-wrap">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
@@ -172,7 +242,10 @@
             </button>
         </nav>
 
-        <!-- Profile & Account Sheet Modal -->
+
+        <!-- =========================================================
+             PROFILE & ACCOUNT iOS BOTTOM SHEET MODAL
+        ========================================================= -->
         <div id="profileSheetModal" class="profile-sheet-modal" aria-hidden="true">
             <div class="sheet-backdrop" onclick="toggleProfileSheet()"></div>
             <div class="sheet-card">
@@ -216,6 +289,7 @@
 
     </div>
 
+    <script src="roseia_booking_modal.js"></script>
     <script src="ios_app.js"></script>
 
 </body>

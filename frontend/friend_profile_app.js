@@ -152,7 +152,11 @@ function displayProfile(creator) {
     const priceFormatted = basePrice.toLocaleString("en-IN");
 
     const age = creator.creator_age || creator.age;
-    const location = creator.creator_location || creator.location || "Delhi, India";
+    let rawLoc = (creator.creator_location || creator.location || "Mumbai, India").trim();
+    if (rawLoc.toLowerCase().includes("available locally") && (rawLoc.includes("·") || rawLoc.includes(","))) {
+        rawLoc = "Available Locally";
+    }
+    const location = rawLoc;
 
     // Dynamic tags
     const tagsList = Array.isArray(creator.tags) && creator.tags.length > 0
@@ -368,6 +372,10 @@ function getVerifiedSession(creatorId) {
 
 window.openBookingWizard = function() {
     if (!selectedCreator) return;
+    if (window.RoseiaBooking && typeof window.RoseiaBooking.open === "function") {
+        window.RoseiaBooking.open(selectedCreator);
+        return;
+    }
     wizardStep = 1;
     wizardMonthDate = new Date();
 

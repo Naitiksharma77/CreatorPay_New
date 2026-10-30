@@ -349,15 +349,58 @@ function createProfileCardHTML(creator, index) {
                     <a class="btn-view-profile" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View Profile of ${escapeHTML(name)}">
                         View Profile
                     </a>
-                    <a class="btn-book-date" href="${profileLink}&action=book" onclick="event.stopPropagation();" aria-label="Book a Date with ${escapeHTML(name)}">
+                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openBookingForCreator('${escapeHTML(creator.id)}');" aria-label="Book a Date with ${escapeHTML(name)}">
                         Book a Date
-                    </a>
+                    </button>
                 </div>
             </div>
         </article>
     `;
 }
 
+// Global hook to open booking modal directly or fallback to friend_profile
+window.openBookingForCreator = function(creatorId) {
+    const creator = allCreators.find(c => String(c.id) === String(creatorId));
+    if (creator && window.RoseiaBooking) {
+        window.RoseiaBooking.open(creator);
+    } else {
+        window.location.href = `friend_profile.html?id=${encodeURIComponent(creatorId)}&action=book`;
+    }
+};
+
+
+// ===============================
+// SEARCH & FILTERS STATE & LOGIC
+// ===============================
+
+let filterCity = "all";
+let filterDate = "";
+let filterSort = "popularity";
+let filterMaxPrice = 500;
+let filterInterest = "all";
+
+function populateCityOptions() {
+    const citySelect = document.getElementById("filterCitySelect");
+    if (!citySelect) return;
+    const cities = new Set();
+    allCreators.forEach(c => {
+        const loc = (c.creator_location || c.location || "").trim();
+        if (loc && !loc.toLowerCase().includes("available locally")) {
+            const cityName = loc.split(",")[0].trim();
+            if (cityName) cities.add(cityName);
+        }
+    });
+
+    const currentVal = citySelect.value;
+    let html = `<option value="all">All Cities</option>`;
+    Array.from(cities).sort().forEach(city => {
+        html += `<option value="${escapeHTML(city)}">${escapeHTML(city)}</option>`;
+    });
+    citySelect.innerHTML = html;
+    if (currentVal && cities.has(currentVal)) {
+        citySelect.value = currentVal;
+    }
+}
 
 // ===============================
 // RENDER FEEDS
@@ -374,7 +417,7 @@ function renderHomeFeed() {
         homePeopleList.innerHTML = `
             <div class="loading-state">
                 <span class="loading-spinner"></span>
-                <p>Loading people from database...</p>
+                <p>Loading curated profiles...</p>
             </div>
         `;
         return;
@@ -388,48 +431,80 @@ function renderHomeFeed() {
 function renderDiscoverFeed() {
     if (!discoverPeopleList) return;
 
-    let filtered = allCreators;
+    let filtered = [...allCreators];
 
-    // Filter by Category
-    if (activeFilter !== "all") {
-        const filterKey = activeFilter.toLowerCase();
-        filtered = filtered.filter((c) => {
-            const cat = String(c.category || "").toLowerCase();
+    // 1. Text Search Query
+    if (searchQuery.trim().length > 0) {
+        const query = searchQuery.toLowerCase().trim();
+        filtered = filtered.filter(c => {
+            const name = String(c.name || "").toLowerCase();
             const bio = String(c.bio || "").toLowerCase();
-
-            if (filterKey === "content") {
-                return cat.includes("content") || cat.includes("instagram") || cat.includes("fashion") || cat.includes("lifestyle") || bio.includes("instagram");
-            }
-            if (filterKey === "design") {
-                return cat.includes("art") || cat.includes("paint") || cat.includes("design") || cat.includes("creative");
-            }
-            if (filterKey === "tech") {
-                return cat.includes("student") || cat.includes("enginier") || cat.includes("engineer") || cat.includes("tech") || cat.includes("science") || cat.includes("doctor") || cat.includes("medical");
-            }
-            if (filterKey === "conversation") {
-                return cat.includes("coach") || cat.includes("finance") || cat.includes("guidance") || cat.includes("unemployed") || cat.includes("conversation") || cat.includes("teacher");
-            }
-            return cat.includes(filterKey);
+            const loc = String(c.creator_location || c.location || "").toLowerCase();
+            const tags = Array.isArray(c.tags) ? c.tags.join(" ").toLowerCase() : String(c.tags || "").toLowerCase();
+            return name.includes(query) || bio.includes(query) || loc.includes(query) || tags.includes(query);
         });
     }
 
-    // Filter by Search Query
-    if (searchQuery.trim().length > 0) {
-        const query = searchQuery.toLowerCase().trim();
-        filtered = filtered.filter((c) => {
-            const name = String(c.name || "").toLowerCase();
-            const cat = String(c.category || "").toLowerCase();
-            const bio = String(c.bio || "").toLowerCase();
-            return name.includes(query) || cat.includes(query) || bio.includes(query);
+    // 2. City Filter
+    if (filterCity !== "all") {
+        const cityLower = filterCity.toLowerCase();
+        filtered = filtered.filter(c => {
+            const loc = String(c.creator_location || c.location || "").toLowerCase();
+            return loc.includes(cityLower);
         });
+    }
+
+    // 3. Available Date Filter
+    if (filterDate) {
+        filtered = filtered.filter(c => {
+            if (Array.isArray(c.available_dates) && c.available_dates.length > 0) {
+                return c.available_dates.includes(filterDate);
+            }
+            return true;
+        });
+    }
+
+    // 4. Maximum Price Slider
+    if (filterMaxPrice && filterMaxPrice < 1000) {
+        filtered = filtered.filter(c => {
+            const price = Number(c.price) || 0;
+            return price <= filterMaxPrice;
+        });
+    }
+
+    // 5. Interest Filter
+    if (filterInterest !== "all") {
+        const interestLower = filterInterest.toLowerCase();
+        filtered = filtered.filter(c => {
+            const tags = Array.isArray(c.tags) ? c.tags.join(" ").toLowerCase() : String(c.tags || "").toLowerCase();
+            const bio = String(c.bio || "").toLowerCase();
+            return tags.includes(interestLower) || bio.includes(interestLower);
+        });
+    }
+
+    // 6. Sort
+    if (filterSort === "price_low") {
+        filtered.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    } else if (filterSort === "price_high") {
+        filtered.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    } else if (filterSort === "age_young") {
+        filtered.sort((a, b) => (Number(getDisplayAge(a)) || 25) - (Number(getDisplayAge(b)) || 25));
+    } else {
+        filtered = sortFeaturedCreators(filtered);
+    }
+
+    // Update Result Count text
+    const countEl = document.getElementById("discoverResultCount");
+    if (countEl) {
+        countEl.textContent = `Showing ${filtered.length} creator profile${filtered.length === 1 ? '' : 's'}`;
     }
 
     if (filtered.length === 0) {
         discoverPeopleList.innerHTML = `
-            <div class="empty-chats-state">
-                <h3 class="empty-title">No people found</h3>
-                <p class="empty-desc">Try searching for a different name, stream, or topic.</p>
-                <button class="empty-action-btn" onclick="resetFilters()">Reset Filter</button>
+            <div class="empty-chats-state" style="grid-column: 1 / -1; padding: 48px 20px;">
+                <h3 class="empty-title">No creators found</h3>
+                <p class="empty-desc">Try adjusting your city, date, or budget filter to see more profiles.</p>
+                <button class="empty-action-btn" onclick="resetFilters()">Reset All Filters</button>
             </div>
         `;
         return;
@@ -498,14 +573,32 @@ function renderChatsFeed() {
 }
 
 function resetFilters() {
-    activeFilter = "all";
     searchQuery = "";
-    if (discoverSearchInput) discoverSearchInput.value = "";
+    filterCity = "all";
+    filterDate = "";
+    filterSort = "popularity";
+    filterMaxPrice = 500;
+    filterInterest = "all";
+
+    const searchInput = document.getElementById("discoverSearchInput");
+    if (searchInput) searchInput.value = "";
     if (clearSearchBtn) clearSearchBtn.style.display = "none";
 
-    document.querySelectorAll(".filter-chip").forEach((chip) => {
-        chip.classList.toggle("active", chip.dataset.category === "all");
-    });
+    const citySelect = document.getElementById("filterCitySelect");
+    if (citySelect) citySelect.value = "all";
+
+    const dateInput = document.getElementById("filterDateInput");
+    if (dateInput) dateInput.value = "";
+
+    const sortSelect = document.getElementById("filterSortSelect");
+    if (sortSelect) sortSelect.value = "popularity";
+
+    const slider = document.getElementById("priceRangeSlider");
+    if (slider) slider.value = 500;
+    const readout = document.getElementById("priceSliderReadout");
+    if (readout) readout.textContent = "Up to ₹500";
+
+    document.querySelectorAll(".interest-tag-btn").forEach((btn) => btn.classList.remove("active"));
 
     renderDiscoverFeed();
 }
@@ -704,6 +797,7 @@ async function loadCreators() {
                 localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
             } catch (_) {}
 
+            populateCityOptions();
             renderHomeFeed();
             renderDiscoverFeed();
             renderChatsFeed();
@@ -753,17 +847,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Category filter chips in Discover
-    document.querySelectorAll(".filter-chip").forEach((chip) => {
-        chip.addEventListener("click", () => {
-            document.querySelectorAll(".filter-chip").forEach((c) => c.classList.remove("active"));
-            chip.classList.add("active");
-            activeFilter = chip.dataset.category || "all";
-            renderDiscoverFeed();
-        });
-    });
-
-    // Search input in Discover
+    // Search input in Search & Filters
     if (discoverSearchInput) {
         discoverSearchInput.addEventListener("input", (e) => {
             searchQuery = e.target.value;
@@ -783,14 +867,72 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // City Dropdown Filter
+    const citySelect = document.getElementById("filterCitySelect");
+    if (citySelect) {
+        citySelect.addEventListener("change", (e) => {
+            filterCity = e.target.value;
+            renderDiscoverFeed();
+        });
+    }
+
+    // Available Date Filter
+    const dateInput = document.getElementById("filterDateInput");
+    if (dateInput) {
+        dateInput.addEventListener("change", (e) => {
+            filterDate = e.target.value;
+            renderDiscoverFeed();
+        });
+    }
+
+    // Sort By Dropdown Filter
+    const sortSelect = document.getElementById("filterSortSelect");
+    if (sortSelect) {
+        sortSelect.addEventListener("change", (e) => {
+            filterSort = e.target.value;
+            renderDiscoverFeed();
+        });
+    }
+
+    // Maximum Date Price Slider
+    const priceSlider = document.getElementById("priceRangeSlider");
+    const priceReadout = document.getElementById("priceSliderReadout");
+    if (priceSlider) {
+        priceSlider.addEventListener("input", (e) => {
+            filterMaxPrice = Number(e.target.value);
+            if (priceReadout) {
+                priceReadout.textContent = `Up to ₹${filterMaxPrice}`;
+            }
+            renderDiscoverFeed();
+        });
+    }
+
+    // Interests Tag Buttons (toggle filter)
+    document.querySelectorAll(".interest-tag-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const interest = btn.dataset.interest;
+            if (btn.classList.contains("active")) {
+                btn.classList.remove("active");
+                filterInterest = "all";
+            } else {
+                document.querySelectorAll(".interest-tag-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                filterInterest = interest || "all";
+            }
+            renderDiscoverFeed();
+        });
+    });
+
     // Determine initial tab from URL hash
     const hash = window.location.hash.replace("#", "").toLowerCase();
-    if (hash === "discover") {
-        switchTab("discover");
-    } else if (hash === "chats") {
-        switchTab("chats");
+    if (hash === "discover" || hash === "search") {
+        switchTab("search");
+    } else if (hash === "chats" || hash === "bookings") {
+        switchTab("bookings");
+    } else if (hash === "favorites") {
+        switchTab("favorites");
     } else {
-        switchTab("home");
+        switchTab("explore");
     }
 
     // Immediately load creators as soon as website opens
