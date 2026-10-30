@@ -64,394 +64,313 @@ button {
 
 
 /* =========================================================
-   PROFILE APP SHELL
-========================================================= */
+   ROSÉIA CREATOR PROFILE VIEW (Strictly matching reference screenshot)
+   ========================================================= */
 
 .profile-app-shell {
-    width: min(100%, 540px);
+    width: min(100%, 480px);
     margin: 0 auto;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--myp-blush);
+    background: #FFF4F7;
+    position: relative;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 600px) {
     body {
-        background-color: #FFF1F6;
+        background-color: #FAEDF2;
     }
-
     .profile-app-shell {
-        width: min(92%, 640px);
-        box-shadow: 0 0 50px rgba(219, 39, 119, 0.06);
-        border-left: 1px solid var(--myp-border);
-        border-right: 1px solid var(--myp-border);
-        background: var(--myp-blush);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        border-left: 1px solid #F5DFE9;
+        border-right: 1px solid #F5DFE9;
     }
 }
-
-
-/* =========================================================
-   iOS TOP NAVIGATION BAR
-========================================================= */
-
-.profile-top-bar {
-    position: sticky;
-    top: 0;
-    z-index: 80;
-    height: 52px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--myp-border);
-    padding-top: env(safe-area-inset-top, 0px);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
-.ios-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--myp-pink);
-    font-size: 15px;
-    font-weight: 700;
-    min-height: 44px;
-    min-width: 44px;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.ios-back-btn:active {
-    opacity: 0.65;
-    transform: scale(0.96);
-}
-
-.top-bar-title {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--myp-text);
-    letter-spacing: -0.2px;
-}
-
-.top-bar-spacer {
-    width: 44px;
-}
-
-
-/* =========================================================
-   PROFILE VIEWPORT & CARD
-========================================================= */
 
 .profile-viewport {
     flex: 1;
-    width: 92%;
-    margin: 0 auto;
-    padding: 16px 0 50px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-.profile-card {
+.creator-profile-view {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    animation: fadeIn 0.25s ease;
+    width: 100%;
+    background: #FFF4F7;
+    padding-bottom: 24px;
 }
 
-
-/* Profile Hero (Portrait Frame) */
-.profile-hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 6px 0 10px;
-}
-
-.profile-portrait-wrap,
-.profile-avatar-wrap {
+/* 1. Full-Bleed Immersive Hero Photograph */
+.creator-hero-frame {
     position: relative;
     width: 100%;
-    max-width: 340px;
-    aspect-ratio: 4 / 5;
-    margin: 0 auto 16px;
-    border-radius: 26px;
+    height: 70vh;
+    min-height: 480px;
+    max-height: 640px;
     overflow: hidden;
-    background: #FDF2F7;
-    box-shadow:
-        0 14px 36px -4px rgba(236, 72, 153, 0.14),
-        0 4px 12px -2px rgba(37, 32, 42, 0.04);
-    border: 2px solid var(--myp-border);
-    animation: portraitEntrance 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+    background: #25202A;
 }
 
-.profile-portrait-wrap img,
-.profile-avatar-wrap img {
+.creator-hero-img {
     width: 100%;
     height: 100%;
-    border-radius: 0;
     object-fit: cover;
+    object-position: center 25%;
     display: block;
-    border: none;
-    box-shadow: none;
-    background: #FDF2F7;
-    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Hide unwanted activity badges on customer-facing profiles */
-.profile-online-badge,
-.profile-last-active-badge,
-.active-status-dot,
-.status-indicator {
-    display: none !important;
-}
-
-.profile-header-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
-    width: 100%;
-}
-
-.profile-name-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.profile-name {
-    font-size: 25px;
-    font-weight: 850;
-    color: var(--myp-text);
-    letter-spacing: -0.5px;
-    line-height: 1.2;
-}
-
-.verified-check {
-    display: inline-flex;
-    align-items: center;
-}
-
-.profile-interest-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 14px;
-    border-radius: 999px;
-    background: #FDF2F7;
-    border: 1px solid var(--myp-border);
-    color: var(--myp-rose);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.profile-interest-pill svg {
-    color: var(--myp-pink);
-    flex-shrink: 0;
-}
-
-.profile-badges-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 2px;
-}
-
-@keyframes portraitEntrance {
-    from {
-        opacity: 0;
-        transform: translateY(10px) scale(0.985);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-
-/* Profile Sections (About & Perks) */
-.profile-section {
-    background: #ffffff;
-    border: 1px solid var(--myp-border);
-    border-radius: 22px;
-    padding: 18px 20px;
-    box-shadow: 0 4px 18px rgba(236, 72, 153, 0.05);
-}
-
-.profile-section-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--myp-text);
-    letter-spacing: -0.2px;
-    margin-bottom: 8px;
-}
-
-.profile-bio-text {
-    font-size: 13.8px;
-    color: #475569;
-    line-height: 1.58;
-}
-
-.connection-perks {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-top: 6px;
-}
-
-.perk-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-}
-
-.perk-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: #FDF2F7;
-    border: 1px solid var(--myp-border);
-    color: var(--myp-pink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
-}
-
-.perk-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-}
-
-.perk-text strong {
-    font-size: 14px;
-    font-weight: 750;
-    color: var(--myp-text);
-    line-height: 1.25;
-}
-
-.perk-text span {
-    font-size: 12.5px;
-    color: var(--myp-text-muted);
-    line-height: 1.45;
-}
-
-
-/* Bottom Payment Action Box */
-.profile-action-box {
-    background: #ffffff;
-    border: 1px solid var(--myp-border);
-    border-radius: 24px;
-    padding: 20px;
-    box-shadow: 0 6px 24px rgba(236, 72, 153, 0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.profile-price-row {
+/* Floating Top Controls (Back, Fullscreen, Favorite) */
+.creator-hero-controls {
+    position: absolute;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    left: 16px;
+    right: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 2px;
+    z-index: 20;
+    pointer-events: auto;
 }
 
-.price-service-col {
+.hero-right-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-float-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.14s ease, background 0.15s ease;
+    color: #25202A;
+}
+
+.hero-float-btn:active {
+    transform: scale(0.92);
+}
+
+.hero-fav-btn svg.favorited {
+    fill: #E11D48 !important;
+    stroke: #E11D48 !important;
+}
+
+/* Dark Gradient & Text OVER Photo at the bottom */
+.creator-hero-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 70px 20px 24px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.55) 50%, rgba(0, 0, 0, 0.15) 80%, transparent 100%);
+    z-index: 10;
+    color: #FFFFFF;
+    pointer-events: none;
+}
+
+.hero-overlay-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #FFFFFF;
+    line-height: 1.15;
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    letter-spacing: -0.3px;
+}
+
+.hero-overlay-loc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.3;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.hero-overlay-loc svg {
+    color: rgba(255, 255, 255, 0.9);
+    flex-shrink: 0;
+}
+
+.hero-overlay-date {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.3;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* 2. "A Little More About Her" White Rounded Card */
+.about-her-card {
+    background: #FFFFFF;
+    border-radius: 28px;
+    margin: 16px 14px 110px 14px;
+    padding: 26px 22px;
+    box-shadow: 0 4px 24px rgba(217, 59, 120, 0.05);
+    border: 1px solid #F8E6EE;
+}
+
+.about-her-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1E1B22;
+    margin: 0 0 14px 0;
+    letter-spacing: -0.2px;
+}
+
+.about-her-bio {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #2D2735;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.about-her-divider {
+    height: 1px;
+    background: #F4E8EE;
+    margin: 18px 0;
+    border: none;
+}
+
+.about-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.about-field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8A818C;
+    line-height: 1.3;
+}
+
+.about-field-val {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1E1B22;
+    line-height: 1.4;
+}
+
+.about-field-val.language-val {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 3. Sticky Bottom Booking Bar */
+.sticky-booking-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #FFFFFF;
+    border-top: 1px solid #F1E5EC;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)) 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.sticky-price-col {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.price-service-label {
-    font-size: 15px;
+.sticky-price-figure {
+    font-size: 22px;
     font-weight: 800;
-    color: var(--myp-text);
-    letter-spacing: -0.2px;
-    line-height: 1.2;
-}
-
-.price-type-label {
-    font-size: 12px;
-    color: var(--myp-text-muted);
-    font-weight: 500;
-    line-height: 1.2;
-}
-
-.price-figure {
-    font-size: 26px;
-    font-weight: 850;
-    color: var(--myp-text);
-    letter-spacing: -0.6px;
+    color: #1E1B22;
+    letter-spacing: -0.3px;
     line-height: 1;
 }
 
-.start-connection-btn {
-    width: 100%;
-    min-height: 52px;
-    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
-    color: #ffffff;
-    font-size: 15.5px;
-    font-weight: 750;
-    letter-spacing: -0.2px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 18px rgba(236, 72, 153, 0.36);
-    transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), filter 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
-    cursor: pointer;
-}
-
-.start-connection-btn:hover {
-    filter: brightness(1.05);
-    box-shadow: 0 6px 24px rgba(236, 72, 153, 0.46);
-    transform: translateY(-1px);
-}
-
-.start-connection-btn:active:not(:disabled) {
-    transform: scale(0.975);
-}
-
-.start-connection-btn:disabled {
-    opacity: 0.75;
-    cursor: not-allowed;
-}
-
-.cta-loading-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.cta-spinner {
-    width: 17px;
-    height: 17px;
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    display: inline-block;
-}
-
-.secure-text {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+.sticky-price-sub {
     font-size: 12px;
-    color: var(--myp-text-muted);
-    text-align: center;
+    font-weight: 500;
+    color: #8A818C;
+    line-height: 1.2;
+}
+
+.sticky-book-cta-btn {
+    background: #D93B78;
+    color: #FFFFFF;
+    font-size: 15.5px;
+    font-weight: 700;
+    border-radius: 14px;
+    padding: 13px 28px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(217, 59, 120, 0.32);
+    transition: transform 0.12s ease, background-color 0.15s ease, filter 0.15s ease;
+}
+
+.sticky-book-cta-btn:hover {
+    background: #C82D6A;
+}
+
+.sticky-book-cta-btn:active {
+    transform: scale(0.97);
+}
+
+/* Fullscreen Lightbox */
+.hero-lightbox-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.lightbox-img {
+    max-width: 95vw;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 14px;
+}
+
+.lightbox-close-btn {
+    position: absolute;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    border: none;
 }
 
 

@@ -132,8 +132,92 @@ async function loadProfile() {
 
 
 // ===============================
-// DISPLAY PROFILE (ROSÉIA DATING PLATFORM)
+// DISPLAY PROFILE (ROSÉIA REFERENCE DESIGN)
 // ===============================
+
+function formatProfileNextDate(dates) {
+    if (Array.isArray(dates) && dates.length > 0) {
+        const sorted = [...dates].sort();
+        const dateStr = sorted[0];
+        try {
+            const d = new Date(dateStr + "T00:00:00");
+            if (!isNaN(d.getTime())) {
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+            }
+        } catch (_) {}
+    }
+    return "Oct 30, 2026";
+}
+
+function getCreatorDisplayAge(creator) {
+    const raw = creator.creator_age || creator.age;
+    if (raw && typeof raw === "string" && !raw.includes("http")) {
+        const num = raw.trim();
+        if (/^\d{2}$/.test(num)) return num;
+    }
+    if (creator.bio) {
+        const m = creator.bio.match(/\b(1[89]|[2-3][0-9])\b/);
+        if (m) return m[1];
+    }
+    return "25";
+}
+
+function getFavoritesList() {
+    try {
+        const stored = localStorage.getItem("fc_favorites");
+        return stored ? JSON.parse(stored) : [];
+    } catch {
+        return [];
+    }
+}
+
+window.toggleProfileFav = function(event, id) {
+    if (event) event.stopPropagation();
+    const favs = getFavoritesList();
+    const strId = String(id);
+    const idx = favs.indexOf(strId);
+    let isNowFav = false;
+    if (idx > -1) {
+        favs.splice(idx, 1);
+    } else {
+        favs.push(strId);
+        isNowFav = true;
+    }
+    try {
+        localStorage.setItem("fc_favorites", JSON.stringify(favs));
+    } catch (_) {}
+
+    const heartIcon = document.getElementById("heroFavHeart");
+    if (heartIcon) {
+        heartIcon.setAttribute("fill", isNowFav ? "#E11D48" : "none");
+        heartIcon.setAttribute("stroke", isNowFav ? "#E11D48" : "#25202A");
+    }
+};
+
+window.handleProfileBack = function() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = "creator_home.html";
+    }
+};
+
+window.toggleHeroFullscreen = function() {
+    const modal = document.getElementById("heroLightboxModal");
+    const imgEl = document.getElementById("lightboxImage");
+    if (!modal) return;
+    if (modal.style.display === "none" || !modal.style.display) {
+        if (selectedCreator && imgEl) {
+            imgEl.src = selectedCreator.profile_image || "";
+        }
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    } else {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    }
+};
 
 function displayProfile(creator) {
     const image =
@@ -142,227 +226,150 @@ function displayProfile(creator) {
             : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
 
     const name = (creator.name && creator.name.trim()) || "Member";
-    const category = (creator.category && creator.category.trim()) || "Lifestyle & Conversations";
-    const bio =
-        (creator.bio && creator.bio.trim()) ||
-        "Excited to meet lovely people, share meaningful stories and enjoy great coffee together.";
+    const age = getCreatorDisplayAge(creator);
+
+    // Bio & Introduction
+    let intro = (creator.bio && creator.bio.trim()) || `This is ${name}, Fitness Coach`;
+    if (!intro.toLowerCase().startsWith("this is")) {
+        intro = `This is ${name}. ${intro}`;
+    }
 
     const rawPrice = Number(creator.price);
-    const basePrice = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice : 49;
+    const basePrice = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice : 499;
     const priceFormatted = basePrice.toLocaleString("en-IN");
 
-    const age = creator.creator_age || creator.age;
-    let rawLoc = (creator.creator_location || creator.location || "Mumbai, India").trim();
-    if (rawLoc.toLowerCase().includes("available locally") && (rawLoc.includes("·") || rawLoc.includes(","))) {
-        rawLoc = "Available Locally";
+    // Location: clean single line
+    let loc = (creator.creator_location || creator.location || "Available Locally").trim();
+    if (loc.toLowerCase().includes("available locally") && loc.includes("·")) {
+        loc = "Available Locally";
     }
-    const location = rawLoc;
 
-    // Dynamic tags
-    const tagsList = Array.isArray(creator.tags) && creator.tags.length > 0
-        ? creator.tags
-        : (typeof creator.tags === "string" && creator.tags.trim()
-            ? creator.tags.split(",").map(t => t.trim())
-            : ["Coffee & Conversation", "Fine Dining", "Casual Walk"]);
+    // Dynamic tags (Interests & Hobbies)
+    let interestsStr = "Coffee & Conversation · Fine Dining";
+    if (Array.isArray(creator.tags) && creator.tags.length > 0) {
+        interestsStr = creator.tags.join(" · ");
+    } else if (typeof creator.tags === "string" && creator.tags.trim()) {
+        interestsStr = creator.tags.split(",").map(t => t.trim()).join(" · ");
+    }
 
-    // Dynamic available dates count
-    const datesList = Array.isArray(creator.available_dates) ? creator.available_dates : [];
-    const availableDatesCount = datesList.length;
+    // Languages
+    const languagesStr = creator.languages || "English · Hindi";
+
+    // Activities
+    const activitiesStr = creator.activities || "Coffee & Conversation · Fine Dining · Casual Walk";
+
+    const nextOpenDate = formatProfileNextDate(creator.available_dates);
+
+    const favs = getFavoritesList();
+    const isFav = favs.includes(String(creator.id));
 
     profileContent.innerHTML = `
-        <article class="profile-card">
-            <!-- Profile Hero (Portrait Frame) -->
-            <div class="profile-hero">
-                <div class="profile-portrait-wrap">
-                    <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                </div>
+        <article class="creator-profile-view">
+            <!-- 1. Full-Bleed Immersive Hero Photograph -->
+            <div class="creator-hero-frame">
+                <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" class="creator-hero-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
 
-                <div class="profile-header-meta">
-                    <div class="profile-name-row">
-                        <h1 class="profile-name">${escapeHTML(name)}</h1>
-                        <span class="verified-check" title="Verified Roséia Member">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="10" fill="#EC4899"></circle>
-                                <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"></path>
+                <!-- Floating Top Controls -->
+                <div class="creator-hero-controls">
+                    <!-- Left: Back Button -->
+                    <button type="button" class="hero-float-btn hero-back-btn" onclick="handleProfileBack()" aria-label="Go Back">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#25202A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Right: Fullscreen & Favorite Buttons -->
+                    <div class="hero-right-buttons">
+                        <button type="button" class="hero-float-btn hero-expand-btn" onclick="toggleHeroFullscreen()" aria-label="View Fullscreen" title="View Fullscreen">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#25202A" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <polyline points="9 21 3 21 3 15"></polyline>
+                                <line x1="21" y1="3" x2="14" y2="10"></line>
+                                <line x1="3" y1="21" x2="10" y2="14"></line>
                             </svg>
-                        </span>
-                    </div>
+                        </button>
 
-                    <div class="profile-badges-row">
-                        ${age ? `
-                        <div class="profile-interest-pill" style="background: rgba(236, 72, 153, 0.08); color: #BE185D;">
-                            <span>${escapeHTML(age)} years old</span>
-                        </div>
-                        ` : ""}
-
-                        <div class="profile-interest-pill" style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
+                        <button type="button" class="hero-float-btn hero-fav-btn" onclick="toggleProfileFav(event, '${escapeHTML(creator.id)}')" aria-label="Save Favorite" title="Save Favorite">
+                            <svg id="heroFavHeart" width="20" height="20" viewBox="0 0 24 24" fill="${isFav ? '#E11D48' : 'none'}" stroke="${isFav ? '#E11D48' : '#25202A'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
-                            <span>${escapeHTML(location)}</span>
-                        </div>
-
-                        <div class="profile-interest-pill" style="background: #FFF1F6; color: #DB2777; border: 1px solid #FCE7F3;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                            </svg>
-                            <span>${availableDatesCount > 0 ? `${availableDatesCount} Available Dates` : "Dates Available"}</span>
-                        </div>
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tags & Date Interests Section -->
-            <div class="profile-section">
-                <h2 class="profile-section-title">Date Interests &amp; Activities</h2>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
-                    ${tagsList.map(tag => `
-                        <div class="profile-interest-pill" style="background: #FFF5F8; color: #DB2777; border: 1px solid #FCE7F3; font-weight: 650; padding: 6px 12px; font-size: 12px;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                            </svg>
-                            <span>${escapeHTML(tag)}</span>
-                        </div>
-                    `).join("")}
-                </div>
-            </div>
-
-            <!-- About Section -->
-            <div class="profile-section">
-                <h2 class="profile-section-title">About ${escapeHTML(name)}</h2>
-                <p class="profile-bio-text">${escapeHTML(bio)}</p>
-                <div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #817783;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>Available in <strong>${escapeHTML(location)}</strong> for verified personal dates</span>
-                </div>
-            </div>
-
-            <!-- Date Booking Highlights -->
-            <div class="profile-section">
-                <h2 class="profile-section-title">Date Booking Perks</h2>
-                <div class="connection-perks">
-                    <div class="perk-item">
-                        <div class="perk-icon" aria-hidden="true" style="background: #FFF1F6; color: #EC4899;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                        </div>
-                        <div class="perk-text">
-                            <strong>Choose Your Date &amp; Time Slot</strong>
-                            <span>Select from real-time admin enabled dates and convenient slots (11 AM to 7 PM).</span>
-                        </div>
+                <!-- Bottom Gradient with Name, Age, Location, Date OVER photo -->
+                <div class="creator-hero-overlay">
+                    <h1 class="hero-overlay-name">${escapeHTML(name)}, ${escapeHTML(age)}</h1>
+                    
+                    <div class="hero-overlay-loc">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <span>${escapeHTML(loc)} ·</span>
                     </div>
 
-                    <div class="perk-item">
-                        <div class="perk-icon" aria-hidden="true" style="background: #FFF1F6; color: #EC4899;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                        </div>
-                        <div class="perk-text">
-                            <strong>100% Escrow &amp; Safety Concierge</strong>
-                            <span>Your payment is secured until the date takes place. Dedicated concierge assistance.</span>
-                        </div>
-                    </div>
-
-                    <div class="perk-item">
-                        <div class="perk-icon" aria-hidden="true" style="background: #FFF1F6; color: #EC4899;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                        </div>
-                        <div class="perk-text">
-                            <strong>Direct Contact &amp; Chat Access</strong>
-                            <span>She will contact you to coordinate venue details directly.</span>
-                        </div>
+                    <div class="hero-overlay-date">
+                        Next open date: ${escapeHTML(nextOpenDate)}
                     </div>
                 </div>
             </div>
 
-            <!-- Primary Price & Action Box -->
-            <div class="profile-action-box">
-                <div class="profile-price-row">
-                    <div class="price-service-col">
-                        <span class="price-service-label">Personal Date Booking</span>
-                        <span class="price-type-label">Base Fee · Transparent Pricing</span>
-                    </div>
-                    <div class="price-figure">₹${priceFormatted}</div>
+            <!-- 2. "A Little More About Her" White Rounded Card -->
+            <div class="about-her-card">
+                <h2 class="about-her-title">A Little More About Her</h2>
+                
+                <p class="about-her-bio">${escapeHTML(intro)}</p>
+
+                <div class="about-her-divider"></div>
+
+                <div class="about-field-group">
+                    <div class="about-field-label">Interests &amp; Hobbies</div>
+                    <div class="about-field-val">${escapeHTML(interestsStr)}</div>
                 </div>
 
-                <!-- Primary CTA: 4-Step Booking Wizard -->
+                <div class="about-her-divider"></div>
+
+                <div class="about-field-group">
+                    <div class="about-field-label">Languages Spoken</div>
+                    <div class="about-field-val language-val">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D93B78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <span>${escapeHTML(languagesStr)}</span>
+                    </div>
+                </div>
+
+                <div class="about-her-divider"></div>
+
+                <div class="about-field-group">
+                    <div class="about-field-label">Preferred Date Activities</div>
+                    <div class="about-field-val">${escapeHTML(activitiesStr)}</div>
+                </div>
+            </div>
+
+            <!-- 3. Sticky Bottom Booking Bar (Follows Reference) -->
+            <div class="sticky-booking-bar">
+                <div class="sticky-price-col">
+                    <div class="sticky-price-figure">₹${priceFormatted}</div>
+                    <div class="sticky-price-sub">120 min · Request approval</div>
+                </div>
+
                 <button
-                    class="start-connection-btn"
+                    type="button"
+                    class="sticky-book-cta-btn"
                     id="bookDateBtn"
-                    type="button"
                     onclick="openBookingWizard()"
-                    style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); margin-bottom: 8px;"
+                    aria-label="Book a Date with ${escapeHTML(name)}"
                 >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    <span>Book a Date with ${escapeHTML(name)}</span>
+                    Book a Date
                 </button>
-
-                <!-- Secondary Option: Chat only -->
-                <button
-                    type="button"
-                    id="payButton"
-                    style="width: 100%; padding: 11px; border-radius: 14px; background: #FFF; border: 1.5px solid #FCE7F3; color: #DB2777; font-weight: 700; font-size: 13.5px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;"
-                >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>Or Start Private Chat (₹${priceFormatted})</span>
-                </button>
-
-                <p class="secure-text" style="margin-top: 10px;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                    <span>Secure payment powered by Razorpay · 100% Escrow Protected</span>
-                </p>
             </div>
         </article>
     `;
-
-    // Chat session check
-    const verifiedSession = getVerifiedSession(creator.id);
-    const payButton = document.getElementById("payButton");
-    if (verifiedSession && payButton) {
-        payButton.innerHTML = `
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span>Open Verified Chat with ${escapeHTML(name)}</span>
-        `;
-        payButton.onclick = () => {
-            window.location.href = `chat.html?id=${encodeURIComponent(creator.id)}&payment_id=${encodeURIComponent(verifiedSession.paymentId)}&token=${encodeURIComponent(verifiedSession.token)}`;
-        };
-    } else if (payButton) {
-        payButton.onclick = startRazorpayChatPayment;
-    }
-}
-
-function getVerifiedSession(creatorId) {
-    try {
-        const raw = localStorage.getItem(`fc_chat_session_${creatorId}`);
-        if (!raw) return null;
-        const data = JSON.parse(raw);
-        if (data && data.token && data.paymentId) return data;
-    } catch (_) {}
-    return null;
 }
 
 
@@ -959,87 +966,7 @@ window.closeBookingSuccessModal = function() {
 };
 
 
-// ===============================
-// CHAT-ONLY RAZORPAY PAYMENT
-// ===============================
 
-async function startRazorpayChatPayment() {
-    if (!selectedCreator) return;
-    const amount = Number(selectedCreator.price) || 49;
-
-    const payButton = document.getElementById("payButton");
-    payButton.disabled = true;
-    payButton.innerHTML = `<span>Connecting...</span>`;
-
-    try {
-        let res = await fetch("/api/create-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ creatorId: selectedCreator.id, type: "chat_access" })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-            throw new Error(data.message || "Failed to create chat order");
-        }
-
-        const options = {
-            key: data.keyId,
-            amount: data.order.amount,
-            currency: "INR",
-            name: "Roséia",
-            description: `Chat session with ${selectedCreator.name}`,
-            order_id: data.order.id,
-
-            handler: async function (paymentResponse) {
-                const verifyRes = await fetch("/api/verify-payment", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        razorpay_order_id: paymentResponse.razorpay_order_id,
-                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
-                        razorpay_signature: paymentResponse.razorpay_signature,
-                        creatorId: selectedCreator.id
-                    })
-                });
-                const verifyData = await verifyRes.json();
-                if (verifyRes.ok && verifyData.success) {
-                    const sessionData = {
-                        token: verifyData.token,
-                        paymentId: paymentResponse.razorpay_payment_id,
-                        orderId: paymentResponse.razorpay_order_id,
-                        creatorId: selectedCreator.id,
-                        creatorName: selectedCreator.name
-                    };
-                    localStorage.setItem(`fc_chat_session_${selectedCreator.id}`, JSON.stringify(sessionData));
-                    window.location.href = `chat.html?id=${encodeURIComponent(selectedCreator.id)}&payment_id=${encodeURIComponent(paymentResponse.razorpay_payment_id)}&token=${encodeURIComponent(verifyData.token)}`;
-                } else {
-                    alert(verifyData.message || "Verification failed");
-                    resetPayButton();
-                }
-            },
-            theme: { color: "#EC4899" },
-            modal: { ondismiss: resetPayButton }
-        };
-
-        const rzp = new Razorpay(options);
-        rzp.open();
-    } catch (err) {
-        alert(err.message || "Unable to start chat payment.");
-        resetPayButton();
-    }
-}
-
-function resetPayButton() {
-    const payButton = document.getElementById("payButton");
-    if (!payButton || !selectedCreator) return;
-    payButton.disabled = false;
-    payButton.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span>Or Start Private Chat (₹${Number(selectedCreator.price).toLocaleString("en-IN")})</span>
-    `;
-}
 
 function displayError(title, message) {
     profileContent.innerHTML = `
