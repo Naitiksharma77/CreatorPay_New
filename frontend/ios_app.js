@@ -232,8 +232,37 @@ function isCreatorOnline(creator) {
 
 
 // ===============================
-// PROFILE CARD COMPONENT RENDERER
+// PROFILE CARD COMPONENT RENDERER (ROSÉIA REFERENCE DESIGN)
 // ===============================
+
+function formatNextOpenDate(dates) {
+    if (Array.isArray(dates) && dates.length > 0) {
+        // Sort and pick earliest upcoming or first date
+        const sorted = [...dates].sort();
+        const dateStr = sorted[0];
+        try {
+            const d = new Date(dateStr + "T00:00:00");
+            if (!isNaN(d.getTime())) {
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+            }
+        } catch (_) {}
+    }
+    return "Oct 30, 2026";
+}
+
+function getDisplayAge(creator) {
+    const raw = creator.creator_age || creator.age;
+    if (raw && typeof raw === "string" && !raw.includes("http")) {
+        const num = raw.trim();
+        if (/^\d{2}$/.test(num)) return num;
+    }
+    if (creator.bio) {
+        const m = creator.bio.match(/\b(1[89]|[2-3][0-9])\b/);
+        if (m) return m[1];
+    }
+    return "25";
+}
 
 function createProfileCardHTML(creator, index) {
     const favIds = getFavorites();
@@ -245,91 +274,83 @@ function createProfileCardHTML(creator, index) {
             : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
 
     const name = (creator.name && creator.name.trim()) || "Member";
-    const category = (creator.category && creator.category.trim()) || "Lifestyle & Conversations";
     const bio = (creator.bio && creator.bio.trim()) || "Excited to meet lovely people, share meaningful stories and start great conversations.";
     const rawPrice = Number(creator.price);
     const price = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice.toLocaleString("en-IN") : "49";
     const profileLink = `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
     const animDelay = Math.min(index * 35, 250);
 
-    const isSpecific99Card = (String(creator.id) === "3faaf9a9-c333-4d78-b481-7cb2417aa2da") || (index === 1 && rawPrice === 99);
-    const priceUnit = "/ date";
-    const age = creator.creator_age || creator.age;
-    const location = creator.creator_location || creator.location || "Delhi, India";
-    const tagsList = Array.isArray(creator.tags) && creator.tags.length > 0
-        ? creator.tags
-        : (typeof creator.tags === "string" && creator.tags.trim()
-            ? creator.tags.split(",").map(t => t.trim())
-            : ["Coffee & Conversation", "Fine Dining"]);
+    const age = getDisplayAge(creator);
+    const location = (creator.creator_location && String(creator.creator_location).trim()) || "Available Locally";
+
+    // Tags with middle dot (Coffee & Conversation  ·  Fine Dining)
+    let tagsText = "Coffee & Conversation  ·  Fine Dining";
+    if (Array.isArray(creator.tags) && creator.tags.length > 0) {
+        tagsText = creator.tags.slice(0, 2).map(t => String(t).trim()).join("  ·  ");
+    } else if (typeof creator.tags === "string" && creator.tags.trim()) {
+        tagsText = creator.tags.split(",").slice(0, 2).map(t => t.trim()).join("  ·  ");
+    }
+
+    const nextOpenDate = formatNextOpenDate(creator.available_dates);
 
     return `
-        <article class="social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
-            <div class="card-top-row">
-                <div class="avatar-ring-wrap">
-                    <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                </div>
-
-                <div class="card-identity">
-                    <div class="name-line">
-                        <span class="person-name">${escapeHTML(name)}</span>
-                        <span class="verified-badge" title="Verified Roséia Member">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="10" fill="#EC4899"></circle>
-                                <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                        </span>
-                    </div>
-
-                    <div class="interest-badge">
-                        ${getCategoryIcon(category)}
-                        <span>${escapeHTML(category)}</span>
-                    </div>
-
-                    <div class="card-meta-row" style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #817783; margin-top: 3px; font-weight: 500;">
-                        ${age ? `<span class="meta-age" style="display: inline-flex; align-items: center; gap: 3px;"><strong style="color: #25202A; font-weight: 650;">${escapeHTML(age)}</strong> yrs</span>` : ""}
-                        ${age ? `<span style="opacity: 0.4;">•</span>` : ""}
-                        <span class="meta-location" style="display: inline-flex; align-items: center; gap: 3px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><svg width="10.5" height="10.5" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${escapeHTML(location)}</span>
-                    </div>
-                </div>
-
+        <article class="roseia-card social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
+            <div class="card-image-wrap">
+                <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" class="card-image" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
+                
                 <button
                     type="button"
                     class="card-fav-btn ${isFav ? 'is-fav' : ''}"
                     data-fav-id="${escapeHTML(creator.id)}"
                     onclick="toggleCardFav(event, '${escapeHTML(creator.id)}')"
                     aria-label="Save ${escapeHTML(name)}"
+                    title="Save person"
                 >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="${isFav ? '#EC4899' : 'none'}" stroke="${isFav ? '#EC4899' : '#817783'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="${isFav ? '#E11D48' : 'none'}" stroke="${isFav ? '#E11D48' : '#1F2937'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
+
+                <div class="card-image-overlay">
+                    <div class="card-overlay-left">
+                        <div class="card-overlay-name">${escapeHTML(name)}, ${escapeHTML(age)}</div>
+                        <div class="card-overlay-location">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <span>${escapeHTML(location)}</span>
+                        </div>
+                    </div>
+                    <div class="card-overlay-price">₹${price}</div>
+                </div>
             </div>
 
-            <p class="card-bio">${escapeHTML(bio)}</p>
+            <div class="card-content-wrap">
+                <p class="card-bio-text">${escapeHTML(bio)}</p>
 
-            ${tagsList.length > 0 ? `
-            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;">
-                ${tagsList.slice(0, 3).map(t => `
-                    <span style="background: #FFF5F8; color: #DB2777; border: 1px solid #FCE7F3; border-radius: 10px; font-size: 10.5px; padding: 2px 7px; font-weight: 600;">
-                        ${escapeHTML(t.trim())}
+                <div class="card-tags-line">${escapeHTML(tagsText)}</div>
+
+                <div class="card-availability-line">
+                    <span class="card-open-date">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span>Next open date: ${escapeHTML(nextOpenDate)}</span>
                     </span>
-                `).join("")}
-            </div>
-            ` : ""}
-
-            <div class="card-bottom-row">
-                <div class="card-price-group">
-                    <span class="price-val">₹${price}</span>
-                    <span class="price-unit">${priceUnit}</span>
+                    <span class="card-meta-dot">·</span>
+                    <span class="card-duration">120 min</span>
                 </div>
 
-                <div style="display: flex; gap: 6px;">
-                    <a class="say-hi-btn view-profile-btn" href="${profileLink}&action=book" onclick="event.stopPropagation();" aria-label="Book a Date with ${escapeHTML(name)}" style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: #FFF; font-weight: 700; border: none; padding: 7px 12px;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-                        <span>Book Date</span>
+                <div class="card-actions-row">
+                    <a class="btn-view-profile" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View Profile of ${escapeHTML(name)}">
+                        View Profile
                     </a>
-                    <a class="say-hi-btn" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View profile of ${escapeHTML(name)}" style="background: #FFF; border: 1.5px solid #FCE7F3; color: #DB2777; font-weight: 700; padding: 7px 10px;">
-                        <span>View</span>
+                    <a class="btn-book-date" href="${profileLink}&action=book" onclick="event.stopPropagation();" aria-label="Book a Date with ${escapeHTML(name)}">
+                        Book a Date
                     </a>
                 </div>
             </div>
@@ -490,35 +511,101 @@ function resetFilters() {
 }
 
 
+const PINNED_NAMES = ["naina", "radhikachouhan", "radhika", "pallavithakur", "pallavi"];
+function sortFeaturedCreators(list) {
+    if (!Array.isArray(list)) return [];
+    return [...list].sort((a, b) => {
+        const normA = String(a.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const normB = String(b.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const idxA = PINNED_NAMES.findIndex(p => normA.includes(p));
+        const idxB = PINNED_NAMES.findIndex(p => normB.includes(p));
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return 0;
+    });
+}
+
 // ===============================
-// TAB SWITCHING (HOME, DISCOVER, CHATS)
+// TAB SWITCHING (EXPLORE, SEARCH, FAVORITES, BOOKINGS)
 // ===============================
 
 function switchTab(tabName) {
-    currentTab = tabName;
+    // Map aliases
+    let normalizedTab = tabName;
+    if (tabName === "home") normalizedTab = "explore";
+    if (tabName === "discover") normalizedTab = "search";
+    if (tabName === "chats") normalizedTab = "bookings";
+
+    if (normalizedTab === "profile") {
+        toggleProfileSheet();
+        return;
+    }
+
+    currentTab = normalizedTab;
 
     // Update views
-    if (homeView) homeView.classList.toggle("active", tabName === "home");
-    if (discoverView) discoverView.classList.toggle("active", tabName === "discover");
-    if (chatsView) chatsView.classList.toggle("active", tabName === "chats");
+    if (homeView) homeView.classList.toggle("active", normalizedTab === "explore" || normalizedTab === "favorites");
+    if (discoverView) discoverView.classList.toggle("active", normalizedTab === "search");
+    if (chatsView) chatsView.classList.toggle("active", normalizedTab === "bookings");
 
     // Update bottom navigation buttons
     document.querySelectorAll(".tab-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.tab === tabName);
+        const bTab = btn.dataset.tab;
+        const matches = (bTab === normalizedTab) ||
+            (bTab === "home" && normalizedTab === "explore") ||
+            (bTab === "discover" && normalizedTab === "search") ||
+            (bTab === "chats" && normalizedTab === "bookings");
+        btn.classList.toggle("active", matches);
+    });
+
+    // Update desktop navigation links in header
+    document.querySelectorAll(".desktop-nav-link").forEach((link) => {
+        const lTab = link.dataset.tab;
+        const matches = (lTab === normalizedTab) ||
+            (lTab === "home" && normalizedTab === "explore") ||
+            (lTab === "discover" && normalizedTab === "search") ||
+            (lTab === "chats" && normalizedTab === "bookings");
+        link.classList.toggle("active", matches);
     });
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     // Render corresponding view
-    if (tabName === "home") renderHomeFeed();
-    if (tabName === "discover") renderDiscoverFeed();
-    if (tabName === "chats") renderChatsFeed();
+    if (normalizedTab === "explore") renderHomeFeed();
+    if (normalizedTab === "search") renderDiscoverFeed();
+    if (normalizedTab === "bookings") renderChatsFeed();
+    if (normalizedTab === "favorites") renderFavoritesFeed();
 
     // Update window hash
-    if (window.location.hash !== `#${tabName}`) {
-        window.history.replaceState(null, "", `#${tabName}`);
+    if (window.location.hash !== `#${normalizedTab}`) {
+        window.history.replaceState(null, "", `#${normalizedTab}`);
     }
+}
+
+function renderFavoritesFeed() {
+    if (!homePeopleList) return;
+    const favIds = getFavorites();
+    const favCreators = allCreators.filter(c => favIds.includes(String(c.id)));
+
+    if (homePeopleCount) {
+        homePeopleCount.textContent = `${favCreators.length} saved`;
+    }
+
+    if (favCreators.length === 0) {
+        homePeopleList.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 20px; border: 1px solid #F3E8EE;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D93B78" stroke-width="1.8" style="margin: 0 auto 14px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <h3 style="font-size: 18px; font-weight: 700; color: #1F2937; margin-bottom: 6px;">No saved favorites yet</h3>
+                <p style="color: #6B7280; font-size: 14px; margin-bottom: 18px;">Click the heart icon on any card to save lovely people here.</p>
+                <button type="button" onclick="switchTab('explore')" class="btn-book-date" style="display: inline-flex; width: auto; padding: 10px 22px;">Explore Profiles</button>
+            </div>
+        `;
+        return;
+    }
+
+    homePeopleList.innerHTML = favCreators.map(createProfileCardHTML).join("");
 }
 
 
@@ -566,7 +653,7 @@ async function loadCreators() {
         if (cached) {
             const list = JSON.parse(cached);
             if (Array.isArray(list) && list.length > 0) {
-                allCreators = list;
+                allCreators = sortFeaturedCreators(list);
                 renderHomeFeed();
                 renderDiscoverFeed();
                 renderChatsFeed();
@@ -612,9 +699,9 @@ async function loadCreators() {
         }
 
         if (fetched && freshList.length > 0) {
-            allCreators = freshList;
+            allCreators = sortFeaturedCreators(freshList);
             try {
-                localStorage.setItem("fc_cached_creators", JSON.stringify(freshList));
+                localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
             } catch (_) {}
 
             renderHomeFeed();
