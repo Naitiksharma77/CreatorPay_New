@@ -1340,3 +1340,79 @@ a:focus-visible {
         padding-right: 10px;
     }
 }
+
+/* Mobile header and profile card alignment refinement */
+@media (max-width: 679px) {
+
+/* Remove unnecessary horizontal spacing from the app shell */
+.app-shell {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Make the header span the full available width */
+.app-header {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.header-inner {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* Give the main content a small, consistent side margin */
+.app-viewport {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Let profile cards use the available content width */
+.people-feed {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.roseia-card,
+.social-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.card-image-wrap {
+    width: 100%;
+}
+
+.card-content-wrap {
+    min-width: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.card-actions-row {
+    width: 100%;
+    gap: 10px;
+}
+
+.btn-view-profile,
+.btn-book-date {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+}
