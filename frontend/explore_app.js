@@ -310,6 +310,11 @@ function displayCreators(creators) {
             const priceSub = isSpecific99Card ? "/ one time" : "/ connection";
             const age = creator.creator_age || creator.age;
             const location = creator.creator_location || creator.location;
+            const tagsList = Array.isArray(creator.tags) 
+                ? creator.tags 
+                : (typeof creator.tags === "string" && creator.tags.trim() 
+                    ? creator.tags.split(",").map(t => t.trim()) 
+                    : []);
 
     return `
                 <article class="person-card social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
@@ -365,23 +370,43 @@ function displayCreators(creators) {
                         ${escapeHTML(bio)}
                     </p>
 
+                    ${tagsList.length > 0 ? `
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;">
+                        ${tagsList.slice(0, 3).map(t => `
+                            <span style="background: #FFF5F8; color: #DB2777; border: 1px solid #FCE7F3; border-radius: 10px; font-size: 10.5px; padding: 2px 7px; font-weight: 600;">
+                                ${escapeHTML(t.trim())}
+                            </span>
+                        `).join("")}
+                    </div>
+                    ` : ""}
+
                     <div class="card-footer-row card-bottom-row">
                         <div class="price-container card-price-group">
                             <span class="price-main price-val">₹${price}</span>
                             <span class="price-sub price-unit">${priceSub}</span>
                         </div>
 
-                        <a
-                            class="say-hi-btn view-profile-btn view-profile-cta"
-                            href="${profileLink}"
-                            onclick="event.stopPropagation();"
-                            aria-label="Say Hi to ${escapeHTML(name)}"
-                        >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span>Say Hi</span>
-                        </a>
+                        <div style="display: flex; gap: 6px;">
+                            <a
+                                class="say-hi-btn view-profile-btn view-profile-cta"
+                                href="${profileLink}&action=book"
+                                onclick="event.stopPropagation();"
+                                aria-label="Book a Date with ${escapeHTML(name)}"
+                                style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: #FFF; font-weight: 700; border: none; padding: 7px 12px; display: inline-flex; align-items: center; gap: 4px;"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                                <span>Book Date</span>
+                            </a>
+                            <a
+                                class="say-hi-btn"
+                                href="${profileLink}"
+                                onclick="event.stopPropagation();"
+                                aria-label="View ${escapeHTML(name)}"
+                                style="background: #FFF; border: 1.5px solid #FCE7F3; color: #DB2777; font-weight: 700; padding: 7px 10px; display: inline-flex; align-items: center;"
+                            >
+                                <span>View</span>
+                            </a>
+                        </div>
                     </div>
                 </article>
             `;

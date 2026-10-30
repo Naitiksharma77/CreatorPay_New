@@ -90,10 +90,80 @@ app.get("/api/status", (req, res) => {
 
 
 // ======================================
-// GET ALL CREATORS (RESILIENT SUPABASE + RENDER FALLBACK)
+// GET ALL CREATORS (DYNAMIC SUPABASE + ROSÉIA DATES/TAGS ENRICHMENT)
 // ======================================
 
 let memoryCreatorsCache = [];
+
+function getDefaultAvailableDates(seedOffset = 0) {
+  const dates = [];
+  const today = new Date();
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date();
+    d.setDate(today.getDate() + i);
+    // Give 4-6 selectable dates over the next two weeks
+    if ((i + seedOffset) % 2 === 0 || (i + seedOffset) % 3 === 0) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      dates.push(`${yyyy}-${mm}-${dd}`);
+    }
+  }
+  return dates;
+}
+
+function getDefaultTags(category, bio) {
+  const str = `${category || ""} ${bio || ""}`.toLowerCase();
+  const tags = [];
+  if (str.includes("food") || str.includes("dine") || str.includes("coffee") || str.includes("eat")) {
+    tags.push("Coffee & Conversation", "Fine Dining");
+  } else if (str.includes("design") || str.includes("art") || str.includes("creative")) {
+    tags.push("Art & Museums", "Creative Talks", "Coffee & Conversation");
+  } else if (str.includes("tech") || str.includes("code") || str.includes("growth")) {
+    tags.push("Startup & Tech", "Evening Walk", "Coffee & Conversation");
+  } else if (str.includes("student") || str.includes("science")) {
+    tags.push("Coffee & Conversation", "Campus Walks", "Bookstores");
+  } else {
+    tags.push("Coffee & Conversation", "Fine Dining", "Casual Walk");
+  }
+  return tags;
+}
+
+function enrichCreator(creator, index = 0) {
+  if (!creator) return creator;
+  let store = {};
+  try {
+    store = loadAnalyticsStore();
+  } catch (_) {}
+  const meta = (store.creator_metadata && store.creator_metadata[String(creator.id)]) || {};
+
+  // Parse available_dates: priority is meta.available_dates -> creator.available_dates -> default
+  let dates = meta.available_dates;
+  if (!dates && creator.available_dates) {
+    dates = typeof creator.available_dates === "string" ? (function() {
+      try { return JSON.parse(creator.available_dates); } catch (_) { return []; }
+    })() : creator.available_dates;
+  }
+  if (!Array.isArray(dates) || dates.length === 0) {
+    const seed = (String(creator.id || "").charCodeAt(0) || 0) + index;
+    dates = getDefaultAvailableDates(seed);
+  }
+
+  // Parse tags: priority is meta.tags -> creator.tags -> default
+  let tags = meta.tags;
+  if (!tags && creator.tags) {
+    tags = typeof creator.tags === "string" ? creator.tags.split(",").map(t => t.trim()).filter(Boolean) : creator.tags;
+  }
+  if (!Array.isArray(tags) || tags.length === 0) {
+    tags = getDefaultTags(creator.category, creator.bio);
+  }
+
+  return {
+    ...creator,
+    available_dates: dates,
+    tags: tags
+  };
+}
 
 async function refreshCreatorsCache() {
   try {
@@ -137,11 +207,12 @@ app.get("/api/creators", async (req, res) => {
       console.warn("[Creators] Supabase query exception:", dbErr.message);
     }
 
-    // If Supabase returned data, respond immediately
+    // If Supabase returned data, respond immediately with enriched profiles
     if (fetchedData && fetchedData.length > 0) {
+      const enriched = fetchedData.map((c, i) => enrichCreator(c, i));
       return res.json({
         success: true,
-        creators: fetchedData,
+        creators: enriched,
         source: "supabase"
       });
     }
@@ -156,9 +227,10 @@ app.get("/api/creators", async (req, res) => {
         const renderData = await renderRes.json();
         if (renderData && renderData.success && Array.isArray(renderData.creators) && renderData.creators.length > 0) {
           memoryCreatorsCache = renderData.creators;
+          const enriched = renderData.creators.map((c, i) => enrichCreator(c, i));
           return res.json({
             success: true,
-            creators: renderData.creators,
+            creators: enriched,
             source: "render_fallback"
           });
         }
@@ -169,9 +241,10 @@ app.get("/api/creators", async (req, res) => {
 
     // 3. Fallback to memory cache if available
     if (Array.isArray(memoryCreatorsCache) && memoryCreatorsCache.length > 0) {
+      const enriched = memoryCreatorsCache.map((c, i) => enrichCreator(c, i));
       return res.json({
         success: true,
-        creators: memoryCreatorsCache,
+        creators: enriched,
         source: "memory_cache"
       });
     }
@@ -193,15 +266,16 @@ app.get("/api/creators", async (req, res) => {
 
     return res.json({
       success: true,
-      creators: fallbackList,
+      creators: fallbackList.map((c, i) => enrichCreator(c, i)),
       source: "seed_fallback"
     });
 
   } catch (error) {
     console.error("Critical error in /api/creators:", error);
+    const fallback = memoryCreatorsCache.length > 0 ? memoryCreatorsCache : [];
     return res.json({
       success: true,
-      creators: memoryCreatorsCache.length > 0 ? memoryCreatorsCache : [],
+      creators: fallback.map((c, i) => enrichCreator(c, i)),
       source: "emergency_fallback"
     });
   }
@@ -484,17 +558,39 @@ const handleUpdateCreator = async (req, res) => {
 
     console.log(`[Admin Update] SUCCESS: Creator "${data.name}" (${data.id}) price updated to ₹${data.price}`);
 
-    if (data && Array.isArray(memoryCreatorsCache)) {
+    // Persist tags & available_dates in creator_metadata store
+    if (req.body.tags !== undefined || req.body.available_dates !== undefined) {
+      try {
+        const store = loadAnalyticsStore();
+        store.creator_metadata = store.creator_metadata || {};
+        store.creator_metadata[cleanId] = store.creator_metadata[cleanId] || {};
+        if (req.body.tags !== undefined) {
+          store.creator_metadata[cleanId].tags = Array.isArray(req.body.tags)
+            ? req.body.tags
+            : String(req.body.tags).split(",").map(t => t.trim()).filter(Boolean);
+        }
+        if (req.body.available_dates !== undefined && Array.isArray(req.body.available_dates)) {
+          store.creator_metadata[cleanId].available_dates = req.body.available_dates;
+        }
+        saveAnalyticsStore(store);
+      } catch (metaErr) {
+        console.warn("[Admin Update] Metadata save issue:", metaErr.message);
+      }
+    }
+
+    const finalCreator = enrichCreator(data);
+
+    if (finalCreator && Array.isArray(memoryCreatorsCache)) {
       const idx = memoryCreatorsCache.findIndex(c => String(c.id) === String(cleanId));
       if (idx !== -1) {
-        memoryCreatorsCache[idx] = { ...memoryCreatorsCache[idx], ...data };
+        memoryCreatorsCache[idx] = { ...memoryCreatorsCache[idx], ...finalCreator };
       }
     }
 
     return res.json({
       success: true,
       message: "Creator updated successfully",
-      creator: data
+      creator: finalCreator
     });
 
   } catch (error) {
@@ -507,6 +603,65 @@ app.put("/api/creators/:id", handleUpdateCreator);
 app.patch("/api/creators/:id", handleUpdateCreator);
 app.put("/api/creators", handleUpdateCreator);
 app.patch("/api/creators", handleUpdateCreator);
+
+// ======================================
+// MANAGE CREATOR AVAILABLE DATES (ADMIN CALENDAR)
+// ======================================
+
+app.get("/api/creators/:id/dates", (req, res) => {
+  const { id } = req.params;
+  const store = loadAnalyticsStore();
+  const meta = (store.creator_metadata && store.creator_metadata[String(id)]) || {};
+  let dates = meta.available_dates;
+  if (!Array.isArray(dates) || dates.length === 0) {
+    const seed = String(id).charCodeAt(0) || 0;
+    dates = getDefaultAvailableDates(seed);
+  }
+  return res.json({
+    success: true,
+    creatorId: id,
+    available_dates: dates
+  });
+});
+
+app.put("/api/creators/:id/dates", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { available_dates } = req.body;
+    if (!Array.isArray(available_dates)) {
+      return sendError(res, 400, "available_dates must be an array of date strings (YYYY-MM-DD)");
+    }
+
+    const store = loadAnalyticsStore();
+    store.creator_metadata = store.creator_metadata || {};
+    store.creator_metadata[String(id)] = {
+      ...(store.creator_metadata[String(id)] || {}),
+      available_dates: available_dates
+    };
+    saveAnalyticsStore(store);
+
+    if (Array.isArray(memoryCreatorsCache)) {
+      const idx = memoryCreatorsCache.findIndex(c => String(c.id) === String(id));
+      if (idx !== -1) {
+        memoryCreatorsCache[idx].available_dates = available_dates;
+      }
+    }
+
+    try {
+      await supabase.from("creators").update({ available_dates: JSON.stringify(available_dates) }).eq("id", id);
+    } catch (_) {}
+
+    return res.json({
+      success: true,
+      message: "Available dates updated successfully",
+      creatorId: id,
+      available_dates
+    });
+  } catch (err) {
+    return sendError(res, 500, "Failed to update available dates", err);
+  }
+});
+app.post("/api/creators/:id/dates", (req, res) => app._router.handle({ ...req, method: "PUT" }, res));
 
 
 // ======================================
@@ -565,9 +720,7 @@ app.delete("/api/creators/:id", async (req, res) => {
 
 app.post("/api/create-order", async (req, res) => {
   try {
-    const {
-      creatorId
-    } = req.body;
+    const creatorId = req.body.creatorId || req.body.creator_id;
 
     if (!creatorId) {
       return sendError(
@@ -617,38 +770,63 @@ app.post("/api/create-order", async (req, res) => {
       );
     }
 
-    const amountInPaise =
-      Math.round(numericPrice * 100);
+    const bookingDate = req.body.bookingDate || req.body.booking_date || null;
+    const timeSlot = req.body.timeSlot || req.body.time_slot || "11:00 AM";
+    const userNote = req.body.userNote || req.body.user_note || "";
+    const isBooking = req.body.type === "date_booking" || Boolean(bookingDate);
 
-    const receipt =
-      `creatorpay_${Date.now()}`;
+    const basePrice = numericPrice;
+    const platformFee = isBooking ? Math.round(basePrice * 0.10) : 0;
+    const tax = isBooking ? Math.round(basePrice * 0.085) : 0;
+    const totalPayable = isBooking ? (basePrice + platformFee + tax) : basePrice;
 
-    const order =
-      await razorpay.orders.create({
-        amount: amountInPaise,
-        currency: "INR",
-        receipt,
-        notes: {
-          creatorId: String(creator.id),
-          creatorName: String(creator.name)
-        }
-      });
+    const amountInPaise = Math.round(totalPayable * 100);
+    const receipt = `roseia_${Date.now()}`;
+
+    const orderNotes = {
+      creatorId: String(creator.id),
+      creatorName: String(creator.name),
+      type: isBooking ? "date_booking" : "chat_access"
+    };
+    if (isBooking) {
+      if (bookingDate) orderNotes.bookingDate = String(bookingDate);
+      if (timeSlot) orderNotes.timeSlot = String(timeSlot);
+      if (userNote) orderNotes.userNote = String(userNote);
+    }
+
+    const order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: "INR",
+      receipt,
+      notes: orderNotes
+    });
 
     try {
       recordPendingOrder(order.id, {
+        type: isBooking ? "date_booking" : "chat_access",
         creatorId: String(creator.id),
         creatorName: String(creator.name),
-        amount: numericPrice
+        basePrice,
+        platformFee,
+        tax,
+        amount: totalPayable,
+        totalPayable,
+        bookingDate,
+        timeSlot,
+        userNote
       });
     } catch (_) {}
 
     return res.json({
       success: true,
-
       keyId: razorpayKeyId,
-
       order,
-
+      pricing: {
+        basePrice,
+        platformFee,
+        tax,
+        totalPayable
+      },
       creator: {
         id: creator.id,
         name: creator.name,
@@ -666,9 +844,15 @@ app.post("/api/create-order", async (req, res) => {
   }
 });
 
+// Booking specific order route alias
+app.post("/api/bookings/create-order", (req, res) => {
+  req.body.type = "date_booking";
+  return app._router.handle(req, res);
+});
+
 
 // ======================================
-// VERIFY RAZORPAY PAYMENT
+// VERIFY RAZORPAY PAYMENT & CONFIRM BOOKINGS
 // ======================================
 
 app.post("/api/verify-payment", async (req, res) => {
@@ -733,7 +917,7 @@ app.post("/api/verify-payment", async (req, res) => {
     const pending = (store.pending_orders && store.pending_orders[razorpay_order_id]) || null;
     const targetCreatorId = (pending && pending.creatorId) || creatorId || null;
     const targetCreatorName = (pending && pending.creatorName) || null;
-    const targetAmount = (pending && pending.amount) || 49;
+    const targetAmount = (pending && (pending.totalPayable || pending.amount)) || 49;
 
     const token = targetCreatorId ? generateChatToken(targetCreatorId, razorpay_payment_id) : null;
 
@@ -753,9 +937,49 @@ app.post("/api/verify-payment", async (req, res) => {
       console.warn("Analytics record warning:", recErr.message);
     }
 
+    // Process Date Booking if applicable
+    const isBooking = (pending && (pending.type === "date_booking" || pending.bookingDate)) || Boolean(req.body.bookingDate);
+    let createdBooking = null;
+
+    if (isBooking) {
+      createdBooking = {
+        id: `bk_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+        creator_id: String(targetCreatorId),
+        creator_name: targetCreatorName || "Creator",
+        booking_date: (pending && pending.bookingDate) || req.body.bookingDate || new Date().toISOString().slice(0, 10),
+        time_slot: (pending && pending.timeSlot) || req.body.timeSlot || "11:00 AM",
+        user_note: (pending && pending.userNote) || req.body.userNote || "",
+        base_price: (pending && pending.basePrice) || targetAmount,
+        platform_fee: (pending && pending.platformFee) || 0,
+        tax: (pending && pending.tax) || 0,
+        total_amount: (pending && pending.totalPayable) || targetAmount,
+        payment_id: razorpay_payment_id,
+        order_id: razorpay_order_id,
+        status: "confirmed",
+        created_at: new Date().toISOString()
+      };
+
+      try {
+        await supabase.from("bookings").insert([createdBooking]);
+      } catch (dbErr) {
+        console.warn("[Bookings] Supabase insert note:", dbErr.message);
+      }
+
+      try {
+        const curStore = loadAnalyticsStore();
+        curStore.bookings = curStore.bookings || [];
+        curStore.bookings.unshift(createdBooking);
+        saveAnalyticsStore(curStore);
+      } catch (stErr) {
+        console.warn("[Bookings] Store save note:", stErr.message);
+      }
+    }
+
     return res.json({
       success: true,
-      message: "Payment verified successfully",
+      message: isBooking ? "Booking Confirmed! She will contact you soon. Thank you!" : "Payment verified successfully",
+      confirmationText: "Booking Confirmed! She will contact you soon. Thank you!",
+      booking: createdBooking,
       token,
       paymentId: razorpay_payment_id,
       creatorId: targetCreatorId,
@@ -768,6 +992,78 @@ app.post("/api/verify-payment", async (req, res) => {
       "Unable to verify payment",
       error
     );
+  }
+});
+
+// ======================================
+// BOOKINGS DIRECT ACCESS & RETRIEVAL
+// ======================================
+
+app.post("/api/bookings", async (req, res) => {
+  try {
+    const {
+      creatorId,
+      creatorName,
+      bookingDate,
+      timeSlot,
+      userNote,
+      basePrice,
+      platformFee,
+      tax,
+      totalAmount,
+      paymentId,
+      orderId
+    } = req.body;
+
+    const newBooking = {
+      id: `bk_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+      creator_id: String(creatorId),
+      creator_name: creatorName || "Creator",
+      booking_date: bookingDate || new Date().toISOString().slice(0, 10),
+      time_slot: timeSlot || "11:00 AM",
+      user_note: userNote || "",
+      base_price: Number(basePrice) || 0,
+      platform_fee: Number(platformFee) || 0,
+      tax: Number(tax) || 0,
+      total_amount: Number(totalAmount) || 0,
+      payment_id: paymentId || `pay_manual_${Date.now()}`,
+      order_id: orderId || `ord_manual_${Date.now()}`,
+      status: "confirmed",
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await supabase.from("bookings").insert([newBooking]);
+    } catch (_) {}
+
+    const store = loadAnalyticsStore();
+    store.bookings = store.bookings || [];
+    store.bookings.unshift(newBooking);
+    saveAnalyticsStore(store);
+
+    return res.json({
+      success: true,
+      message: "Booking Confirmed! She will contact you soon. Thank you!",
+      booking: newBooking
+    });
+  } catch (err) {
+    return sendError(res, 500, "Failed to save booking", err);
+  }
+});
+
+app.get("/api/bookings", async (req, res) => {
+  try {
+    try {
+      const { data, error } = await supabase.from("bookings").select("*").order("created_at", { ascending: false });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return res.json({ success: true, bookings: data, source: "supabase" });
+      }
+    } catch (_) {}
+
+    const store = loadAnalyticsStore();
+    return res.json({ success: true, bookings: store.bookings || [], source: "store" });
+  } catch (err) {
+    return sendError(res, 500, "Failed to retrieve bookings", err);
   }
 });
 
@@ -1159,6 +1455,8 @@ function loadAnalyticsStore() {
         events: Array.isArray(data.events) ? data.events : [],
         pending_orders: (data.pending_orders && typeof data.pending_orders === "object") ? data.pending_orders : {},
         messages: Array.isArray(data.messages) ? data.messages : [],
+        creator_metadata: (data.creator_metadata && typeof data.creator_metadata === "object") ? data.creator_metadata : {},
+        bookings: Array.isArray(data.bookings) ? data.bookings : [],
         tracking_started: data.tracking_started || new Date().toISOString()
       };
     }
@@ -1172,6 +1470,8 @@ function loadAnalyticsStore() {
     events: [],
     pending_orders: {},
     messages: [],
+    creator_metadata: {},
+    bookings: [],
     tracking_started: new Date().toISOString()
   };
 }

@@ -41,6 +41,11 @@
       "userId": "v_mvb2b0vn_ufptm4",
       "date": "2026-10-25",
       "timestamp": "2026-10-25T01:38:06.809Z"
+    },
+    {
+      "userId": "v_mvb2b0vn_ufptm4",
+      "date": "2026-10-30",
+      "timestamp": "2026-10-30T02:42:46.203Z"
     }
   ],
   "active_sessions": {
@@ -53,9 +58,9 @@
     },
     "v_anon": {
       "visitorId": "v_anon",
-      "lastSeen": "2026-10-25T01:42:15.507Z",
+      "lastSeen": "2026-10-30T03:00:41.923Z",
       "page": "friend_profile.html",
-      "creatorId": "f739a17f-e62a-4df1-b25b-42775fa06997",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
       "source": "Direct"
     },
     "s_mvmf6rrq_ajv8i4": {
@@ -75,6 +80,13 @@
     "s_mvn5rb4z_3ntbtx": {
       "visitorId": "v_mvb2b0vn_ufptm4",
       "lastSeen": "2026-10-25T01:42:06.816Z",
+      "page": "creator_home.html",
+      "creatorId": null,
+      "source": "Direct"
+    },
+    "s_mvud7540_bb86m3": {
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "lastSeen": "2026-10-30T02:43:46.199Z",
       "page": "creator_home.html",
       "creatorId": null,
       "source": "Direct"
@@ -256,6 +268,54 @@
       "source": "Direct",
       "referrer": "",
       "timestamp": "2026-10-25T01:42:15.507Z"
+    },
+    {
+      "id": "evt_1793328603773_277f56",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "buttonName": null,
+      "amount": 58,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-30T02:50:03.774Z"
+    },
+    {
+      "id": "evt_1793329219750_0197d1",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "buttonName": null,
+      "amount": 49,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-30T03:00:19.750Z"
+    },
+    {
+      "id": "evt_1793329241923_03279f",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "buttonName": null,
+      "amount": 58,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-10-30T03:00:41.923Z"
     }
   ],
   "pending_orders": {
@@ -306,6 +366,48 @@
       "creatorName": "Zoya Khan",
       "amount": 8,
       "created_at": "2026-10-25T01:42:15.499Z"
+    },
+    "order_TtxcxLkll0Wa8i": {
+      "type": "date_booking",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "basePrice": 49,
+      "platformFee": 5,
+      "tax": 4,
+      "amount": 58,
+      "totalPayable": 58,
+      "bookingDate": "2026-11-05",
+      "timeSlot": "04:30 PM",
+      "userNote": "Looking forward to meeting!",
+      "created_at": "2026-10-30T02:50:03.773Z"
+    },
+    "order_TtxnnjKEhHBd6j": {
+      "type": "chat_access",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "basePrice": 49,
+      "platformFee": 0,
+      "tax": 0,
+      "amount": 49,
+      "totalPayable": 49,
+      "bookingDate": null,
+      "timeSlot": "11:00 AM",
+      "userNote": "",
+      "created_at": "2026-10-30T03:00:19.749Z"
+    },
+    "order_TtxoBvrgdRd9vc": {
+      "type": "date_booking",
+      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorName": "Pallavi Thakur",
+      "basePrice": 49,
+      "platformFee": 5,
+      "tax": 4,
+      "amount": 58,
+      "totalPayable": 58,
+      "bookingDate": "2026-11-05",
+      "timeSlot": "04:30 PM",
+      "userNote": "Coffee & conversation",
+      "created_at": "2026-10-30T03:00:41.922Z"
     }
   },
   "messages": [
@@ -317,5 +419,15 @@
       "timestamp": "2026-10-16T14:10:51.885Z"
     }
   ],
+  "creator_metadata": {
+    "58568af4-bb6b-4142-b0a1-d0ebd59d35fe": {
+      "available_dates": [
+        "2026-11-05",
+        "2026-11-07",
+        "2026-11-12"
+      ]
+    }
+  },
+  "bookings": [],
   "tracking_started": "2026-10-16T14:22:30.078Z"
 }

@@ -181,6 +181,12 @@ window.openEditModal = function (id) {
     if (editAgeEl) editAgeEl.value = creator.creator_age || creator.age || "";
     const editLocEl = document.getElementById("editCreatorLocation");
     if (editLocEl) editLocEl.value = creator.creator_location || creator.location || "";
+    const editTagsEl = document.getElementById("editCreatorTags");
+    if (editTagsEl) {
+        editTagsEl.value = (creator.tags && Array.isArray(creator.tags))
+            ? creator.tags.join(", ")
+            : (creator.tags || "");
+    }
 
     // Save existing photo URL so it is NEVER lost
     const existingPhoto = creator.profile_image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
@@ -287,15 +293,18 @@ if (editCreatorForm) {
         const price = document.getElementById("editCreatorPrice").value;
         const ageEl = document.getElementById("editCreatorAge");
         const locEl = document.getElementById("editCreatorLocation");
+        const tagsEl = document.getElementById("editCreatorTags");
         const creator_age = ageEl ? ageEl.value.trim() : "";
         const creator_location = locEl ? locEl.value.trim() : "";
+        const tags_raw = tagsEl ? tagsEl.value.trim() : "";
+        const tagsList = tags_raw ? tags_raw.split(",").map(t => t.trim()).filter(Boolean) : [];
 
         // Safe existing image fallback
         const creator = allCreators.find((c) => String(c.id) === String(id));
         const existingImage = (editExistingProfileImage && editExistingProfileImage.value) || (creator && creator.profile_image) || "";
 
         try {
-            console.log(`[Admin Edit] Initiating save for creator ID: "${id}", Name: "${name}", Price: ${price}, Age: "${creator_age}", Loc: "${creator_location}"`);
+            console.log(`[Admin Edit] Initiating save for creator ID: "${id}", Name: "${name}", Price: ${price}, Age: "${creator_age}", Loc: "${creator_location}", Tags:`, tagsList);
 
             let finalProfileImage = existingImage;
 
@@ -342,7 +351,8 @@ if (editCreatorForm) {
                 bio,
                 price: Number(price),
                 creator_age,
-                creator_location
+                creator_location,
+                tags: tagsList
             };
 
             // Explicitly pass profile_image to preserve it completely
@@ -459,8 +469,11 @@ if (creatorForm) {
         const price = document.getElementById("creatorPrice").value;
         const ageEl = document.getElementById("creatorAge");
         const locEl = document.getElementById("creatorLocation");
+        const tagsEl = document.getElementById("creatorTags");
         const creator_age = ageEl ? ageEl.value.trim() : "";
         const creator_location = locEl ? locEl.value.trim() : "";
+        const tags_raw = tagsEl ? tagsEl.value.trim() : "";
+        const tagsList = tags_raw ? tags_raw.split(",").map(t => t.trim()).filter(Boolean) : [];
         const imageInput = document.getElementById("creatorImage");
 
         try {
@@ -496,6 +509,7 @@ if (creatorForm) {
                 price: Number(price),
                 creator_age,
                 creator_location,
+                tags: tagsList,
                 profile_image: uploadedImageUrl
             };
 
@@ -753,18 +767,47 @@ function filterAndDisplayCreators() {
                     </td>
                     <td>
                         <span class="category-tag-pill">${escapeHTML(category)}</span>
+                        ${(function() {
+                            const tagsList = Array.isArray(creator.tags) ? creator.tags : (typeof creator.tags === "string" ? creator.tags.split(",") : []);
+                            if (tagsList.length === 0) return "";
+                            return `
+                                <div style="display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px;">
+                                    ${tagsList.slice(0, 3).map(t => `<span style="background: #FFF5F8; color: #DB2777; border: 1px solid #FCE7F3; border-radius: 10px; font-size: 10px; padding: 1px 6px; font-weight: 600;">${escapeHTML(t.trim())}</span>`).join("")}
+                                </div>
+                            `;
+                        })()}
                     </td>
                     <td>
                         <span class="price-tag">₹${escapeHTML(price)}</span>
                     </td>
-                    <td style="max-width: 280px; color: var(--dash-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(bio)}">
+                    <td style="max-width: 260px; color: var(--dash-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(bio)}">
                         ${escapeHTML(bio)}
                     </td>
                     <td>
                         <span class="status-badge verified">● Active</span>
                     </td>
                     <td>
-                        <div class="table-action-btns">
+                        <div class="table-action-btns" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end;">
+                            <button
+                                type="button"
+                                class="action-icon-btn"
+                                onclick="openEditModal('${escapeHTML(creator.id)}')"
+                                title="Edit Profile Details"
+                                style="background: #FFF; border: 1px solid var(--dash-border); color: #1E1B22; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                <span>Edit Profile Details</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="action-icon-btn"
+                                onclick="openDatesModal('${escapeHTML(creator.id)}')"
+                                title="Manage Available Dates"
+                                style="background: #FFF5F8; border: 1px solid #FCE7F3; color: #DB2777; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                <span>Manage Available Dates (${Array.isArray(creator.available_dates) ? creator.available_dates.length : 0})</span>
+                            </button>
                             <a
                                 href="friend_profile.html?id=${encodeURIComponent(creator.id)}"
                                 class="action-icon-btn"
@@ -774,14 +817,6 @@ function filterAndDisplayCreators() {
                             >
                                 View
                             </a>
-                            <button
-                                type="button"
-                                class="action-icon-btn"
-                                onclick="openEditModal('${escapeHTML(creator.id)}')"
-                                title="Edit details & bio"
-                            >
-                                Edit
-                            </button>
                             <button
                                 type="button"
                                 class="action-icon-btn delete"
@@ -796,6 +831,195 @@ function filterAndDisplayCreators() {
             `;
         })
         .join("");
+}
+
+// ===============================
+// MANAGE AVAILABLE DATES (ADMIN CALENDAR TOOL)
+// ===============================
+
+let datesActiveCreatorId = null;
+let currentCalendarDate = new Date();
+let activeAvailableDatesSet = new Set();
+
+const datesModal = document.getElementById("datesModal");
+const closeDatesModalButton = document.getElementById("closeDatesModalButton");
+const cancelDatesBtn = document.getElementById("cancelDatesBtn");
+const saveDatesBtn = document.getElementById("saveDatesBtn");
+const prevMonthBtn = document.getElementById("prevMonthBtn");
+const nextMonthBtn = document.getElementById("nextMonthBtn");
+const quickNext7Btn = document.getElementById("quickNext7Btn");
+const quickClearBtn = document.getElementById("quickClearBtn");
+
+window.openDatesModal = function(id) {
+    const creator = allCreators.find(c => String(c.id) === String(id));
+    if (!creator) return;
+    datesActiveCreatorId = id;
+
+    const avatarEl = document.getElementById("datesCreatorAvatar");
+    if (avatarEl) {
+        avatarEl.src = (creator.profile_image && creator.profile_image.startsWith("http"))
+            ? creator.profile_image
+            : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
+    }
+    const nameEl = document.getElementById("datesCreatorName");
+    if (nameEl) nameEl.textContent = creator.name || "Partner";
+
+    activeAvailableDatesSet = new Set(Array.isArray(creator.available_dates) ? creator.available_dates : []);
+    currentCalendarDate = new Date();
+    renderAdminCalendar();
+
+    if (datesModal) {
+        datesModal.classList.add("active");
+    }
+};
+
+function renderAdminCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const titleEl = document.getElementById("calendarMonthTitle");
+    if (titleEl) {
+        titleEl.textContent = `${monthNames[month]} ${year}`;
+    }
+
+    const daysGrid = document.getElementById("calendarDaysGrid");
+    if (!daysGrid) return;
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+
+    let html = "";
+    for (let i = 0; i < firstDayIndex; i++) {
+        html += `<div style="height: 38px;"></div>`;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    for (let day = 1; day <= lastDate; day++) {
+        const mm = String(month + 1).padStart(2, "0");
+        const dd = String(day).padStart(2, "0");
+        const dateKey = `${year}-${mm}-${dd}`;
+        const isSelected = activeAvailableDatesSet.has(dateKey);
+        const isPast = dateKey < todayStr;
+
+        const bg = isSelected ? "var(--dash-pink, #EC4899)" : (isPast ? "#F8FAFC" : "#FFF");
+        const color = isSelected ? "#FFFFFF" : (isPast ? "#94A3B8" : "#1E1B22");
+        const border = isSelected ? "1px solid #DB2777" : (isPast ? "1px solid #F1F5F9" : "1px solid #FCE7F3");
+        const fontWeight = isSelected ? "700" : "500";
+
+        html += `
+            <button
+                type="button"
+                data-date="${dateKey}"
+                onclick="toggleAdminDate('${dateKey}')"
+                style="height: 38px; border-radius: 8px; border: ${border}; background: ${bg}; color: ${color}; font-weight: ${fontWeight}; font-size: 12.5px; cursor: pointer; transition: all 0.15s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;"
+            >
+                <span>${day}</span>
+                ${isSelected ? '<span style="width: 4px; height: 4px; border-radius: 50%; background: #FFF; margin-top: 2px;"></span>' : ''}
+            </button>
+        `;
+    }
+
+    daysGrid.innerHTML = html;
+
+    const count = activeAvailableDatesSet.size;
+    const summaryText = document.getElementById("selectedDatesSummaryText");
+    if (summaryText) summaryText.textContent = `${count} date${count === 1 ? "" : "s"} selected`;
+    const metaEl = document.getElementById("datesCreatorMeta");
+    if (metaEl) metaEl.textContent = `${count} date${count === 1 ? "" : "s"} enabled in database`;
+}
+
+window.toggleAdminDate = function(dateKey) {
+    if (activeAvailableDatesSet.has(dateKey)) {
+        activeAvailableDatesSet.delete(dateKey);
+    } else {
+        activeAvailableDatesSet.add(dateKey);
+    }
+    renderAdminCalendar();
+};
+
+if (prevMonthBtn) {
+    prevMonthBtn.onclick = () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        renderAdminCalendar();
+    };
+}
+if (nextMonthBtn) {
+    nextMonthBtn.onclick = () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        renderAdminCalendar();
+    };
+}
+if (quickNext7Btn) {
+    quickNext7Btn.onclick = () => {
+        const today = new Date();
+        for (let i = 1; i <= 7; i++) {
+            const d = new Date();
+            d.setDate(today.getDate() + i);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            activeAvailableDatesSet.add(`${yyyy}-${mm}-${dd}`);
+        }
+        renderAdminCalendar();
+    };
+}
+if (quickClearBtn) {
+    quickClearBtn.onclick = () => {
+        activeAvailableDatesSet.clear();
+        renderAdminCalendar();
+    };
+}
+if (closeDatesModalButton && datesModal) {
+    closeDatesModalButton.onclick = () => datesModal.classList.remove("active");
+}
+if (cancelDatesBtn && datesModal) {
+    cancelDatesBtn.onclick = () => datesModal.classList.remove("active");
+}
+if (datesModal) {
+    datesModal.onclick = (e) => {
+        if (e.target === datesModal) datesModal.classList.remove("active");
+    };
+}
+if (saveDatesBtn) {
+    saveDatesBtn.onclick = async () => {
+        if (!datesActiveCreatorId) return;
+        const originalText = saveDatesBtn.textContent;
+        saveDatesBtn.disabled = true;
+        saveDatesBtn.textContent = "Saving dates...";
+
+        const datesArray = Array.from(activeAvailableDatesSet).sort();
+        try {
+            const res = await fetch(`/api/creators/${datesActiveCreatorId}/dates`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ available_dates: datesArray })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Failed to update dates");
+            }
+
+            const creator = allCreators.find(c => String(c.id) === String(datesActiveCreatorId));
+            if (creator) {
+                creator.available_dates = datesArray;
+            }
+            try {
+                localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
+            } catch (_) {}
+
+            datesModal.classList.remove("active");
+            filterAndDisplayCreators();
+            showToast(`Available dates saved for "${creator ? creator.name : 'Partner'}" (${datesArray.length} dates active)!`);
+        } catch (err) {
+            console.error("Save dates error:", err);
+            alert("Error saving dates: " + err.message);
+        } finally {
+            saveDatesBtn.disabled = false;
+            saveDatesBtn.textContent = originalText;
+        }
+    };
 }
 
 // Search Inputs Handlers

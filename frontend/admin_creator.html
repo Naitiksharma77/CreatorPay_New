@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#FDF4F8">
-    <title>Meet You Partner — Executive Pink Dashboard</title>
+    <title>Roséia — Executive Pink Dashboard</title>
 
     <link rel="stylesheet" href="admin_creator_styles.css">
 </head>
@@ -17,7 +17,7 @@
              LEFT MINI ICON SIDEBAR (REFERENCE IMAGE STYLE)
         ========================================================= -->
         <aside class="dashboard-sidebar">
-            <a href="creator_home.html" class="sidebar-logo" title="Meet You Partner Home">
+            <a href="creator_home.html" class="sidebar-logo" title="Roséia Home">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
@@ -471,6 +471,15 @@
                 </div>
 
                 <div class="form-field-group">
+                    <label for="creatorTags">Date Interests / Tags (comma-separated)</label>
+                    <input
+                        type="text"
+                        id="creatorTags"
+                        placeholder="e.g. Coffee &amp; Conversation, Fine Dining, Casual Walk"
+                    >
+                </div>
+
+                <div class="form-field-group">
                     <label for="creatorImage">Profile Photo</label>
                     <input
                         type="file"
@@ -566,6 +575,18 @@
                     >
                 </div>
 
+                <div class="form-field-group">
+                    <label for="editCreatorTags">Date Interests / Tags (comma-separated)</label>
+                    <input
+                        type="text"
+                        id="editCreatorTags"
+                        placeholder="e.g. Coffee &amp; Conversation, Fine Dining, Casual Walk"
+                    >
+                    <span style="font-size: 11px; color: var(--dash-text-secondary); margin-top: 3px; display: block;">
+                        Shown as tags for date bookings (e.g. Coffee &amp; Conversation, Fine Dining, Art &amp; Museums)
+                    </span>
+                </div>
+
                 <!-- Current Photo Preview & Non-destructive Replacement -->
                 <div class="form-field-group">
                     <label>Profile Photo</label>
@@ -595,6 +616,77 @@
                     Update Partner
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MANAGE AVAILABLE DATES MODAL (ADMIN CALENDAR TOGGLE TOOL)
+    ========================================================= -->
+    <div id="datesModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="datesModalTitle">
+        <div class="modal-dialog" style="max-width: 480px;">
+            <div class="modal-dialog-header">
+                <div>
+                    <h2 id="datesModalTitle" style="font-size: 17px; font-weight: 700; color: var(--dash-text-primary);">Manage Available Dates</h2>
+                    <p id="datesModalSubtitle" style="font-size: 12px; color: var(--dash-text-secondary); margin-top: 2px;">
+                        Select the dates when this creator is available for bookings.
+                    </p>
+                </div>
+                <button
+                    id="closeDatesModalButton"
+                    class="close-x-btn"
+                    type="button"
+                    aria-label="Close dialog"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <div class="dates-modal-body" style="padding: 18px 22px;">
+                <!-- Creator mini preview banner -->
+                <div id="datesCreatorPreview" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #FFF5F8; border: 1px solid #FCE7F3; border-radius: 12px; margin-bottom: 16px;">
+                    <img id="datesCreatorAvatar" src="" alt="" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #FFF;">
+                    <div>
+                        <strong id="datesCreatorName" style="display: block; font-size: 13.5px; color: #1E1B22;">Partner</strong>
+                        <span id="datesCreatorMeta" style="font-size: 11.5px; color: #DB2777; font-weight: 600;">0 dates currently enabled</span>
+                    </div>
+                </div>
+
+                <!-- Calendar Navigation & Quick Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" id="prevMonthBtn" class="action-icon-btn" style="padding: 4px 8px; font-size: 14px;" title="Previous Month">‹</button>
+                        <span id="calendarMonthTitle" style="font-size: 13.5px; font-weight: 700; color: #1E1B22;">November 2026</span>
+                        <button type="button" id="nextMonthBtn" class="action-icon-btn" style="padding: 4px 8px; font-size: 14px;" title="Next Month">›</button>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" id="quickNext7Btn" style="font-size: 11px; padding: 4px 8px; background: #FFF; border: 1px solid #FCE7F3; border-radius: 6px; cursor: pointer; color: #DB2777; font-weight: 600;">+ Next 7 Days</button>
+                        <button type="button" id="quickClearBtn" style="font-size: 11px; padding: 4px 8px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; color: #64748B;">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="calendar-grid-wrap" style="background: #FFF; border: 1px solid #FCE7F3; border-radius: 14px; padding: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 700; color: #817783; margin-bottom: 8px;">
+                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                    </div>
+                    <div id="calendarDaysGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;">
+                        <!-- Days rendered dynamically -->
+                    </div>
+                </div>
+
+                <div style="margin-top: 12px; font-size: 11.5px; color: #817783; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="display: inline-flex; align-items: center; gap: 6px;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EC4899;"></span>
+                        Soft Pink = Available for booking
+                    </span>
+                    <strong id="selectedDatesSummaryText" style="color: #DB2777;">0 dates selected</strong>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" id="cancelDatesBtn" class="modal-submit-btn" style="background: #F1F5F9; color: #475569; flex: 1;">Cancel</button>
+                    <button type="button" id="saveDatesBtn" class="modal-submit-btn" style="flex: 2;">Save Available Dates</button>
+                </div>
+            </div>
         </div>
     </div>
 
