@@ -1,0 +1,449 @@
+/**
+ * Roséia — Interaction Modal Styles (Chat, Voice Call, Video Call)
+ * Clean, mobile-first design with shared transparent pricing
+ */
+
+:root {
+    --ros-bg: #FFF7FA;
+    --ros-card: #FFFFFF;
+    --ros-pink: #E11D48;
+    --ros-pink-soft: #FFF1F5;
+    --ros-pink-hover: #BE123C;
+    --ros-border: #FCE7F3;
+    --ros-border-hover: #F43F5E;
+    --ros-text-dark: #25202A;
+    --ros-text-muted: #817783;
+    --ros-shadow: 0 16px 40px rgba(225, 29, 72, 0.12);
+}
+
+.ros-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(37, 32, 42, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    animation: rosBackdropFadeIn 0.22s ease-out;
+}
+
+@media (min-width: 640px) {
+    .ros-modal-backdrop {
+        align-items: center;
+        padding: 20px;
+    }
+}
+
+.ros-modal-card {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 28px 28px 0 0;
+    padding: 24px 22px 28px;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+    position: relative;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: rosSlideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+    .ros-modal-card {
+        border-radius: 28px;
+        box-shadow: var(--ros-shadow);
+        animation: rosCardPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 28px 26px 32px;
+    }
+}
+
+@keyframes rosBackdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes rosSlideUpMobile {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes rosCardPop {
+    from { opacity: 0; transform: scale(0.96) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Modal Grab Bar (Mobile) */
+.ros-modal-grab-bar {
+    width: 44px;
+    height: 4px;
+    background: #E5E7EB;
+    border-radius: 999px;
+    margin: 0 auto 16px;
+    display: block;
+}
+
+@media (min-width: 640px) {
+    .ros-modal-grab-bar {
+        display: none;
+    }
+}
+
+/* Header */
+.ros-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.ros-modal-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--ros-text-dark);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.ros-modal-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #F3F4F6;
+    border: none;
+    color: var(--ros-text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.ros-modal-close-btn:hover {
+    background: #E5E7EB;
+    transform: scale(1.05);
+}
+
+/* Creator Snapshot */
+.ros-creator-snapshot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: var(--ros-pink-soft);
+    border: 1px solid var(--ros-border);
+    border-radius: 18px;
+    margin-bottom: 22px;
+}
+
+.ros-snapshot-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.ros-snapshot-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ros-snapshot-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ros-text-dark);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ros-snapshot-tagline {
+    font-size: 0.82rem;
+    color: var(--ros-text-muted);
+}
+
+/* Section Title */
+.ros-section-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ros-text-muted);
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* Interaction Options Grid / List */
+.ros-options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.ros-option-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1.5px solid #F1ECEF;
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: left;
+    width: 100%;
+}
+
+.ros-option-card:hover {
+    border-color: #FBCFE8;
+    background: #FFFBFD;
+}
+
+.ros-option-card.is-selected {
+    border-color: var(--ros-pink);
+    background: var(--ros-pink-soft);
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.08);
+}
+
+.ros-opt-left {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+}
+
+.ros-opt-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: #FCE7F3;
+    color: var(--ros-pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.ros-option-card.is-selected .ros-opt-icon-wrap {
+    background: var(--ros-pink);
+    color: #FFFFFF;
+}
+
+.ros-opt-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ros-opt-title {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--ros-text-dark);
+    margin-bottom: 2px;
+}
+
+.ros-opt-sub {
+    font-size: 0.78rem;
+    color: var(--ros-text-muted);
+    line-height: 1.25;
+}
+
+.ros-opt-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.ros-opt-price-tag {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--ros-pink);
+}
+
+.ros-opt-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+}
+
+.ros-option-card.is-selected .ros-opt-radio {
+    border-color: var(--ros-pink);
+}
+
+.ros-opt-radio-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ros-pink);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.18s ease-out;
+}
+
+.ros-option-card.is-selected .ros-opt-radio-dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Pricing Breakdown (Transparent Single Price) */
+.ros-price-summary-box {
+    background: #FAF7F9;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border: 1px solid #F3EDF1;
+}
+
+.ros-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: var(--ros-text-muted);
+    margin-bottom: 8px;
+}
+
+.ros-summary-row:last-child {
+    margin-bottom: 0;
+    padding-top: 8px;
+    border-top: 1px dashed #E5E7EB;
+    font-weight: 700;
+    color: var(--ros-text-dark);
+    font-size: 1rem;
+}
+
+.ros-total-val {
+    color: var(--ros-pink);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+/* Action CTA Button */
+.ros-pay-btn {
+    width: 100%;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #E11D48 0%, #DB2777 100%);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.28);
+    transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
+    min-height: 52px;
+}
+
+.ros-pay-btn:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 8px 24px rgba(225, 29, 72, 0.35);
+}
+
+.ros-pay-btn:active {
+    transform: scale(0.98);
+}
+
+.ros-pay-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.ros-security-note {
+    text-align: center;
+    font-size: 0.74rem;
+    color: #9CA3AF;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Call Confirmation Notice (Transparent & Honest Calling State) */
+.ros-notice-card {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.ros-notice-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #ECFDF5;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.ros-notice-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ros-text-dark);
+    margin-bottom: 8px;
+}
+
+.ros-notice-body {
+    font-size: 0.88rem;
+    color: #4B5563;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    background: #F9FAFB;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid #E5E7EB;
+    text-align: left;
+}
+
+.ros-notice-meta {
+    font-size: 0.82rem;
+    color: #6B7280;
+    margin-bottom: 12px;
+}
+
+.ros-notice-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ros-btn-secondary {
+    width: 100%;
+    padding: 13px 18px;
+    background: #F3F4F6;
+    color: var(--ros-text-dark);
+    border: none;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 46px;
+}
+
+.ros-btn-secondary:hover {
+    background: #E5E7EB;
+}

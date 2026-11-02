@@ -741,21 +741,27 @@ app.post("/api/create-order", async (req, res) => {
       );
     }
 
-    const {
-      data: creator,
-      error: creatorError
-    } = await supabase
-      .from("creators")
-      .select("id, name, price")
-      .eq("id", creatorId)
-      .single();
+    let creator = null;
+    try {
+      const { data: dbCreator, error: creatorError } = await supabase
+        .from("creators")
+        .select("id, name, price")
+        .eq("id", creatorId)
+        .single();
+      if (!creatorError && dbCreator) {
+        creator = dbCreator;
+      }
+    } catch (_) {}
 
-    if (creatorError || !creator) {
+    if (!creator && Array.isArray(memoryCreatorsCache) && memoryCreatorsCache.length > 0) {
+      creator = memoryCreatorsCache.find(c => String(c.id) === String(creatorId));
+    }
+
+    if (!creator) {
       return sendError(
         res,
         404,
-        "Creator not found",
-        creatorError
+        "Creator not found"
       );
     }
 
@@ -770,29 +776,23 @@ app.post("/api/create-order", async (req, res) => {
       );
     }
 
-    const bookingDate = req.body.bookingDate || req.body.booking_date || null;
-    const timeSlot = req.body.timeSlot || req.body.time_slot || "11:00 AM";
-    const userNote = req.body.userNote || req.body.user_note || "";
-    const isBooking = req.body.type === "date_booking" || Boolean(bookingDate);
+    const requestedType = req.body.interaction_type || req.body.type || "chat";
+    const interactionType = ["chat", "voice_call", "video_call"].includes(requestedType)
+      ? requestedType
+      : (requestedType === "date_booking" ? "chat" : "chat");
 
     const basePrice = numericPrice;
-    const platformFee = isBooking ? Math.round(basePrice * 0.10) : 0;
-    const tax = isBooking ? Math.round(basePrice * 0.085) : 0;
-    const totalPayable = isBooking ? (basePrice + platformFee + tax) : basePrice;
-
+    // Shared pricing rule: all 3 interactions use the creator's exact configured price with NO hidden fees or taxes
+    const totalPayable = basePrice;
     const amountInPaise = Math.round(totalPayable * 100);
     const receipt = `roseia_${Date.now()}`;
 
     const orderNotes = {
       creatorId: String(creator.id),
       creatorName: String(creator.name),
-      type: isBooking ? "date_booking" : "chat_access"
+      interaction_type: interactionType,
+      type: interactionType
     };
-    if (isBooking) {
-      if (bookingDate) orderNotes.bookingDate = String(bookingDate);
-      if (timeSlot) orderNotes.timeSlot = String(timeSlot);
-      if (userNote) orderNotes.userNote = String(userNote);
-    }
 
     const order = await razorpay.orders.create({
       amount: amountInPaise,
@@ -803,17 +803,13 @@ app.post("/api/create-order", async (req, res) => {
 
     try {
       recordPendingOrder(order.id, {
-        type: isBooking ? "date_booking" : "chat_access",
+        type: interactionType,
+        interaction_type: interactionType,
         creatorId: String(creator.id),
         creatorName: String(creator.name),
         basePrice,
-        platformFee,
-        tax,
         amount: totalPayable,
-        totalPayable,
-        bookingDate,
-        timeSlot,
-        userNote
+        totalPayable
       });
     } catch (_) {}
 
@@ -821,16 +817,15 @@ app.post("/api/create-order", async (req, res) => {
       success: true,
       keyId: razorpayKeyId,
       order,
+      interaction_type: interactionType,
       pricing: {
         basePrice,
-        platformFee,
-        tax,
         totalPayable
       },
       creator: {
         id: creator.id,
         name: creator.name,
-        price: creator.price
+        price: basePrice
       }
     });
 
@@ -842,12 +837,6 @@ app.post("/api/create-order", async (req, res) => {
       error
     );
   }
-});
-
-// Booking specific order route alias
-app.post("/api/bookings/create-order", (req, res) => {
-  req.body.type = "date_booking";
-  return app._router.handle(req, res);
 });
 
 
@@ -937,53 +926,21 @@ app.post("/api/verify-payment", async (req, res) => {
       console.warn("Analytics record warning:", recErr.message);
     }
 
-    // Process Date Booking if applicable
-    const isBooking = (pending && (pending.type === "date_booking" || pending.bookingDate)) || Boolean(req.body.bookingDate);
-    let createdBooking = null;
-
-    if (isBooking) {
-      createdBooking = {
-        id: `bk_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
-        creator_id: String(targetCreatorId),
-        creator_name: targetCreatorName || "Creator",
-        booking_date: (pending && pending.bookingDate) || req.body.bookingDate || new Date().toISOString().slice(0, 10),
-        time_slot: (pending && pending.timeSlot) || req.body.timeSlot || "11:00 AM",
-        user_note: (pending && pending.userNote) || req.body.userNote || "",
-        base_price: (pending && pending.basePrice) || targetAmount,
-        platform_fee: (pending && pending.platformFee) || 0,
-        tax: (pending && pending.tax) || 0,
-        total_amount: (pending && pending.totalPayable) || targetAmount,
-        payment_id: razorpay_payment_id,
-        order_id: razorpay_order_id,
-        status: "confirmed",
-        created_at: new Date().toISOString()
-      };
-
-      try {
-        await supabase.from("bookings").insert([createdBooking]);
-      } catch (dbErr) {
-        console.warn("[Bookings] Supabase insert note:", dbErr.message);
-      }
-
-      try {
-        const curStore = loadAnalyticsStore();
-        curStore.bookings = curStore.bookings || [];
-        curStore.bookings.unshift(createdBooking);
-        saveAnalyticsStore(curStore);
-      } catch (stErr) {
-        console.warn("[Bookings] Store save note:", stErr.message);
-      }
-    }
+    // Determine interaction type
+    const interactionType = (pending && (pending.interaction_type || pending.type)) || req.body.interaction_type || req.body.type || "chat";
 
     return res.json({
       success: true,
-      message: isBooking ? "Booking Confirmed! She will contact you soon. Thank you!" : "Payment verified successfully",
-      confirmationText: "Booking Confirmed! She will contact you soon. Thank you!",
-      booking: createdBooking,
+      message: interactionType === "chat"
+        ? "Payment verified! Chat access unlocked."
+        : `${interactionType === "voice_call" ? "Voice Call" : "Video Call"} order verified successfully`,
+      interaction_type: interactionType,
       token,
       paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
       creatorId: targetCreatorId,
-      creatorName: targetCreatorName
+      creatorName: targetCreatorName,
+      amount: targetAmount
     });
   } catch (error) {
     return sendError(

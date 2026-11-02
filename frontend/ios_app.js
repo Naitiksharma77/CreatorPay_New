@@ -280,10 +280,7 @@ function createProfileCardHTML(creator, index) {
     const profileLink = `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
     const animDelay = Math.min(index * 35, 250);
 
-    const age = getDisplayAge(creator);
-    const location = (creator.creator_location && String(creator.creator_location).trim()) || "Available Locally";
-
-    // Tags with middle dot (Coffee & Conversation  ·  Fine Dining)
+    // Dynamic tags (Interests)
     let tagsText = "Coffee & Conversation  ·  Fine Dining";
     if (Array.isArray(creator.tags) && creator.tags.length > 0) {
         tagsText = creator.tags.slice(0, 2).map(t => String(t).trim()).join("  ·  ");
@@ -291,12 +288,10 @@ function createProfileCardHTML(creator, index) {
         tagsText = creator.tags.split(",").slice(0, 2).map(t => t.trim()).join("  ·  ");
     }
 
-    const nextOpenDate = formatNextOpenDate(creator.available_dates);
-
     return `
         <article class="roseia-card social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
             <div class="card-image-wrap">
-                <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" class="card-image" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
+                <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" class="card-image" style="object-position: 50% 20%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
                 
                 <button
                     type="button"
@@ -313,14 +308,7 @@ function createProfileCardHTML(creator, index) {
 
                 <div class="card-image-overlay">
                     <div class="card-overlay-left">
-                        <div class="card-overlay-name">${escapeHTML(name)}, ${escapeHTML(age)}</div>
-                        <div class="card-overlay-location">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            <span>${escapeHTML(location)}</span>
-                        </div>
+                        <div class="card-overlay-name">${escapeHTML(name)}</div>
                     </div>
                     <div class="card-overlay-price">₹${price}</div>
                 </div>
@@ -331,26 +319,12 @@ function createProfileCardHTML(creator, index) {
 
                 <div class="card-tags-line">${escapeHTML(tagsText)}</div>
 
-                <div class="card-availability-line">
-                    <span class="card-open-date">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <span>Next open date: ${escapeHTML(nextOpenDate)}</span>
-                    </span>
-                    <span class="card-meta-dot">·</span>
-                    <span class="card-duration">120 min</span>
-                </div>
-
                 <div class="card-actions-row">
                     <a class="btn-view-profile" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View Profile of ${escapeHTML(name)}">
                         View Profile
                     </a>
-                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openBookingForCreator('${escapeHTML(creator.id)}');" aria-label="Book a Date with ${escapeHTML(name)}">
-                        Book a Date
+                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openConnectForCreator('${escapeHTML(creator.id)}');" aria-label="Connect with ${escapeHTML(name)}">
+                        Connect · ₹${price}
                     </button>
                 </div>
             </div>
@@ -358,15 +332,17 @@ function createProfileCardHTML(creator, index) {
     `;
 }
 
-// Global hook to open booking modal directly or fallback to friend_profile
-window.openBookingForCreator = function(creatorId) {
+// Global hook to open interaction modal directly or fallback to friend_profile
+window.openConnectForCreator = function(creatorId) {
     const creator = allCreators.find(c => String(c.id) === String(creatorId));
-    if (creator && window.RoseiaBooking) {
-        window.RoseiaBooking.open(creator);
+    if (creator && window.openInteractionModal) {
+        window.openInteractionModal(creator, "chat");
     } else {
-        window.location.href = `friend_profile.html?id=${encodeURIComponent(creatorId)}&action=book`;
+        window.location.href = `friend_profile.html?id=${encodeURIComponent(creatorId)}&action=chat`;
     }
 };
+
+window.openBookingForCreator = window.openConnectForCreator;
 
 
 // ===============================

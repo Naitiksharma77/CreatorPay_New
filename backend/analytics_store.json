@@ -24,6 +24,19 @@
       "id": "pay_dev_test999",
       "hasAccess": true,
       "created_at": "2026-10-25T01:42:15.506Z"
+    },
+    {
+      "order_id": "order_TvG3qhGzmlhOCp",
+      "payment_id": "pay_dev_1793611860436",
+      "creator_id": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creator_name": "Pallaaviiii._",
+      "amount": 293,
+      "token": "8b77dfa483e981194858978260f59098f01955b65d9995fd5af4e51ad5ae39b4",
+      "status": "verified",
+      "timestamp": "2026-11-02T09:31:00.440Z",
+      "id": "pay_dev_1793611860436",
+      "hasAccess": true,
+      "created_at": "2026-11-02T09:31:00.440Z"
     }
   ],
   "active_users": [
@@ -46,6 +59,11 @@
       "userId": "v_mvb2b0vn_ufptm4",
       "date": "2026-10-30",
       "timestamp": "2026-10-30T02:42:46.203Z"
+    },
+    {
+      "userId": "v_mvb2b0vn_ufptm4",
+      "date": "2026-11-02",
+      "timestamp": "2026-11-02T09:10:10.740Z"
     }
   ],
   "active_sessions": {
@@ -58,9 +76,9 @@
     },
     "v_anon": {
       "visitorId": "v_anon",
-      "lastSeen": "2026-10-30T15:12:47.977Z",
+      "lastSeen": "2026-11-02T09:31:00.440Z",
       "page": "friend_profile.html",
-      "creatorId": "58568af4-bb6b-4142-b0a1-d0ebd59d35fe",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
       "source": "Direct"
     },
     "s_mvmf6rrq_ajv8i4": {
@@ -97,6 +115,13 @@
       "page": "creator_home.html",
       "creatorId": null,
       "source": "Direct"
+    },
+    "s_mvyzvtf9_avefo9": {
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "lastSeen": "2026-11-02T09:19:23.556Z",
+      "page": "creator_home.html",
+      "creatorId": null,
+      "source": "Google"
     }
   },
   "events": [
@@ -339,6 +364,86 @@
       "source": "Direct",
       "referrer": "",
       "timestamp": "2026-10-30T15:12:47.977Z"
+    },
+    {
+      "id": "evt_1793611839965_fb8c89",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "buttonName": null,
+      "amount": 293,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-11-02T09:30:39.965Z"
+    },
+    {
+      "id": "evt_1793611841065_316f9f",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "buttonName": null,
+      "amount": 293,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-11-02T09:30:41.065Z"
+    },
+    {
+      "id": "evt_1793611842089_4689d2",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "buttonName": null,
+      "amount": 293,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-11-02T09:30:42.089Z"
+    },
+    {
+      "id": "evt_1793611860430_f2c011",
+      "type": "checkout_initiated",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "buttonName": null,
+      "amount": 293,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-11-02T09:31:00.430Z"
+    },
+    {
+      "id": "evt_1793611860440_ad5de9",
+      "type": "payment_success",
+      "visitorId": "v_anon",
+      "sessionId": null,
+      "isNewVisitor": false,
+      "page": "friend_profile.html",
+      "title": "",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "buttonName": null,
+      "amount": 293,
+      "source": "Direct",
+      "referrer": "",
+      "timestamp": "2026-11-02T09:31:00.440Z"
     }
   ],
   "pending_orders": {
@@ -445,6 +550,46 @@
       "timeSlot": "07:00 PM",
       "userNote": "",
       "created_at": "2026-10-30T15:12:47.977Z"
+    },
+    "order_TvG3UKDY5tym60": {
+      "type": "chat",
+      "interaction_type": "chat",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "basePrice": 293,
+      "amount": 293,
+      "totalPayable": 293,
+      "created_at": "2026-11-02T09:30:39.965Z"
+    },
+    "order_TvG3VXw60Q85Li": {
+      "type": "voice_call",
+      "interaction_type": "voice_call",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "basePrice": 293,
+      "amount": 293,
+      "totalPayable": 293,
+      "created_at": "2026-11-02T09:30:41.065Z"
+    },
+    "order_TvG3WexSg018z5": {
+      "type": "video_call",
+      "interaction_type": "video_call",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "basePrice": 293,
+      "amount": 293,
+      "totalPayable": 293,
+      "created_at": "2026-11-02T09:30:42.089Z"
+    },
+    "order_TvG3qhGzmlhOCp": {
+      "type": "video_call",
+      "interaction_type": "video_call",
+      "creatorId": "b8a7815c-c497-4af5-8f91-37f1c9e888d5",
+      "creatorName": "Pallaaviiii._",
+      "basePrice": 293,
+      "amount": 293,
+      "totalPayable": 293,
+      "created_at": "2026-11-02T09:31:00.430Z"
     }
   },
   "messages": [
