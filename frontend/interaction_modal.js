@@ -101,11 +101,11 @@
 
                     <span class="ros-section-label">Select Interaction</span>
 
-                    <!-- 3 Interaction Options: Chat, Voice Call, Video Call -->
+                    <!-- 3 Interaction Options: Video Call, Voice Call, Chat -->
                     <div class="ros-options-group" role="radiogroup" aria-label="Interaction Options">
-                        ${renderOption("chat", priceFormatted)}
-                        ${renderOption("voice_call", priceFormatted)}
                         ${renderOption("video_call", priceFormatted)}
+                        ${renderOption("voice_call", priceFormatted)}
+                        ${renderOption("chat", priceFormatted)}
                     </div>
 
                     <!-- Transparent Pricing Summary (NO fees, NO taxes) -->

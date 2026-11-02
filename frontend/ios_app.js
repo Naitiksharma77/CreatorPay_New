@@ -323,8 +323,11 @@ function createProfileCardHTML(creator, index) {
                     <a class="btn-view-profile" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View Profile of ${escapeHTML(name)}">
                         View Profile
                     </a>
-                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openConnectForCreator('${escapeHTML(creator.id)}');" aria-label="Connect with ${escapeHTML(name)}">
-                        Connect · ₹${price}
+                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openConnectForCreator('${escapeHTML(creator.id)}');" aria-label="Say Hi to ${escapeHTML(name)}">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; flex-shrink: 0;" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Say Hi
                     </button>
                 </div>
             </div>
@@ -343,6 +346,7 @@ window.openConnectForCreator = function(creatorId) {
 };
 
 window.openBookingForCreator = window.openConnectForCreator;
+window.openSayHiForCreator = window.openConnectForCreator;
 
 
 // ===============================
