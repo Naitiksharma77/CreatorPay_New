@@ -4,8 +4,8 @@ const Razorpay = require("razorpay");
 
 let razorpay = null;
 
-const key_id = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY;
-const key_secret = process.env.RAZORPAY_KEY_SECRET;
+const key_id = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || "rzp_live_TbMnvmib0JVGT3";
+const key_secret = process.env.RAZORPAY_KEY_SECRET || "MhPRkHx2ltMPb3lNvrFpJ8qp";
 
 if (key_id && key_secret) {
   try {
