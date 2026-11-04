@@ -73,6 +73,17 @@ function getNumericPrice(price) {
   return amount;
 }
 
+function calculateInteractionPrice(baseChatPrice, interactionType) {
+  const base = Number(baseChatPrice) || 0;
+  if (interactionType === "voice_call") {
+    return Math.round(base * 1.10);
+  }
+  if (interactionType === "video_call") {
+    return Math.round(base * 1.20);
+  }
+  return Math.round(base);
+}
+
 
 // ======================================
 // BACKEND STATUS
@@ -182,12 +193,21 @@ async function refreshCreatorsCache() {
   return null;
 }
 
+function sortCreatorsByCreatedAtDesc(list) {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const tA = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+    const tB = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+    return tB - tA;
+  });
+}
+
 // Warm up cache at startup
 refreshCreatorsCache().catch(() => {});
 
 app.get("/api/creators", async (req, res) => {
   try {
-    // 1. Try Supabase with a fast query
+    // 1. Try Supabase with a fast query (ordered by created_at DESC)
     let fetchedData = null;
     try {
       const { data, error } = await supabase
@@ -198,8 +218,8 @@ app.get("/api/creators", async (req, res) => {
         });
 
       if (!error && Array.isArray(data) && data.length > 0) {
-        fetchedData = data;
-        memoryCreatorsCache = data;
+        fetchedData = sortCreatorsByCreatedAtDesc(data);
+        memoryCreatorsCache = fetchedData;
       } else if (error) {
         console.warn("[Creators] Supabase query error:", error.message || error);
       }
@@ -207,9 +227,9 @@ app.get("/api/creators", async (req, res) => {
       console.warn("[Creators] Supabase query exception:", dbErr.message);
     }
 
-    // If Supabase returned data, respond immediately with enriched profiles
+    // If Supabase returned data, respond immediately with enriched profiles sorted newest first
     if (fetchedData && fetchedData.length > 0) {
-      const enriched = fetchedData.map((c, i) => enrichCreator(c, i));
+      const enriched = sortCreatorsByCreatedAtDesc(fetchedData.map((c, i) => enrichCreator(c, i)));
       return res.json({
         success: true,
         creators: enriched,
@@ -226,8 +246,8 @@ app.get("/api/creators", async (req, res) => {
       if (renderRes.ok) {
         const renderData = await renderRes.json();
         if (renderData && renderData.success && Array.isArray(renderData.creators) && renderData.creators.length > 0) {
-          memoryCreatorsCache = renderData.creators;
-          const enriched = renderData.creators.map((c, i) => enrichCreator(c, i));
+          memoryCreatorsCache = sortCreatorsByCreatedAtDesc(renderData.creators);
+          const enriched = sortCreatorsByCreatedAtDesc(memoryCreatorsCache.map((c, i) => enrichCreator(c, i)));
           return res.json({
             success: true,
             creators: enriched,
@@ -241,7 +261,7 @@ app.get("/api/creators", async (req, res) => {
 
     // 3. Fallback to memory cache if available
     if (Array.isArray(memoryCreatorsCache) && memoryCreatorsCache.length > 0) {
-      const enriched = memoryCreatorsCache.map((c, i) => enrichCreator(c, i));
+      const enriched = sortCreatorsByCreatedAtDesc(memoryCreatorsCache.map((c, i) => enrichCreator(c, i)));
       return res.json({
         success: true,
         creators: enriched,
@@ -761,8 +781,9 @@ app.post("/api/create-order", async (req, res) => {
       : (requestedType === "date_booking" ? "chat" : "chat");
 
     const basePrice = numericPrice;
-    // Shared pricing rule: all 3 interactions use creator's exact price with NO hidden fees or taxes
-    const totalPayable = basePrice;
+    // Dynamic interaction pricing formula:
+    // Chat = basePrice, Voice = Math.round(basePrice * 1.10), Video = Math.round(basePrice * 1.20)
+    const totalPayable = calculateInteractionPrice(basePrice, interactionType);
     const amountInPaise = Math.round(totalPayable * 100);
     const receipt = `roseia_${Date.now()}`;
 
@@ -770,7 +791,9 @@ app.post("/api/create-order", async (req, res) => {
       creatorId: String(creator.id),
       creatorName: String(creator.name || "Creator"),
       interaction_type: interactionType,
-      type: interactionType
+      type: interactionType,
+      base_price: String(basePrice),
+      calculated_price: String(totalPayable)
     };
 
     let order = null;
@@ -791,6 +814,7 @@ app.post("/api/create-order", async (req, res) => {
             creatorId: creator.id,
             creatorName: creator.name,
             price: totalPayable,
+            base_price: basePrice,
             interaction_type: interactionType
           })
         });
@@ -828,6 +852,7 @@ app.post("/api/create-order", async (req, res) => {
       interaction_type: interactionType,
       pricing: {
         basePrice,
+        calculatedPrice: totalPayable,
         totalPayable
       },
       creator: {

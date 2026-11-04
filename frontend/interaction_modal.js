@@ -54,6 +54,17 @@
         return (Number.isFinite(num) && num > 0) ? num : 49;
     }
 
+    function calculateInteractionPrice(baseChatPrice, interactionType) {
+        const base = Number(baseChatPrice) || 0;
+        if (interactionType === "voice_call") {
+            return Math.round(base * 1.10);
+        }
+        if (interactionType === "video_call") {
+            return Math.round(base * 1.20);
+        }
+        return Math.round(base);
+    }
+
     function ensureContainer() {
         let el = document.getElementById("roseiaInteractionModalContainer");
         if (!el) {
@@ -71,8 +82,14 @@
             return;
         }
 
-        const price = getBasePrice(currentCreator);
-        const priceFormatted = price.toLocaleString("en-IN");
+        const baseChatPrice = getBasePrice(currentCreator);
+        const chatPrice = calculateInteractionPrice(baseChatPrice, "chat");
+        const voicePrice = calculateInteractionPrice(baseChatPrice, "voice_call");
+        const videoPrice = calculateInteractionPrice(baseChatPrice, "video_call");
+
+        const selectedPrice = calculateInteractionPrice(baseChatPrice, selectedInteraction);
+        const selectedPriceFormatted = selectedPrice.toLocaleString("en-IN");
+
         const name = (currentCreator.name && currentCreator.name.trim()) || "Creator";
         const avatar = (currentCreator.profile_image && currentCreator.profile_image.startsWith("http"))
             ? currentCreator.profile_image
@@ -101,11 +118,11 @@
 
                     <span class="ros-section-label">Select Interaction</span>
 
-                    <!-- 3 Interaction Options: Video Call, Voice Call, Chat -->
+                    <!-- 3 Interaction Options in required order: Chat, Voice Call, Video Call -->
                     <div class="ros-options-group" role="radiogroup" aria-label="Interaction Options">
-                        ${renderOption("video_call", priceFormatted)}
-                        ${renderOption("voice_call", priceFormatted)}
-                        ${renderOption("chat", priceFormatted)}
+                        ${renderOption("chat", chatPrice.toLocaleString("en-IN"))}
+                        ${renderOption("voice_call", voicePrice.toLocaleString("en-IN"))}
+                        ${renderOption("video_call", videoPrice.toLocaleString("en-IN"))}
                     </div>
 
                     <!-- Transparent Pricing Summary (NO fees, NO taxes) -->
@@ -120,11 +137,11 @@
                         </div>
                         <div class="ros-summary-row">
                             <span>Total Payable</span>
-                            <span class="ros-total-val">₹${priceFormatted} INR</span>
+                            <span class="ros-total-val">₹${selectedPriceFormatted} INR</span>
                         </div>
                     </div>
 
-                    <!-- CTA Button -->
+                    <!-- CTA Button with Selected Interaction Amount -->
                     <button type="button" id="rosPayActionBtn" class="ros-pay-btn" onclick="window.proceedToPayment()" ${isProcessing ? 'disabled' : ''}>
                         ${isProcessing ? `
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 0.8s linear infinite;">
@@ -133,7 +150,7 @@
                             </svg>
                             <span>Processing...</span>
                         ` : `
-                            <span>Continue to Payment · ₹${priceFormatted}</span>
+                            <span>Continue to Payment · ₹${selectedPriceFormatted}</span>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -331,19 +348,21 @@
                 throw new Error("Payment gateway could not be loaded. Please check your network or adblocker and try again.");
             }
 
-            const basePrice = getBasePrice(currentCreator);
+            const baseChatPrice = getBasePrice(currentCreator);
+            const selectedPrice = calculateInteractionPrice(baseChatPrice, selectedInteraction);
 
             // 2. Create order on backend (with dual Render fallback)
             const orderData = await requestCreateOrder({
                 creatorId: currentCreator.id,
                 creatorName: currentCreator.name || "Roséia Creator",
-                price: basePrice,
+                price: selectedPrice,
+                base_price: baseChatPrice,
                 interaction_type: selectedInteraction
             });
 
             const keyId = orderData.keyId || "rzp_live_TbMnvmib0JVGT3";
             const order = orderData.order;
-            const price = orderData.pricing?.totalPayable || basePrice;
+            const price = orderData.pricing?.totalPayable || orderData.pricing?.calculatedPrice || selectedPrice;
             const interactionInfo = INTERACTION_CONFIG[selectedInteraction] || INTERACTION_CONFIG.chat;
 
             // 3. Configure and open Razorpay Checkout modal

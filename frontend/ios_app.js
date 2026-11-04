@@ -584,20 +584,18 @@ function resetFilters() {
 }
 
 
-const PINNED_NAMES = ["naina", "radhikachouhan", "radhika", "pallavithakur", "pallavi"];
-function sortFeaturedCreators(list) {
+function sortCreatorsByNewestFirst(list) {
     if (!Array.isArray(list)) return [];
     return [...list].sort((a, b) => {
-        const normA = String(a.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const normB = String(b.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const idxA = PINNED_NAMES.findIndex(p => normA.includes(p));
-        const idxB = PINNED_NAMES.findIndex(p => normB.includes(p));
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
+        const timeA = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) {
+            return timeB - timeA; // Newest created_at timestamp first
+        }
         return 0;
     });
 }
+const sortFeaturedCreators = sortCreatorsByNewestFirst;
 
 // ===============================
 // TAB SWITCHING (EXPLORE, SEARCH, FAVORITES, BOOKINGS)

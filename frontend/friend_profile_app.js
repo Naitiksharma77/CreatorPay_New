@@ -182,6 +182,17 @@ window.toggleHeroFullscreen = function() {
     }
 };
 
+function calculateInteractionPrice(baseChatPrice, interactionType) {
+    const base = Number(baseChatPrice) || 0;
+    if (interactionType === "voice_call") {
+        return Math.round(base * 1.10);
+    }
+    if (interactionType === "video_call") {
+        return Math.round(base * 1.20);
+    }
+    return Math.round(base);
+}
+
 // ===============================
 // DISPLAY PROFILE
 // Strictly NO age, NO location/city, NO date booking references
@@ -198,10 +209,12 @@ function displayProfile(creator) {
     // Bio & Introduction
     let intro = (creator.bio && creator.bio.trim()) || `This is ${name}. Welcome to my profile!`;
 
-    // Dynamic creator interaction price (same for Chat, Voice Call, Video Call)
+    // Dynamic creator interaction pricing (Chat = base, Voice = base * 1.10, Video = base * 1.20)
     const rawPrice = Number(creator.price);
-    const basePrice = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice : 49;
-    const priceFormatted = basePrice.toLocaleString("en-IN");
+    const baseChatPrice = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice : 49;
+    const chatPriceFormatted = calculateInteractionPrice(baseChatPrice, "chat").toLocaleString("en-IN");
+    const voicePriceFormatted = calculateInteractionPrice(baseChatPrice, "voice_call").toLocaleString("en-IN");
+    const videoPriceFormatted = calculateInteractionPrice(baseChatPrice, "video_call").toLocaleString("en-IN");
 
     // Dynamic tags (Interests & Hobbies)
     let interestsStr = "Coffee & Conversation · Fine Dining";
@@ -305,7 +318,7 @@ function displayProfile(creator) {
                                 <span class="p-btn-sub">Direct 1-on-1 private messaging</span>
                             </div>
                         </div>
-                        <span class="p-btn-price">₹${priceFormatted}</span>
+                        <span class="p-btn-price">₹${chatPriceFormatted}</span>
                     </button>
 
                     <!-- Action 2: Voice Call -->
@@ -321,7 +334,7 @@ function displayProfile(creator) {
                                 <span class="p-btn-sub">High-definition audio conversation</span>
                             </div>
                         </div>
-                        <span class="p-btn-price">₹${priceFormatted}</span>
+                        <span class="p-btn-price">₹${voicePriceFormatted}</span>
                     </button>
 
                     <!-- Action 3: Video Call -->
@@ -338,7 +351,7 @@ function displayProfile(creator) {
                                 <span class="p-btn-sub">Face-to-face video interaction</span>
                             </div>
                         </div>
-                        <span class="p-btn-price">₹${priceFormatted}</span>
+                        <span class="p-btn-price">₹${videoPriceFormatted}</span>
                     </button>
                 </div>
             </div>
@@ -349,7 +362,7 @@ function displayProfile(creator) {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <span>Chat · ₹${priceFormatted}</span>
+                    <span>Chat · ₹${chatPriceFormatted}</span>
                 </button>
 
                 <button type="button" class="sticky-action-pill" onclick="window.triggerInteraction('voice_call')" aria-label="Voice Call with ${escapeHTML(name)}">

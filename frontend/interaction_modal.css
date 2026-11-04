@@ -269,7 +269,7 @@
 .ros-opt-price-tag {
     font-size: 1.05rem;
     font-weight: 800;
-    color: var(--ros-pink);
+    color: #059669;
 }
 
 .ros-opt-radio {
@@ -330,7 +330,7 @@
 }
 
 .ros-total-val {
-    color: var(--ros-pink);
+    color: #059669;
     font-size: 1.25rem;
     font-weight: 800;
 }
