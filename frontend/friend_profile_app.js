@@ -37,7 +37,7 @@ function escapeHTML(value) {
 
 async function loadProfile() {
     if (!creatorId) {
-        displayError("Profile not found", "Please return to Roséia and choose someone to view.");
+        displayError("Profile not found", "Please return to Takora and choose someone to view.");
         return;
     }
 
@@ -111,7 +111,7 @@ async function loadProfile() {
         }
 
         if (!selectedCreator) {
-            displayError("Profile does not exist", "The requested Roséia profile could not be found.");
+            displayError("Profile does not exist", "The requested Takora profile could not be found.");
         }
 
     } catch (error) {
@@ -299,7 +299,7 @@ function displayProfile(creator) {
                 </div>
             </div>
 
-            <!-- 3. Roséia Interaction Suite (Chat, Voice Call, Video Call) -->
+            <!-- 3. Takora Interaction Suite (Chat, Voice Call, Video Call) -->
             <div class="profile-interactions-card">
                 <h2 class="profile-interactions-title">Connect with ${escapeHTML(name)}</h2>
                 <p class="profile-interactions-sub">Select an interaction below to start your private connection.</p>

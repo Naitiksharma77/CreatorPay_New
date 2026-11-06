@@ -1,5 +1,5 @@
 /**
- * Roséia — Creator Interaction & Payment Suite
+ * Takora — Creator Interaction & Payment Suite
  * Handles 1-on-1 Chat, Voice Call, and Video Call interactions
  * Shared transparent pricing matching creator's configured price
  */
@@ -354,7 +354,7 @@
             // 2. Create order on backend (with dual Render fallback)
             const orderData = await requestCreateOrder({
                 creatorId: currentCreator.id,
-                creatorName: currentCreator.name || "Roséia Creator",
+                creatorName: currentCreator.name || "Takora Creator",
                 price: selectedPrice,
                 base_price: baseChatPrice,
                 interaction_type: selectedInteraction
@@ -370,12 +370,12 @@
                 key: keyId,
                 amount: order.amount,
                 currency: "INR",
-                name: "Roséia",
+                name: "Takora",
                 description: `${interactionInfo.label} with ${currentCreator.name || "Creator"}`,
                 order_id: order.id,
                 theme: { color: "#E11D48" },
                 prefill: {
-                    name: "Roséia Member",
+                    name: "Takora Member",
                     email: "member@roseia.club"
                 },
                 retry: {
@@ -477,7 +477,7 @@
 
                         <div class="ros-notice-body">
                             <p style="margin-bottom:8px;"><strong>Thank you!</strong> Your order for a <strong>${escapeHTML(typeLabel)}</strong> with <strong>${escapeHTML(name)}</strong> has been confirmed.</p>
-                            <p style="margin-bottom:8px;">Roséia is currently connecting direct WebRTC audio/video infrastructure for this profile. Our team has notified <strong>${escapeHTML(name)}</strong> directly.</p>
+                            <p style="margin-bottom:8px;">Takora is currently connecting direct WebRTC audio/video infrastructure for this profile. Our team has notified <strong>${escapeHTML(name)}</strong> directly.</p>
                             <p>You have also been granted <strong>unlimited instant chat access</strong> so you can coordinate directly with ${escapeHTML(name)} right away!</p>
                         </div>
 

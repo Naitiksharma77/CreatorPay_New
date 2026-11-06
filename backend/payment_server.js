@@ -765,7 +765,7 @@ app.post("/api/create-order", async (req, res) => {
       const fallbackPrice = getNumericPrice(req.body.price) || 49;
       creator = {
         id: String(creatorId),
-        name: req.body.creatorName || req.body.name || "Roséia Creator",
+        name: req.body.creatorName || req.body.name || "Takora Creator",
         price: fallbackPrice
       };
     }
