@@ -697,26 +697,13 @@
                     body: JSON.stringify({ creatorId })
                 });
 
-                if (res.status === 401) {
-                    showLockedState({
-                        badge: "Free Sign In Required",
-                        title: "Sign In to Open Private Chat",
-                        message: "Create a free account or sign in to continue with your monthly Takora membership.",
-                        buttonHtml: `<button type="button" id="chatSignInBtn" class="locked-action-btn">Sign In / Register Free</button>`,
-                        backUrl: profileUrl
-                    });
-                    const btn = document.getElementById("chatSignInBtn");
-                    if (btn && window.TakoraAuth) {
-                        btn.onclick = () => window.TakoraAuth.openAuthModal("login", () => initChat());
-                    }
-                    return;
-                }
-
-                if (res.status === 403 || !res.ok || !data.success || !data.authorized) {
+                if (res.status === 401 || res.status === 403 || !res.ok || !data.success || !data.authorized) {
                     showLockedState({
                         badge: "Membership Required",
                         title: "Monthly Membership Needed",
-                        message: data.message || "Chat access requires an active Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo) plan.",
+                        message: (data && data.message && res.status === 403)
+                            ? data.message
+                            : "Chat access requires an active Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo) plan.",
                         buttonHtml: `<a href="pricing.html?plan=basic" class="locked-action-btn">View Monthly Plans (from ₹9/mo)</a>`,
                         backUrl: profileUrl
                     });

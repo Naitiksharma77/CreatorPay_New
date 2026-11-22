@@ -344,11 +344,48 @@ async function requireAuth(req, res) {
     res.status(401).json({
       success: false,
       code: "AUTH_REQUIRED",
-      message: "Please create a free account or log in to continue."
+      message: "Active membership required. Please select a plan to continue."
     });
     return null;
   }
   return user;
+}
+
+async function createInstantMemberSession(req, res) {
+  const uniqueSuffix = `${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+  const { salt, hash } = hashPassword(crypto.randomBytes(24).toString("hex"));
+  const nowIso = new Date().toISOString();
+  const newUser = {
+    id: `usr_${uniqueSuffix}`,
+    name: "Takora Member",
+    email: `member_${uniqueSuffix}@member.takora.local`,
+    phone: "",
+    password_hash: hash,
+    password_salt: salt,
+    role: "member",
+    has_access: false,
+    status: "active",
+    razorpay_customer_id: "",
+    created_at: nowIso,
+    updated_at: nowIso
+  };
+
+  const store = loadAnalyticsStore();
+  store.users = store.users || [];
+  store.users.unshift(newUser);
+  saveAnalyticsStore(store);
+
+  if (supabase.isSupabaseLive) {
+    try {
+      await supabase.from("users").insert([newUser]);
+    } catch (err) {
+      console.warn("[Supabase] Instant member insert warning:", err.message || err);
+    }
+  }
+
+  const token = signSessionToken(newUser);
+  setSessionCookie(req, res, token);
+  return { user: newUser, token };
 }
 
 // ======================================
@@ -822,8 +859,13 @@ app.get("/api/subscriptions/me", async (req, res) => {
 });
 
 async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
-  const user = await requireAuth(req, res);
-  if (!user) return;
+  let user = await getAuthenticatedUser(req);
+  let issuedToken = null;
+  if (!user) {
+    const instantSession = await createInstantMemberSession(req, res);
+    user = instantSession.user;
+    issuedToken = instantSession.token;
+  }
 
   const { planCode } = req.body || {};
   const cleanPlanCode = String(planCode || "").trim().toLowerCase();
@@ -880,9 +922,11 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
   }
 
   try {
-    // 1. Ensure Razorpay Customer exists
+    const isGuestPlaceholder = String(user.email || "").endsWith("@member.takora.local");
+
+    // 1. Ensure Razorpay Customer exists when user has a real email
     let rzpCustomerId = String(user.razorpay_customer_id || "").trim();
-    if (!rzpCustomerId) {
+    if (!rzpCustomerId && !isGuestPlaceholder && user.email) {
       try {
         const customerPayload = {
           name: user.name || "Takora Member",
@@ -914,7 +958,7 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       total_count: 120,
       notes: {
         userId: String(user.id),
-        userEmail: String(user.email),
+        userEmail: isGuestPlaceholder ? "" : String(user.email),
         planCode: targetPlan.code,
         app: "takora",
         upgradeFromSubscriptionId:
@@ -934,7 +978,7 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
 
     const savedSub = await saveSubscriptionRecord({
       user_id: String(user.id),
-      user_email: String(user.email),
+      user_email: isGuestPlaceholder ? "" : String(user.email),
       plan_code: targetPlan.code,
       plan_name: targetPlan.name,
       amount_inr: targetPlan.priceInr,
@@ -961,9 +1005,18 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       creatorName: `${targetPlan.name} Plan`
     });
 
+    const prefill = isGuestPlaceholder
+      ? {}
+      : {
+          name: user.name,
+          email: user.email,
+          contact: user.phone || ""
+        };
+
     return res.json({
       success: true,
       keyId: rzpStatus.keyId,
+      sessionToken: issuedToken || undefined,
       plan: targetPlan,
       subscription: {
         id: rzpSub.id,
@@ -971,11 +1024,7 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
         status: savedSub.status,
         short_url: rzpSub.short_url || ""
       },
-      prefill: {
-        name: user.name,
-        email: user.email,
-        contact: user.phone || ""
-      }
+      prefill
     });
   } catch (err) {
     const rzpMsg =
@@ -1109,9 +1158,27 @@ app.post("/api/subscriptions/verify", async (req, res) => {
     const currentEndIso = unixToIso(rzpSub.current_end) || addOneMonthIso(nowIso);
     const nextBillingIso = unixToIso(rzpSub.charge_at || rzpSub.current_end) || currentEndIso;
 
+    const payerEmail = String((rzpPay && rzpPay.email) || "").trim().toLowerCase();
+    const payerContact = String((rzpPay && rzpPay.contact) || "").trim();
+    const currentEmail = String(user.email || "");
+    const resolvedEmail = currentEmail.endsWith("@member.takora.local")
+      ? (payerEmail || payerContact || "")
+      : currentEmail;
+
+    if (currentEmail.endsWith("@member.takora.local") && (payerEmail || payerContact)) {
+      const uStore = loadAnalyticsStore();
+      const uIdx = (uStore.users || []).findIndex((u) => String(u.id) === String(user.id));
+      if (uIdx !== -1) {
+        if (payerEmail) uStore.users[uIdx].email = payerEmail;
+        if (payerContact) uStore.users[uIdx].phone = payerContact;
+        uStore.users[uIdx].updated_at = new Date().toISOString();
+        saveAnalyticsStore(uStore);
+      }
+    }
+
     const activeRow = await saveSubscriptionRecord({
       user_id: String(user.id),
-      user_email: String(user.email),
+      user_email: resolvedEmail,
       plan_code: plan.code,
       plan_name: plan.name,
       amount_inr: plan.priceInr,
@@ -1132,7 +1199,7 @@ app.post("/api/subscriptions/verify", async (req, res) => {
       subscription_id: activeRow.id,
       razorpay_subscription_id: rzpSub.id,
       user_id: String(user.id),
-      user_email: String(user.email),
+      user_email: resolvedEmail,
       plan_code: plan.code,
       razorpay_payment_id: rzpPay.id,
       razorpay_signature: String(razorpay_signature),
@@ -1540,9 +1607,9 @@ app.get("/api/entitlements/check", async (req, res) => {
         success: true,
         authenticated: false,
         allowed: false,
-        reason: "AUTH_REQUIRED",
+        reason: "SUBSCRIPTION_REQUIRED",
         requiredPlan: getRequiredPlanForFeature(feature),
-        redirectTo: "/pricing.html",
+        redirectTo: `/pricing.html?plan=${getRequiredPlanForFeature(feature)}`,
         entitlements: computeEntitlements(null)
       });
     }

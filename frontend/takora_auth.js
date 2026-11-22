@@ -669,6 +669,20 @@
         ];
     }
 
+    function setSessionToken(token) {
+        if (token && typeof token === "string") {
+            memoryBearerToken = token;
+        }
+    }
+
+    function displayUserLabel(user) {
+        if (!user) return "";
+        const email = String(user.email || "");
+        if (email && !email.endsWith("@member.takora.local")) return email;
+        if (user.phone) return String(user.phone);
+        return "Takora Member";
+    }
+
     function syncHeaderAndSheetUI() {
         const headerBtn = document.getElementById("headerAuthButton");
         const headerPlanBadge = document.getElementById("headerPlanBadge");
@@ -679,12 +693,11 @@
                     headerBtn.textContent = `${sub.planName} Plan`;
                     headerBtn.className = "tk-header-auth-btn";
                 } else {
-                    const firstName = (authState.user.name || "Account").split(" ")[0];
-                    headerBtn.textContent = firstName;
+                    headerBtn.textContent = "Membership";
                     headerBtn.className = "tk-header-auth-btn";
                 }
             } else {
-                headerBtn.textContent = "Sign In Free";
+                headerBtn.textContent = headerBtn.dataset.guestLabel || "Plans · ₹9/mo";
                 headerBtn.className = "tk-header-auth-btn solid";
             }
         }
@@ -703,31 +716,28 @@
         const sheetAuthSection = document.getElementById("sheetAuthSection");
         if (sheetNameEl) {
             sheetNameEl.textContent = authState.authenticated && authState.user
-                ? (authState.user.name || authState.user.email)
-                : "Guest Visitor";
+                ? (authState.user.name || "Takora Member")
+                : "Takora Visitor";
         }
         if (sheetSubEl) {
             if (authState.authenticated && authState.subscription && authState.subscription.hasActiveAccess) {
                 sheetSubEl.textContent = `${authState.subscription.planName} Member · Active`;
             } else if (authState.authenticated) {
-                sheetSubEl.textContent = `${authState.user.email} · Free Account`;
+                sheetSubEl.textContent = `${displayUserLabel(authState.user)} · No Active Plan`;
             } else {
-                sheetSubEl.textContent = "Sign in or register free to subscribe";
+                sheetSubEl.textContent = "Choose a monthly plan to unlock Chat & Calls";
             }
         }
         if (sheetAuthSection) {
             if (!authState.authenticated) {
                 sheetAuthSection.innerHTML = `
                     <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
-                        <button type="button" class="tk-primary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('register')">
-                            Create Free Account
-                        </button>
-                        <button type="button" class="tk-secondary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('login')">
-                            Sign In to Existing Account
-                        </button>
-                        <a href="pricing.html" class="tk-secondary-btn" style="color:#2563EB; border-color:#DBEAFE; background:#EFF6FF;">
-                            View Membership Plans (from ₹9/mo)
+                        <a href="pricing.html" class="tk-primary-btn">
+                            Choose a Monthly Plan (from ₹9/mo)
                         </a>
+                        <button type="button" class="tk-secondary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('login')">
+                            Already Subscribed? Sign In
+                        </button>
                     </div>
                 `;
             } else {
@@ -756,130 +766,92 @@
         }
     }
 
-    function openAuthModal(initialMode = "register", onSuccessCallback = null) {
+    function openAuthModal(_initialMode = "login", onSuccessCallback = null) {
         ensureContainers();
         pendingCallback = typeof onSuccessCallback === "function" ? onSuccessCallback : null;
-        let currentMode = initialMode === "login" ? "login" : "register";
 
         const backdrop = document.getElementById("tkModalBackdrop");
-        function render() {
-            const isReg = currentMode === "register";
-            backdrop.innerHTML = `
-                <div class="tk-modal-card" role="dialog" aria-modal="true" aria-labelledby="tkAuthTitle">
-                    <div class="tk-modal-head">
-                        <div>
-                            <h2 id="tkAuthTitle" class="tk-modal-title">${isReg ? "Create Free Account" : "Welcome Back"}</h2>
-                            <p class="tk-modal-sub">${isReg ? "Join Takora for free in seconds." : "Sign in to access your membership and conversations."}</p>
-                        </div>
-                        <button type="button" class="tk-close-btn" id="tkAuthCloseBtn" aria-label="Close">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
+        backdrop.innerHTML = `
+            <div class="tk-modal-card" role="dialog" aria-modal="true" aria-labelledby="tkAuthTitle">
+                <div class="tk-modal-head">
+                    <div>
+                        <h2 id="tkAuthTitle" class="tk-modal-title">Member Sign In</h2>
+                        <p class="tk-modal-sub">Sign in with your existing member email and password.</p>
                     </div>
-
-                    <div class="tk-free-notice">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        <span>Registration is 100% free. No card or payment is charged during signup.</span>
-                    </div>
-
-                    <div class="tk-tabs">
-                        <button type="button" class="tk-tab-btn ${isReg ? "active" : ""}" id="tkTabRegister">Free Sign Up</button>
-                        <button type="button" class="tk-tab-btn ${!isReg ? "active" : ""}" id="tkTabLogin">Sign In</button>
-                    </div>
-
-                    <div id="tkAuthError" class="tk-error-box"></div>
-
-                    <form id="tkAuthForm">
-                        ${isReg ? `
-                        <div class="tk-field">
-                            <label for="tkAuthName">Full Name</label>
-                            <input type="text" id="tkAuthName" placeholder="Your full name" required autocomplete="name">
-                        </div>` : ""}
-                        <div class="tk-field">
-                            <label for="tkAuthEmail">Email Address</label>
-                            <input type="email" id="tkAuthEmail" placeholder="you@example.com" required autocomplete="email">
-                        </div>
-                        ${isReg ? `
-                        <div class="tk-field">
-                            <label for="tkAuthPhone">Phone Number (Optional)</label>
-                            <input type="tel" id="tkAuthPhone" placeholder="+91 98765 43210" autocomplete="tel">
-                        </div>` : ""}
-                        <div class="tk-field">
-                            <label for="tkAuthPassword">Password ${isReg ? "(min 6 characters)" : ""}</label>
-                            <input type="password" id="tkAuthPassword" placeholder="Enter password" required minlength="6" autocomplete="${isReg ? "new-password" : "current-password"}">
-                        </div>
-                        <button type="submit" id="tkAuthSubmitBtn" class="tk-primary-btn">
-                            ${isReg ? "Create Free Account" : "Sign In"}
-                        </button>
-                    </form>
+                    <button type="button" class="tk-close-btn" id="tkAuthCloseBtn" aria-label="Close">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                 </div>
-            `;
 
-            backdrop.classList.add("open");
-            backdrop.setAttribute("aria-hidden", "false");
+                <div id="tkAuthError" class="tk-error-box"></div>
 
-            document.getElementById("tkAuthCloseBtn").onclick = closeModal;
-            document.getElementById("tkTabRegister").onclick = () => {
-                currentMode = "register";
-                render();
-            };
-            document.getElementById("tkTabLogin").onclick = () => {
-                currentMode = "login";
-                render();
-            };
+                <form id="tkAuthForm">
+                    <div class="tk-field">
+                        <label for="tkAuthEmail">Email Address</label>
+                        <input type="email" id="tkAuthEmail" placeholder="you@example.com" required autocomplete="email">
+                    </div>
+                    <div class="tk-field">
+                        <label for="tkAuthPassword">Password</label>
+                        <input type="password" id="tkAuthPassword" placeholder="Enter password" required minlength="6" autocomplete="current-password">
+                    </div>
+                    <button type="submit" id="tkAuthSubmitBtn" class="tk-primary-btn">
+                        Sign In
+                    </button>
+                    <a href="pricing.html" class="tk-secondary-btn" style="margin-top:10px; color:#2563EB; border-color:#DBEAFE; background:#EFF6FF;">
+                        Or Subscribe Directly (from ₹9/mo)
+                    </a>
+                </form>
+            </div>
+        `;
 
-            document.getElementById("tkAuthForm").onsubmit = async (e) => {
-                e.preventDefault();
-                const errEl = document.getElementById("tkAuthError");
-                const submitBtn = document.getElementById("tkAuthSubmitBtn");
-                errEl.classList.remove("show");
-                errEl.textContent = "";
+        backdrop.classList.add("open");
+        backdrop.setAttribute("aria-hidden", "false");
 
-                const email = document.getElementById("tkAuthEmail").value.trim();
-                const password = document.getElementById("tkAuthPassword").value;
-                const payload = { email, password };
-                if (isReg) {
-                    payload.name = document.getElementById("tkAuthName").value.trim();
-                    const phoneEl = document.getElementById("tkAuthPhone");
-                    if (phoneEl && phoneEl.value.trim()) payload.phone = phoneEl.value.trim();
+        document.getElementById("tkAuthCloseBtn").onclick = closeModal;
+
+        document.getElementById("tkAuthForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const errEl = document.getElementById("tkAuthError");
+            const submitBtn = document.getElementById("tkAuthSubmitBtn");
+            errEl.classList.remove("show");
+            errEl.textContent = "";
+
+            const email = document.getElementById("tkAuthEmail").value.trim();
+            const password = document.getElementById("tkAuthPassword").value;
+
+            const origLabel = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Signing in...";
+
+            try {
+                const { res, data } = await apiFetch("/api/auth/login", {
+                    method: "POST",
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || "Sign in failed.");
                 }
 
-                const origLabel = submitBtn.textContent;
-                submitBtn.disabled = true;
-                submitBtn.textContent = isReg ? "Creating free account..." : "Signing in...";
-
-                try {
-                    const endpoint = isReg ? "/api/auth/register" : "/api/auth/login";
-                    const { res, data } = await apiFetch(endpoint, {
-                        method: "POST",
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!res.ok || !data.success) {
-                        throw new Error(data.message || "Authentication failed.");
-                    }
-
-                    if (data.token) {
-                        memoryBearerToken = data.token;
-                    }
-
-                    await refreshSession();
-                    const cb = pendingCallback;
-                    pendingCallback = null;
-                    closeModal();
-                    showToast(isReg ? "Free account created!" : "Signed in successfully.");
-                    if (cb) {
-                        cb(authState);
-                    }
-                } catch (err) {
-                    errEl.textContent = err.message || "Unable to continue.";
-                    errEl.classList.add("show");
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = origLabel;
+                if (data.token) {
+                    memoryBearerToken = data.token;
                 }
-            };
-        }
 
-        render();
+                await refreshSession();
+                const cb = pendingCallback;
+                pendingCallback = null;
+                closeModal();
+                showToast("Signed in successfully.");
+                if (cb) {
+                    cb(authState);
+                }
+            } catch (err) {
+                errEl.textContent = err.message || "Unable to continue.";
+                errEl.classList.add("show");
+                submitBtn.disabled = false;
+                submitBtn.textContent = origLabel;
+            }
+        };
     }
 
     async function openAccountModal() {
@@ -888,7 +860,7 @@
             await refreshSession();
         }
         if (!authState.authenticated) {
-            openAuthModal("login");
+            window.location.href = "pricing.html";
             return;
         }
 
@@ -897,8 +869,8 @@
             <div class="tk-modal-card wide" role="dialog" aria-modal="true" aria-labelledby="tkAccTitle">
                 <div class="tk-modal-head">
                     <div>
-                        <h2 id="tkAccTitle" class="tk-modal-title">Account &amp; Membership</h2>
-                        <p class="tk-modal-sub">${escapeHTML(authState.user.name || "")} · ${escapeHTML(authState.user.email || "")}</p>
+                        <h2 id="tkAccTitle" class="tk-modal-title">Membership &amp; AutoPay</h2>
+                        <p class="tk-modal-sub">${escapeHTML(authState.user.name || "Takora Member")} · ${escapeHTML(displayUserLabel(authState.user))}</p>
                     </div>
                     <button type="button" class="tk-close-btn" id="tkAccCloseBtn" aria-label="Close">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -946,8 +918,8 @@
             <div class="tk-modal-card wide" role="dialog" aria-modal="true" aria-labelledby="tkAccTitle">
                 <div class="tk-modal-head">
                     <div>
-                        <h2 id="tkAccTitle" class="tk-modal-title">Account &amp; Membership</h2>
-                        <p class="tk-modal-sub">${escapeHTML(authState.user.name || "")} · ${escapeHTML(authState.user.email || "")}</p>
+                        <h2 id="tkAccTitle" class="tk-modal-title">Membership &amp; AutoPay</h2>
+                        <p class="tk-modal-sub">${escapeHTML(authState.user.name || "Takora Member")} · ${escapeHTML(displayUserLabel(authState.user))}</p>
                     </div>
                     <button type="button" class="tk-close-btn" id="tkAccCloseBtn" aria-label="Close">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1215,9 +1187,17 @@
             await refreshSession();
         }
 
+        const requiredPlanForFeature = normalizedFeature === "video"
+            ? "premium"
+            : normalizedFeature === "voice"
+                ? "pro"
+                : "basic";
+
         if (!authState.authenticated) {
-            openAuthModal("register", () => {
-                checkAndStartInteraction(creator, normalizedFeature);
+            openUpgradeModal({
+                feature: normalizedFeature,
+                requiredPlanCode: requiredPlanForFeature,
+                creator
             });
             return;
         }
@@ -1237,15 +1217,10 @@
                 })
             });
 
-            if (res.status === 401) {
-                openAuthModal("login", () => checkAndStartInteraction(creator, normalizedFeature));
-                return;
-            }
-
-            if (res.status === 403 || !data.allowed) {
+            if (res.status === 401 || res.status === 403 || !data.allowed) {
                 openUpgradeModal({
                     feature: normalizedFeature,
-                    requiredPlanCode: data.requiredPlan || (normalizedFeature === "video" ? "premium" : normalizedFeature === "voice" ? "pro" : "basic"),
+                    requiredPlanCode: data.requiredPlan || requiredPlanForFeature,
                     creator,
                     message: data.message
                 });
@@ -1279,6 +1254,7 @@
 
     window.TakoraAuth = {
         getState: () => ({ ...authState }),
+        setSessionToken,
         refreshSession,
         loadPlans,
         openAuthModal,

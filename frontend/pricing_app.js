@@ -114,22 +114,25 @@
 
         if (!auth.authenticated || !auth.user) {
             memberStatusBar.classList.remove("has-plan");
-            memberStatusTitle.textContent = "Free Visitor Mode";
-            memberStatusSub.textContent = "Sign up free in seconds, then choose Basic, Pro, or Premium whenever you're ready.";
+            memberStatusTitle.textContent = "Instant Monthly Membership";
+            memberStatusSub.textContent = "Select Basic, Pro, or Premium below to unlock creator interactions immediately — no account creation required.";
             memberStatusActions.innerHTML = `
-                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
-                <button type="button" class="bar-btn" onclick="window.TakoraAuth.openAuthModal('login')">Sign In</button>
+                <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             `;
             return;
         }
 
         const sub = auth.subscription;
+        const contactDisplay = auth.user.email && !String(auth.user.email).endsWith("@member.takora.local")
+            ? auth.user.email
+            : (auth.user.phone || "Active Member");
+
         if (sub && sub.hasActiveAccess) {
             memberStatusBar.classList.add("has-plan");
             memberStatusTitle.textContent = `${sub.planName} Plan Active · ₹${sub.priceInr}/month`;
             memberStatusSub.textContent = sub.cancelAtPeriodEnd
-                ? `Signed in as ${auth.user.email}. AutoPay cancelled — access active until ${formatDate(sub.currentEnd)}.`
-                : `Signed in as ${auth.user.email}. Next Razorpay AutoPay renewal: ${formatDate(sub.currentEnd)}.`;
+                ? `${contactDisplay}. AutoPay cancelled — access active until ${formatDate(sub.currentEnd)}.`
+                : `${contactDisplay}. Next Razorpay AutoPay renewal: ${formatDate(sub.currentEnd)}.`;
             memberStatusActions.innerHTML = `
                 <button type="button" class="bar-btn primary" onclick="window.TakoraAuth.openAccountModal()">Manage AutoPay</button>
                 <a href="creator_home.html" class="bar-btn">Explore Creators</a>
@@ -139,7 +142,7 @@
 
         if (sub && sub.status === "authenticated" && !sub.hasActiveAccess) {
             memberStatusBar.classList.remove("has-plan");
-            memberStatusTitle.textContent = `Welcome, ${auth.user.name} · Mandate Pending Confirmation`;
+            memberStatusTitle.textContent = "Mandate Pending Confirmation";
             memberStatusSub.textContent = `Your ${sub.planName || ""} AutoPay mandate is awaiting bank payment settlement.`;
             memberStatusActions.innerHTML = `
                 <button type="button" class="bar-btn primary" onclick="window.TakoraAuth.openAccountModal()">Check Status</button>
@@ -148,10 +151,10 @@
         }
 
         memberStatusBar.classList.remove("has-plan");
-        memberStatusTitle.textContent = `Signed in as ${auth.user.name} (${auth.user.email})`;
+        memberStatusTitle.textContent = "Ready to Subscribe";
         memberStatusSub.textContent = "No active monthly plan yet. Select a plan below to start connecting with creators.";
         memberStatusActions.innerHTML = `
-            <button type="button" class="bar-btn" onclick="window.TakoraAuth.openAccountModal()">My Account</button>
+            <a href="creator_home.html" class="bar-btn">Explore Creators</a>
         `;
     }
 
@@ -240,20 +243,11 @@
     }
 
     async function handlePlanSelect(planCode) {
-        if (!window.TakoraAuth) return;
-
-        if (!window.TakoraAuth.getState().loaded) {
+        if (window.TakoraAuth && !window.TakoraAuth.getState().loaded) {
             await window.TakoraAuth.refreshSession();
         }
 
-        const auth = window.TakoraAuth.getState();
-        if (!auth.authenticated) {
-            window.TakoraAuth.openAuthModal("register", () => {
-                startPlanCheckout(planCode);
-            });
-            return;
-        }
-
+        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { subscription: null };
         const sub = auth.subscription;
         if (sub && sub.hasActiveAccess && !sub.cancelAtPeriodEnd) {
             const currentRank = TIER_RANK[sub.planCode] || 0;
@@ -280,7 +274,7 @@
             return;
         }
 
-        const auth = window.TakoraAuth.getState();
+        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { subscription: null };
         const sub = auth.subscription;
         const isUpgrade = Boolean(sub && sub.hasActiveAccess && !sub.cancelAtPeriodEnd);
         const endpoint = isUpgrade ? "/api/subscriptions/upgrade" : "/api/subscriptions/create";
@@ -294,11 +288,8 @@
                 body: JSON.stringify({ planCode })
             });
 
-            if (res.status === 401) {
-                checkoutBusyPlan = null;
-                renderPlanCards();
-                window.TakoraAuth.openAuthModal("login", () => startPlanCheckout(planCode));
-                return;
+            if (data && data.sessionToken && window.TakoraAuth && window.TakoraAuth.setSessionToken) {
+                window.TakoraAuth.setSessionToken(data.sessionToken);
             }
 
             if (res.status === 503 || data.code === "RAZORPAY_NOT_CONFIGURED") {

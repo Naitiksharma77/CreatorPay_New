@@ -320,23 +320,7 @@ function renderChatsFeed() {
     const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, entitlements: { chat: false } };
     const connections = getConnections();
 
-    if (!auth.authenticated) {
-        chatsContent.innerHTML = `
-            <div class="empty-chats-state">
-                <div class="empty-chat-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                </div>
-                <h3 class="empty-title">Sign in to see your connections</h3>
-                <p class="empty-desc">Create a free account or sign in to access your chats with creators.</p>
-                <button type="button" class="empty-action-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In Free</button>
-            </div>
-        `;
-        return;
-    }
-
-    if (!auth.entitlements || !auth.entitlements.chat) {
+    if (!auth.authenticated || !auth.entitlements || !auth.entitlements.chat) {
         chatsContent.innerHTML = `
             <div class="empty-chats-state">
                 <div class="empty-chat-icon">

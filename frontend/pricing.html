@@ -616,8 +616,8 @@
                 <a href="creator_home.html" class="tk-nav-link">Home</a>
                 <a href="explore.html" class="tk-nav-link hide-xs">Explore</a>
                 <a href="pricing.html" class="tk-nav-link active">Plans</a>
-                <button type="button" id="headerAuthButton" class="tk-header-auth-btn solid" onclick="window.TakoraAuth && (window.TakoraAuth.getState().authenticated ? window.TakoraAuth.openAccountModal() : window.TakoraAuth.openAuthModal('login'))">
-                    Sign In Free
+                <button type="button" id="headerAuthButton" data-guest-label="Member Sign In" class="tk-header-auth-btn solid" onclick="window.TakoraAuth && (window.TakoraAuth.getState().authenticated ? window.TakoraAuth.openAccountModal() : window.TakoraAuth.openAuthModal('login'))">
+                    Member Sign In
                 </button>
             </nav>
         </div>
@@ -628,19 +628,18 @@
             <span class="hero-tag">Takora Monthly Membership</span>
             <h1>One Monthly Plan. Every Creator.</h1>
             <p>
-                No separate charges per creator. Create a free account, pick a monthly plan with Razorpay AutoPay, and connect freely across Takora.
+                No separate charges per creator. Pick a monthly plan below with Razorpay AutoPay and connect freely across Takora.
             </p>
         </section>
 
         <!-- Member Account & Current Plan Summary -->
         <section id="memberStatusBar" class="member-status-bar" aria-live="polite">
             <div class="member-status-info">
-                <strong id="memberStatusTitle">Checking your membership status...</strong>
-                <span id="memberStatusSub">Free account registration takes seconds. Zero payment charged on signup.</span>
+                <strong id="memberStatusTitle">Instant Monthly Membership</strong>
+                <span id="memberStatusSub">Select Basic, Pro, or Premium below to unlock creator interactions immediately — no account creation required.</span>
             </div>
             <div class="member-status-actions" id="memberStatusActions">
-                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
-                <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
+                <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             </div>
         </section>
 
@@ -702,8 +701,8 @@
         <!-- AutoPay & Cancellation Disclosure -->
         <section class="autopay-note-card" aria-label="Razorpay AutoPay billing details">
             <div class="autopay-item">
-                <h3>100% Free Registration</h3>
-                <p>Creating a Takora account never triggers a payment or card hold. You only authorize AutoPay when selecting a plan below.</p>
+                <h3>Instant Activation</h3>
+                <p>Select any plan above and pay directly via Razorpay AutoPay. No account signup step required — access unlocks as soon as payment settles.</p>
             </div>
             <div class="autopay-item">
                 <h3>Razorpay AutoPay Mandate</h3>

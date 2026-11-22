@@ -117,7 +117,7 @@
         if (!snap.authenticated) {
             bannerHTML = `
                 <div class="tk-modal-plan-banner">
-                    <span>Sign in free and pick a monthly plan from <strong>₹9/mo</strong>.</span>
+                    <span>Unlock Chat, Voice &amp; Video with a monthly plan from <strong>₹9/mo</strong>.</span>
                     <a href="pricing.html" class="tk-modal-plan-link">See Plans</a>
                 </div>
             `;
