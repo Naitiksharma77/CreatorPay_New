@@ -97,9 +97,24 @@
                     return;
                 }
 
-                const { res, data } = await window.TakoraAuth.apiFetch("/api/subscriptions/me", { method: "GET" });
-                const sub = res.ok && data ? data.subscription : auth.subscription;
-                const ent = res.ok && data ? data.entitlements : auth.entitlements;
+                const params = new URLSearchParams(window.location.search);
+                const querySubId = String(params.get("subscription_id") || "").trim();
+
+                let { res, data } = await window.TakoraAuth.apiFetch("/api/subscriptions/me", { method: "GET" });
+                let sub = res.ok && data ? data.subscription : auth.subscription;
+                let ent = res.ok && data ? data.entitlements : auth.entitlements;
+
+                if (querySubId && (!ent || !ent.hasActiveSubscription)) {
+                    const syncResp = await window.TakoraAuth.apiFetch("/api/subscriptions/sync-status", {
+                        method: "POST",
+                        body: JSON.stringify({ subscriptionId: querySubId })
+                    });
+                    if (syncResp.res.ok && syncResp.data && syncResp.data.success) {
+                        await window.TakoraAuth.refreshSession();
+                        sub = syncResp.data.subscription || sub;
+                        ent = syncResp.data.entitlements || ent;
+                    }
+                }
 
                 if (ent && ent.hasActiveSubscription && sub) {
                     statusIcon.className = "success-icon";

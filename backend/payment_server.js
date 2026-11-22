@@ -39,6 +39,7 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Authorization",
+      "X-Requested-With",
       "x-razorpay-signature",
       "x-razorpay-event-id"
     ]
@@ -53,6 +54,7 @@ app.use(
     }
   })
 );
+app.use(express.urlencoded({ extended: false }));
 
 // Serve static frontend files
 const frontendDir = path.join(__dirname, "../frontend");
@@ -1043,6 +1045,165 @@ app.post("/api/subscriptions/upgrade", (req, res) =>
   createSubscriptionCheckout({ req, res, isUpgrade: true })
 );
 
+async function activateVerifiedSubscription({
+  user,
+  rzp,
+  rzpSub,
+  rzpPay,
+  signature = "",
+  existingRow = null,
+  analyticsPage = "pricing.html"
+}) {
+  const planCode =
+    (rzpSub && rzpSub.notes && rzpSub.notes.planCode) ||
+    (existingRow && existingRow.plan_code) ||
+    "basic";
+  const plan = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS.basic;
+  const paidAmountInr =
+    rzpPay && rzpPay.amount ? Math.round(Number(rzpPay.amount) / 100) : plan.priceInr;
+
+  const paymentSettled = Boolean(
+    rzpPay &&
+      (rzpPay.status === "captured" ||
+        (rzpPay.status === "authorized" && Number((rzpSub && rzpSub.paid_count) || 0) >= 1))
+  );
+  const subscriptionActive = Boolean(
+    rzpSub &&
+      (rzpSub.status === "active" ||
+        (paymentSettled && Number(rzpSub.paid_count || 0) >= 1))
+  );
+
+  if (!paymentSettled || !subscriptionActive) {
+    const pendingRow = await saveSubscriptionRecord({
+      user_id: String(user.id),
+      user_email: String(user.email || "").endsWith("@member.takora.local")
+        ? ""
+        : String(user.email || ""),
+      plan_code: plan.code,
+      plan_name: plan.name,
+      amount_inr: plan.priceInr,
+      razorpay_plan_id:
+        (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
+      razorpay_subscription_id: rzpSub.id,
+      razorpay_customer_id: rzpSub.customer_id || "",
+      status: rzpSub.status || "created",
+      payment_verification_status: "pending",
+      has_access: false,
+      current_start: unixToIso(rzpSub.current_start),
+      current_end: unixToIso(rzpSub.current_end),
+      next_billing_date: unixToIso(rzpSub.charge_at || rzpSub.current_end),
+      paid_count: Number(rzpSub.paid_count || 0)
+    });
+
+    return {
+      settled: false,
+      plan,
+      row: pendingRow
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+  const currentStartIso = unixToIso(rzpSub.current_start) || nowIso;
+  const currentEndIso = unixToIso(rzpSub.current_end) || addOneMonthIso(nowIso);
+  const nextBillingIso = unixToIso(rzpSub.charge_at || rzpSub.current_end) || currentEndIso;
+
+  const payerEmail = String((rzpPay && rzpPay.email) || "").trim().toLowerCase();
+  const payerContact = String((rzpPay && rzpPay.contact) || "").trim();
+  const currentEmail = String(user.email || "");
+  const resolvedEmail = currentEmail.endsWith("@member.takora.local")
+    ? payerEmail || payerContact || ""
+    : currentEmail;
+
+  if (currentEmail.endsWith("@member.takora.local") && (payerEmail || payerContact)) {
+    const uStore = loadAnalyticsStore();
+    const uIdx = (uStore.users || []).findIndex((u) => String(u.id) === String(user.id));
+    if (uIdx !== -1) {
+      if (payerEmail) uStore.users[uIdx].email = payerEmail;
+      if (payerContact) uStore.users[uIdx].phone = payerContact;
+      uStore.users[uIdx].updated_at = nowIso;
+      saveAnalyticsStore(uStore);
+    }
+  }
+
+  const activeRow = await saveSubscriptionRecord({
+    user_id: String(user.id),
+    user_email: resolvedEmail,
+    plan_code: plan.code,
+    plan_name: plan.name,
+    amount_inr: plan.priceInr,
+    razorpay_plan_id:
+      (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
+    razorpay_subscription_id: rzpSub.id,
+    razorpay_customer_id: rzpSub.customer_id || "",
+    status: "active",
+    payment_verification_status: "verified",
+    has_access: true,
+    cancel_at_period_end: false,
+    current_start: currentStartIso,
+    current_end: currentEndIso,
+    next_billing_date: nextBillingIso,
+    paid_count: Math.max(1, Number(rzpSub.paid_count || 1))
+  });
+
+  const payRecord = await recordSubscriptionPayment({
+    subscription_id: activeRow.id,
+    razorpay_subscription_id: rzpSub.id,
+    user_id: String(user.id),
+    user_email: resolvedEmail,
+    plan_code: plan.code,
+    razorpay_payment_id: rzpPay.id,
+    razorpay_signature: String(signature || "razorpay_api_synced"),
+    amount_inr: paidAmountInr,
+    status: rzpPay.status || "captured",
+    method: rzpPay.method || "autopay",
+    paid_at: nowIso
+  });
+
+  await syncUserAccessFlag(user.id, true, rzpSub.customer_id || "");
+
+  // Cancel superseded lower-tier subscription cleanly on Razorpay if this was an upgrade
+  const oldSubId =
+    (rzpSub.notes && rzpSub.notes.upgradeFromSubscriptionId) ||
+    (existingRow && existingRow.superseded_subscription_id) ||
+    "";
+  if (oldSubId && oldSubId !== rzpSub.id) {
+    try {
+      await rzp.subscriptions.cancel(oldSubId, false);
+      const freshStore = loadAnalyticsStore();
+      const oldRow = (freshStore.subscriptions || []).find(
+        (s) => s.razorpay_subscription_id === oldSubId
+      );
+      if (oldRow) {
+        await saveSubscriptionRecord({
+          ...oldRow,
+          status: "cancelled",
+          has_access: false,
+          superseded_by: rzpSub.id,
+          cancelled_at: nowIso
+        });
+      }
+    } catch (cancelOldErr) {
+      console.warn(
+        "[Razorpay] Old subscription cancel warning:",
+        cancelOldErr.message || cancelOldErr
+      );
+    }
+  }
+
+  logAnalyticsEvent("payment_success", {
+    page: analyticsPage,
+    amount: paidAmountInr,
+    creatorName: `${plan.name} Membership`
+  });
+
+  return {
+    settled: true,
+    plan,
+    row: activeRow,
+    payment: payRecord
+  };
+}
+
 app.post("/api/subscriptions/verify", async (req, res) => {
   try {
     const user = await requireAuth(req, res);
@@ -1106,153 +1267,207 @@ app.post("/api/subscriptions/verify", async (req, res) => {
       return sendError(res, 403, "This subscription does not belong to your account.");
     }
 
-    const planCode =
-      (rzpSub && rzpSub.notes && rzpSub.notes.planCode) ||
-      (existingRow && existingRow.plan_code) ||
-      "basic";
-    const plan = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS.basic;
-    const paidAmountInr =
-      rzpPay && rzpPay.amount ? Math.round(Number(rzpPay.amount) / 100) : plan.priceInr;
+    const activation = await activateVerifiedSubscription({
+      user,
+      rzp,
+      rzpSub,
+      rzpPay,
+      signature: String(razorpay_signature),
+      existingRow,
+      analyticsPage: "pricing.html"
+    });
 
-    const paymentSettled =
-      rzpPay &&
-      (rzpPay.status === "captured" ||
-        (rzpPay.status === "authorized" && Number(rzpSub.paid_count || 0) >= 1));
-    const subscriptionActive =
-      rzpSub &&
-      (rzpSub.status === "active" ||
-        (paymentSettled && Number(rzpSub.paid_count || 0) >= 1));
-
-    // Strict check: authenticated mandate without captured initial charge must NOT unlock access
-    if (!paymentSettled && !subscriptionActive) {
-      const pendingRow = await saveSubscriptionRecord({
-        user_id: String(user.id),
-        user_email: String(user.email),
-        plan_code: plan.code,
-        plan_name: plan.name,
-        amount_inr: plan.priceInr,
-        razorpay_plan_id: (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
-        razorpay_subscription_id: rzpSub.id,
-        razorpay_customer_id: rzpSub.customer_id || "",
-        status: rzpSub.status || "authenticated",
-        payment_verification_status: "pending",
-        has_access: false,
-        current_start: unixToIso(rzpSub.current_start),
-        current_end: unixToIso(rzpSub.current_end),
-        next_billing_date: unixToIso(rzpSub.charge_at || rzpSub.current_end),
-        paid_count: Number(rzpSub.paid_count || 0)
-      });
-
+    if (!activation.settled) {
       return res.status(202).json({
         success: false,
         pendingConfirmation: true,
-        subscription: pendingRow,
-        entitlements: computeEntitlements(pendingRow),
+        subscription: activation.row,
+        entitlements: computeEntitlements(activation.row),
         message:
           "Your AutoPay mandate is authorized and awaiting initial payment confirmation from Razorpay. Access will unlock automatically once the charge settles."
       });
     }
 
-    const nowIso = new Date().toISOString();
-    const currentStartIso = unixToIso(rzpSub.current_start) || nowIso;
-    const currentEndIso = unixToIso(rzpSub.current_end) || addOneMonthIso(nowIso);
-    const nextBillingIso = unixToIso(rzpSub.charge_at || rzpSub.current_end) || currentEndIso;
-
-    const payerEmail = String((rzpPay && rzpPay.email) || "").trim().toLowerCase();
-    const payerContact = String((rzpPay && rzpPay.contact) || "").trim();
-    const currentEmail = String(user.email || "");
-    const resolvedEmail = currentEmail.endsWith("@member.takora.local")
-      ? (payerEmail || payerContact || "")
-      : currentEmail;
-
-    if (currentEmail.endsWith("@member.takora.local") && (payerEmail || payerContact)) {
-      const uStore = loadAnalyticsStore();
-      const uIdx = (uStore.users || []).findIndex((u) => String(u.id) === String(user.id));
-      if (uIdx !== -1) {
-        if (payerEmail) uStore.users[uIdx].email = payerEmail;
-        if (payerContact) uStore.users[uIdx].phone = payerContact;
-        uStore.users[uIdx].updated_at = new Date().toISOString();
-        saveAnalyticsStore(uStore);
-      }
-    }
-
-    const activeRow = await saveSubscriptionRecord({
-      user_id: String(user.id),
-      user_email: resolvedEmail,
-      plan_code: plan.code,
-      plan_name: plan.name,
-      amount_inr: plan.priceInr,
-      razorpay_plan_id: (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
-      razorpay_subscription_id: rzpSub.id,
-      razorpay_customer_id: rzpSub.customer_id || "",
-      status: "active",
-      payment_verification_status: "verified",
-      has_access: true,
-      cancel_at_period_end: false,
-      current_start: currentStartIso,
-      current_end: currentEndIso,
-      next_billing_date: nextBillingIso,
-      paid_count: Math.max(1, Number(rzpSub.paid_count || 1))
-    });
-
-    const payRecord = await recordSubscriptionPayment({
-      subscription_id: activeRow.id,
-      razorpay_subscription_id: rzpSub.id,
-      user_id: String(user.id),
-      user_email: resolvedEmail,
-      plan_code: plan.code,
-      razorpay_payment_id: rzpPay.id,
-      razorpay_signature: String(razorpay_signature),
-      amount_inr: paidAmountInr,
-      status: rzpPay.status || "captured",
-      method: rzpPay.method || "autopay",
-      paid_at: nowIso
-    });
-
-    await syncUserAccessFlag(user.id, true, rzpSub.customer_id || "");
-
-    // Cancel superseded lower-tier subscription cleanly on Razorpay if this was an upgrade
-    const oldSubId =
-      (rzpSub.notes && rzpSub.notes.upgradeFromSubscriptionId) ||
-      (existingRow && existingRow.superseded_subscription_id) ||
-      "";
-    if (oldSubId && oldSubId !== rzpSub.id) {
-      try {
-        await rzp.subscriptions.cancel(oldSubId, false);
-        const freshStore = loadAnalyticsStore();
-        const oldRow = (freshStore.subscriptions || []).find(
-          (s) => s.razorpay_subscription_id === oldSubId
-        );
-        if (oldRow) {
-          await saveSubscriptionRecord({
-            ...oldRow,
-            status: "cancelled",
-            has_access: false,
-            superseded_by: rzpSub.id,
-            cancelled_at: nowIso
-          });
-        }
-      } catch (cancelOldErr) {
-        console.warn("[Razorpay] Old subscription cancel warning:", cancelOldErr.message || cancelOldErr);
-      }
-    }
-
-    logAnalyticsEvent("payment_success", {
-      page: "pricing.html",
-      amount: paidAmountInr,
-      creatorName: `${plan.name} Membership`
-    });
-
     return res.json({
       success: true,
-      message: `Your ${plan.name} membership is active!`,
-      subscription: activeRow,
-      entitlements: computeEntitlements(activeRow),
-      payment: payRecord
+      message: `Your ${activation.plan.name} membership is active!`,
+      subscription: activation.row,
+      entitlements: computeEntitlements(activation.row),
+      payment: activation.payment
     });
   } catch (error) {
     return sendError(res, 500, "Unable to verify subscription payment.", error);
   }
+});
+
+app.post("/api/subscriptions/sync-status", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const rzp = getRazorpayInstance();
+    if (!rzp) {
+      return sendError(
+        res,
+        503,
+        "Razorpay credentials are not configured on the server."
+      );
+    }
+
+    const store = loadAnalyticsStore();
+    let targetSubId = String((req.body && req.body.subscriptionId) || "").trim();
+    if (!targetSubId) {
+      const latestSub = await getPrimaryUserSubscription(user.id);
+      targetSubId = latestSub ? String(latestSub.razorpay_subscription_id || "").trim() : "";
+    }
+
+    if (!targetSubId) {
+      return res.status(404).json({
+        success: false,
+        message: "No subscription ID found to verify."
+      });
+    }
+
+    const existingRow = (store.subscriptions || []).find(
+      (s) => s.razorpay_subscription_id === targetSubId
+    );
+    const rzpSub = await rzp.subscriptions.fetch(targetSubId);
+    const ownerUserId =
+      (rzpSub && rzpSub.notes && rzpSub.notes.userId) ||
+      (existingRow && existingRow.user_id) ||
+      "";
+    if (String(ownerUserId) !== String(user.id)) {
+      return sendError(res, 403, "This subscription does not belong to your account.");
+    }
+
+    // Check invoices on Razorpay for a real settled payment (covers hosted rzp.io / UPI flows)
+    let settledPay = null;
+    try {
+      const invRes = await rzp.invoices.all({ subscription_id: targetSubId, count: 10 });
+      const invoices = Array.isArray(invRes && invRes.items) ? invRes.items : [];
+      const paidInvoice = invoices.find(
+        (inv) => inv && inv.payment_id && (inv.status === "paid" || Number(inv.amount_paid || 0) > 0)
+      );
+      if (paidInvoice && paidInvoice.payment_id) {
+        settledPay = await rzp.payments.fetch(paidInvoice.payment_id);
+      }
+    } catch (invErr) {
+      console.warn("[Razorpay] Invoice lookup warning:", invErr.message || invErr);
+    }
+
+    const activation = await activateVerifiedSubscription({
+      user,
+      rzp,
+      rzpSub,
+      rzpPay: settledPay,
+      signature: "razorpay_api_synced",
+      existingRow,
+      analyticsPage: "pricing.html"
+    });
+
+    if (!activation.settled) {
+      return res.status(202).json({
+        success: false,
+        pendingConfirmation: true,
+        status: rzpSub.status || "created",
+        subscription: activation.row,
+        entitlements: computeEntitlements(activation.row),
+        message:
+          rzpSub.status === "authenticated"
+            ? "AutoPay mandate authorized and awaiting Razorpay payment settlement."
+            : "Payment is not completed on Razorpay yet."
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: `Your ${activation.plan.name} membership is active!`,
+      subscription: activation.row,
+      entitlements: computeEntitlements(activation.row),
+      payment: activation.payment
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to sync subscription status with Razorpay.", error);
+  }
+});
+
+app.post("/api/subscriptions/callback", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const paymentId = String(body.razorpay_payment_id || "").trim();
+    const subId = String(body.razorpay_subscription_id || "").trim();
+    const signature = String(body.razorpay_signature || "").trim();
+
+    if (!paymentId || !subId || !signature) {
+      return res.redirect(303, "/pricing.html?checkout_error=missing_params");
+    }
+
+    const secret = getRazorpayKeySecret();
+    const rzp = getRazorpayInstance();
+    if (!secret || !rzp) {
+      return res.redirect(303, "/pricing.html?checkout_error=gateway_not_configured");
+    }
+
+    const generatedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(`${paymentId}|${subId}`)
+      .digest("hex");
+    const sigA = Buffer.from(generatedSignature, "utf8");
+    const sigB = Buffer.from(signature, "utf8");
+    if (sigA.length !== sigB.length || !crypto.timingSafeEqual(sigA, sigB)) {
+      return res.redirect(303, "/pricing.html?checkout_error=invalid_signature");
+    }
+
+    const [rzpSub, rzpPay] = await Promise.all([
+      rzp.subscriptions.fetch(subId),
+      rzp.payments.fetch(paymentId)
+    ]);
+
+    const store = loadAnalyticsStore();
+    const existingRow = (store.subscriptions || []).find(
+      (s) => s.razorpay_subscription_id === subId
+    );
+    const ownerUserId =
+      (rzpSub && rzpSub.notes && rzpSub.notes.userId) ||
+      (existingRow && existingRow.user_id) ||
+      "";
+    const ownerUser = ownerUserId ? await findUserById(ownerUserId) : null;
+    if (!ownerUser) {
+      return res.redirect(303, "/pricing.html?checkout_error=user_not_found");
+    }
+
+    const token = signSessionToken(ownerUser);
+    setSessionCookie(req, res, token);
+
+    const activation = await activateVerifiedSubscription({
+      user: ownerUser,
+      rzp,
+      rzpSub,
+      rzpPay,
+      signature,
+      existingRow,
+      analyticsPage: "pricing_callback"
+    });
+
+    const planCode = encodeURIComponent(activation.plan.code || "basic");
+    return res.redirect(
+      303,
+      `/payment_success.html?subscription_id=${encodeURIComponent(subId)}&plan=${planCode}`
+    );
+  } catch (err) {
+    console.error("[Razorpay Callback] Error:", err.message || err);
+    return res.redirect(303, "/pricing.html?checkout_error=callback_failed");
+  }
+});
+
+app.get("/api/subscriptions/callback", (req, res) => {
+  const subId = String(
+    req.query.razorpay_subscription_id || req.query.subscription_id || ""
+  ).trim();
+  if (subId) {
+    return res.redirect(303, `/payment_success.html?subscription_id=${encodeURIComponent(subId)}`);
+  }
+  return res.redirect(303, "/pricing.html");
 });
 
 app.post("/api/subscriptions/cancel", async (req, res) => {

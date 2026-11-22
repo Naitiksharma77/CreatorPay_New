@@ -64,10 +64,15 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const highlightedPlan = String(urlParams.get("plan") || "").trim().toLowerCase();
+    const callbackError = String(urlParams.get("checkout_error") || "").trim();
 
     let plansList = [...DEFAULT_PLANS];
     let gatewayInfo = { configured: true, missingEnvVars: [] };
     let checkoutBusyPlan = null;
+    let activePendingCheckout = null;
+    let syncPollTimer = null;
+    let syncPollAttempts = 0;
+    let frameCheckTimer = null;
 
     function escapeHTML(val) {
         return String(val ?? "")
@@ -76,6 +81,13 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function safeExternalUrl(url) {
+        if (typeof url === "string" && (url.startsWith("https://") || url.startsWith("http://"))) {
+            return url;
+        }
+        return "";
     }
 
     function formatDate(iso) {
@@ -91,6 +103,21 @@
         }
     }
 
+    function stopFrameCheck() {
+        if (frameCheckTimer) {
+            clearTimeout(frameCheckTimer);
+            frameCheckTimer = null;
+        }
+    }
+
+    function stopSyncPolling() {
+        if (syncPollTimer) {
+            clearInterval(syncPollTimer);
+            syncPollTimer = null;
+        }
+        syncPollAttempts = 0;
+    }
+
     function showAlert(kind, htmlMessage) {
         if (!pricingAlertBox) return;
         if (!htmlMessage) {
@@ -100,6 +127,135 @@
         }
         pricingAlertBox.className = `inline-alert show ${kind || "info"}`;
         pricingAlertBox.innerHTML = htmlMessage;
+    }
+
+    function ensureRazorpayLoaded(timeoutMs = 7000) {
+        if (typeof window.Razorpay === "function") {
+            return Promise.resolve(true);
+        }
+
+        return new Promise((resolve) => {
+            const startedAt = Date.now();
+            const existingScript = document.querySelector('script[src*="checkout.razorpay.com/v1/checkout.js"]');
+
+            if (!existingScript) {
+                const script = document.createElement("script");
+                script.src = "https://checkout.razorpay.com/v1/checkout.js";
+                script.async = true;
+                script.onload = () => resolve(typeof window.Razorpay === "function");
+                script.onerror = () => resolve(false);
+                document.head.appendChild(script);
+            }
+
+            const poll = setInterval(() => {
+                if (typeof window.Razorpay === "function") {
+                    clearInterval(poll);
+                    resolve(true);
+                    return;
+                }
+                if (Date.now() - startedAt >= timeoutMs) {
+                    clearInterval(poll);
+                    resolve(typeof window.Razorpay === "function");
+                }
+            }, 150);
+        });
+    }
+
+    function isRazorpayModalMounted() {
+        const frame = document.querySelector(".razorpay-checkout-frame");
+        if (!frame) return false;
+        const rect = frame.getBoundingClientRect();
+        const style = window.getComputedStyle(frame);
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 40 && rect.height > 40;
+    }
+
+    function showCheckoutHelperPanel({ kind, headline, detail, subscriptionId, plan, shortUrl }) {
+        const safeUrl = safeExternalUrl(shortUrl);
+        const actionButtons = [
+            safeUrl
+                ? `<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer" class="alert-action-btn primary">Open Official Razorpay Payment Page ↗</a>`
+                : "",
+            subscriptionId
+                ? `<button type="button" id="syncStatusNowBtn" class="alert-action-btn">I've Paid — Verify &amp; Activate</button>`
+                : ""
+        ]
+            .filter(Boolean)
+            .join("");
+
+        showAlert(
+            kind || "info",
+            `
+                <div><strong>${escapeHTML(headline)}</strong> ${escapeHTML(detail)}</div>
+                ${actionButtons ? `<div class="inline-alert-actions">${actionButtons}</div>` : ""}
+            `
+        );
+
+        const syncBtn = document.getElementById("syncStatusNowBtn");
+        if (syncBtn && subscriptionId) {
+            syncBtn.addEventListener("click", () => {
+                syncSubscriptionStatus(subscriptionId, plan, { manual: true });
+            });
+        }
+    }
+
+    function startSyncPolling(subscriptionId, plan) {
+        stopSyncPolling();
+        if (!subscriptionId) return;
+
+        syncPollAttempts = 0;
+        syncPollTimer = setInterval(async () => {
+            syncPollAttempts += 1;
+            if (syncPollAttempts > 85) {
+                stopSyncPolling();
+                return;
+            }
+            await syncSubscriptionStatus(subscriptionId, plan, { manual: false });
+        }, 3500);
+    }
+
+    async function syncSubscriptionStatus(subscriptionId, plan, { manual = false } = {}) {
+        if (!subscriptionId || !window.TakoraAuth) return false;
+        const syncBtn = document.getElementById("syncStatusNowBtn");
+        if (manual && syncBtn) {
+            syncBtn.disabled = true;
+            syncBtn.textContent = "Checking Razorpay...";
+        }
+
+        try {
+            const { res, data } = await window.TakoraAuth.apiFetch("/api/subscriptions/sync-status", {
+                method: "POST",
+                body: JSON.stringify({ subscriptionId })
+            });
+
+            if (res.ok && data && data.success) {
+                stopSyncPolling();
+                stopFrameCheck();
+                checkoutBusyPlan = null;
+                activePendingCheckout = null;
+                await window.TakoraAuth.refreshSession();
+                const subId = encodeURIComponent(subscriptionId);
+                const planCode = encodeURIComponent((plan && plan.code) || "");
+                window.location.href = `payment_success.html?subscription_id=${subId}&plan=${planCode}`;
+                return true;
+            }
+
+            if (manual) {
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = "I've Paid — Verify & Activate";
+                }
+                const statusMsg =
+                    (data && data.message) ||
+                    "Payment not confirmed on Razorpay yet. If you just paid, wait a few seconds and click Verify again.";
+                window.TakoraAuth.showToast(statusMsg, res.status >= 400);
+            }
+        } catch (_) {
+            if (manual && syncBtn) {
+                syncBtn.disabled = false;
+                syncBtn.textContent = "I've Paid — Verify & Activate";
+            }
+        }
+        return false;
     }
 
     function renderMemberStatus() {
@@ -263,6 +419,8 @@
 
     async function startPlanCheckout(planCode) {
         if (checkoutBusyPlan) return;
+        stopFrameCheck();
+        stopSyncPolling();
         showAlert("", "");
 
         if (!gatewayInfo.configured) {
@@ -307,43 +465,148 @@
                 throw new Error(data.message || "Unable to create Razorpay subscription.");
             }
 
-            if (typeof window.Razorpay !== "function") {
+            const subscriptionId = data.subscription.id;
+            const shortUrl = data.subscription.short_url || "";
+            activePendingCheckout = {
+                subscriptionId,
+                plan: data.plan,
+                shortUrl
+            };
+
+            // Ensure Razorpay checkout.js is loaded (with dynamic retry)
+            const rzpLoaded = await ensureRazorpayLoaded();
+            if (!rzpLoaded || typeof window.Razorpay !== "function") {
+                checkoutBusyPlan = null;
+                renderPlanCards();
+                if (shortUrl) {
+                    showCheckoutHelperPanel({
+                        kind: "warn",
+                        headline: "Complete Payment on Razorpay:",
+                        detail: `Your ${data.plan.name} (₹${data.plan.priceInr}/mo) subscription is ready. Open the official Razorpay payment page below to complete payment, and your membership will activate automatically.`,
+                        subscriptionId,
+                        plan: data.plan,
+                        shortUrl
+                    });
+                    startSyncPolling(subscriptionId, data.plan);
+                    return;
+                }
                 throw new Error("Razorpay Checkout script failed to load. Please refresh and try again.");
             }
 
+            const hasPrefill = Boolean(
+                data.prefill &&
+                (data.prefill.email || data.prefill.contact || data.prefill.name)
+            );
+
             const options = {
                 key: data.keyId,
-                subscription_id: data.subscription.id,
+                subscription_id: subscriptionId,
                 name: "Takora",
                 description: `${data.plan.name} Monthly Membership (₹${data.plan.priceInr}/month)`,
-                prefill: data.prefill || {},
                 notes: {
                     planCode: data.plan.code
                 },
                 theme: {
                     color: "#2563EB"
                 },
+                retry: {
+                    enabled: true
+                },
                 modal: {
+                    confirm_close: true,
+                    escape: true,
+                    backdropclose: false,
                     ondismiss: () => {
+                        stopFrameCheck();
                         checkoutBusyPlan = null;
                         renderPlanCards();
-                        window.TakoraAuth.showToast("Subscription checkout closed before completion.");
+                        syncSubscriptionStatus(subscriptionId, data.plan, { manual: false });
+                        if (shortUrl) {
+                            showCheckoutHelperPanel({
+                                kind: "info",
+                                headline: "Checkout Window Closed:",
+                                detail: `You can still complete your ${data.plan.name} (₹${data.plan.priceInr}/mo) payment anytime using the official Razorpay link below, or click a plan card to reopen Checkout.`,
+                                subscriptionId,
+                                plan: data.plan,
+                                shortUrl
+                            });
+                        } else if (window.TakoraAuth) {
+                            window.TakoraAuth.showToast("Subscription checkout closed before completion.");
+                        }
                     }
                 },
                 handler: async function (rzpResponse) {
+                    stopFrameCheck();
                     await verifySubscriptionPayment(rzpResponse, data.plan);
                 }
             };
 
+            if (hasPrefill) {
+                options.prefill = data.prefill;
+            }
+
             const rzp = new window.Razorpay(options);
+
             rzp.on("payment.failed", (resp) => {
+                stopFrameCheck();
                 checkoutBusyPlan = null;
                 renderPlanCards();
                 const desc = (resp && resp.error && resp.error.description) || "Payment authorization failed.";
-                showAlert("error", `<strong>Subscription Payment Failed:</strong> ${escapeHTML(desc)}`);
+                showCheckoutHelperPanel({
+                    kind: "error",
+                    headline: "Subscription Payment Failed:",
+                    detail: `${desc} You can retry below or open the official Razorpay payment page directly.`,
+                    subscriptionId,
+                    plan: data.plan,
+                    shortUrl
+                });
             });
+
+            rzp.on("fault.close", () => {
+                stopFrameCheck();
+                checkoutBusyPlan = null;
+                renderPlanCards();
+                showCheckoutHelperPanel({
+                    kind: "warn",
+                    headline: "Embedded Checkout Unavailable:",
+                    detail: `Your browser or preview frame closed the embedded Razorpay popup. Click "Open Official Razorpay Payment Page ↗" below to pay securely on Razorpay.`,
+                    subscriptionId,
+                    plan: data.plan,
+                    shortUrl
+                });
+            });
+
+            // Start hosted fallback helper & automatic Razorpay settlement polling
+            startSyncPolling(subscriptionId, data.plan);
+            showCheckoutHelperPanel({
+                kind: "info",
+                headline: `Razorpay Checkout Initiated (${data.plan.name} · ₹${data.plan.priceInr}/mo):`,
+                detail: "Complete your payment in the Razorpay window. If the popup does not appear inside this browser frame, use the direct Razorpay link below.",
+                subscriptionId,
+                plan: data.plan,
+                shortUrl
+            });
+
             rzp.open();
+
+            // Verify Razorpay modal actually rendered visibly; release button & surface fallback if blocked
+            frameCheckTimer = setTimeout(() => {
+                frameCheckTimer = null;
+                checkoutBusyPlan = null;
+                renderPlanCards();
+                if (!isRazorpayModalMounted() && shortUrl) {
+                    showCheckoutHelperPanel({
+                        kind: "warn",
+                        headline: "Popup Blocked or Restricted by Browser Frame:",
+                        detail: `Click "Open Official Razorpay Payment Page ↗" below to pay ₹${data.plan.priceInr} securely on Razorpay, then return here or click Verify.`,
+                        subscriptionId,
+                        plan: data.plan,
+                        shortUrl
+                    });
+                }
+            }, 2500);
         } catch (err) {
+            stopFrameCheck();
             checkoutBusyPlan = null;
             renderPlanCards();
             showAlert("error", `<strong>Checkout Error:</strong> ${escapeHTML(err.message || "Unable to start subscription checkout.")}`);
@@ -351,6 +614,7 @@
     }
 
     async function verifySubscriptionPayment(rzpResponse, plan) {
+        stopSyncPolling();
         showAlert("info", "Verifying your Razorpay AutoPay authorization and payment with the server...");
         try {
             const { res, data } = await window.TakoraAuth.apiFetch("/api/subscriptions/verify", {
@@ -367,10 +631,15 @@
             if (res.status === 202 || data.pendingConfirmation) {
                 await window.TakoraAuth.refreshSession();
                 renderPlanCards();
-                showAlert(
-                    "warn",
-                    `<strong>AutoPay Mandate Authorized — Waiting for Payment Settlement:</strong> ${escapeHTML(data.message || "Paid access will unlock automatically once Razorpay confirms the initial charge.")}`
-                );
+                startSyncPolling(rzpResponse.razorpay_subscription_id, plan);
+                showCheckoutHelperPanel({
+                    kind: "warn",
+                    headline: "AutoPay Mandate Authorized — Confirming Settlement:",
+                    detail: data.message || "Paid access will unlock automatically once Razorpay confirms the initial charge.",
+                    subscriptionId: rzpResponse.razorpay_subscription_id,
+                    plan,
+                    shortUrl: activePendingCheckout ? activePendingCheckout.shortUrl : ""
+                });
                 return;
             }
 
@@ -380,6 +649,7 @@
                 return;
             }
 
+            activePendingCheckout = null;
             await window.TakoraAuth.refreshSession();
             const subId = encodeURIComponent(rzpResponse.razorpay_subscription_id || "");
             const planCode = encodeURIComponent((plan && plan.code) || "");
@@ -387,13 +657,20 @@
         } catch (err) {
             checkoutBusyPlan = null;
             renderPlanCards();
-            showAlert("error", `<strong>Verification Network Error:</strong> ${escapeHTML(err.message || "Please check Account Settings in a moment.")}`);
+            showAlert("error", `<strong>Verification Network Error:</strong> ${escapeHTML(err.message || "Please click Verify Payment Status or check Account Settings in a moment.")}`);
         }
     }
 
     async function initPricingPage() {
         renderPlanCards();
         renderMemberStatus();
+
+        if (callbackError) {
+            showAlert(
+                "warn",
+                "<strong>Checkout Redirect Notice:</strong> Your Razorpay payment did not complete or could not be verified yet. Please select a plan below to retry."
+            );
+        }
 
         try {
             const fetcher = window.TakoraAuth ? window.TakoraAuth.apiFetch : (u) => fetch(u).then(async (r) => ({ res: r, data: await r.json() }));

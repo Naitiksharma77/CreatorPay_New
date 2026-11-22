@@ -154,7 +154,7 @@
     },
     "s_mwrlxjp8_q420si": {
       "visitorId": "v_mvb2b0vn_ufptm4",
-      "lastSeen": "2026-11-22T09:17:03.819Z",
+      "lastSeen": "2026-11-22T10:05:50.160Z",
       "page": "creator_home.html",
       "creatorId": null,
       "source": "Google"
@@ -1350,5 +1350,11 @@
     }
   },
   "bookings": [],
+  "users": [],
+  "subscriptions": [],
+  "subscription_payments": [],
+  "webhook_events": [],
+  "interaction_sessions": [],
+  "_runtime_session_secret": "",
   "tracking_started": "2026-10-16T14:22:30.078Z"
 }
