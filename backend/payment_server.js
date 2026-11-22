@@ -4,13 +4,25 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 
-const razorpay = require("./payment_config");
+const {
+  SUBSCRIPTION_PLANS,
+  PLAN_TIER_ORDER,
+  getRazorpayKeyId,
+  getRazorpayKeySecret,
+  getRazorpayWebhookSecret,
+  getRazorpayConfigStatus,
+  getRazorpayInstance,
+  resolveRazorpayPlanId
+} = require("./payment_config");
 const supabase = require("./supabase_config");
 
 const app = express();
+const PORT = Number(process.env.PORT) || 3000;
 
-const PORT = 3000;
+app.set("trust proxy", 1);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -21,87 +33,1827 @@ const upload = multer({
 
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    origin: (origin, callback) => callback(null, origin || true),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-razorpay-signature",
+      "x-razorpay-event-id"
+    ]
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "2mb",
+    verify: (req, _res, buf) => {
+      req.rawBody = buf.toString("utf8");
+    }
+  })
+);
 
 // Serve static frontend files
-const path = require("path");
 const frontendDir = path.join(__dirname, "../frontend");
 app.use(express.static(frontendDir));
 
-// Root path serves the creator home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(frontendDir, "creator_home.html"));
 });
 
+// ======================================
+// ANALYTICS & PERSISTENT APPLICATION STORE
+// ======================================
+
+const ANALYTICS_DATA_FILE = path.join(__dirname, "analytics_store.json");
+
+function loadAnalyticsStore() {
+  try {
+    if (fs.existsSync(ANALYTICS_DATA_FILE)) {
+      const data = JSON.parse(fs.readFileSync(ANALYTICS_DATA_FILE, "utf-8"));
+      return {
+        payments: Array.isArray(data.payments) ? data.payments : [],
+        active_users: Array.isArray(data.active_users) ? data.active_users : [],
+        active_sessions:
+          data.active_sessions && typeof data.active_sessions === "object"
+            ? data.active_sessions
+            : {},
+        events: Array.isArray(data.events) ? data.events : [],
+        pending_orders:
+          data.pending_orders && typeof data.pending_orders === "object"
+            ? data.pending_orders
+            : {},
+        messages: Array.isArray(data.messages) ? data.messages : [],
+        creator_metadata:
+          data.creator_metadata && typeof data.creator_metadata === "object"
+            ? data.creator_metadata
+            : {},
+        bookings: Array.isArray(data.bookings) ? data.bookings : [],
+        users: Array.isArray(data.users) ? data.users : [],
+        subscriptions: Array.isArray(data.subscriptions) ? data.subscriptions : [],
+        subscription_payments: Array.isArray(data.subscription_payments)
+          ? data.subscription_payments
+          : [],
+        webhook_events: Array.isArray(data.webhook_events) ? data.webhook_events : [],
+        interaction_sessions: Array.isArray(data.interaction_sessions)
+          ? data.interaction_sessions
+          : [],
+        _runtime_session_secret:
+          typeof data._runtime_session_secret === "string"
+            ? data._runtime_session_secret
+            : "",
+        tracking_started: data.tracking_started || new Date().toISOString()
+      };
+    }
+  } catch (e) {
+    console.warn("Could not read analytics store:", e.message);
+  }
+  return {
+    payments: [],
+    active_users: [],
+    active_sessions: {},
+    events: [],
+    pending_orders: {},
+    messages: [],
+    creator_metadata: {},
+    bookings: [],
+    users: [],
+    subscriptions: [],
+    subscription_payments: [],
+    webhook_events: [],
+    interaction_sessions: [],
+    _runtime_session_secret: "",
+    tracking_started: new Date().toISOString()
+  };
+}
+
+function saveAnalyticsStore(data) {
+  try {
+    fs.writeFileSync(ANALYTICS_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  } catch (e) {
+    console.warn("Could not save analytics store:", e.message);
+  }
+}
 
 // ======================================
-// HELPER FUNCTIONS
+// GENERAL & AUTH HELPERS
 // ======================================
 
-function sendError(res, statusCode, message, error = null) {
-  console.error(message, error || "");
-
+function sendError(res, statusCode, message, error = null, extra = {}) {
+  if (error) {
+    console.error(message, error.message || error);
+  }
   return res.status(statusCode).json({
     success: false,
-    message
+    message,
+    ...extra
   });
 }
 
-
-function getRazorpayKeyId() {
-  return (
-    process.env.RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY ||
-    "rzp_live_TbMnvmib0JVGT3"
-  );
-}
-
-
 function getNumericPrice(price) {
   const amount = Number(price);
-
   if (!Number.isFinite(amount) || amount <= 0) {
     return null;
   }
-
   return amount;
 }
 
-function calculateInteractionPrice(baseChatPrice, interactionType) {
-  const base = Number(baseChatPrice) || 0;
-  if (interactionType === "voice_call") {
-    return Math.round(base * 1.10);
+function getSessionSecret() {
+  const envSecret = String(process.env.SESSION_SECRET || "").trim();
+  if (envSecret.length >= 16) {
+    return envSecret;
   }
-  if (interactionType === "video_call") {
-    return Math.round(base * 1.20);
+  const store = loadAnalyticsStore();
+  if (!store._runtime_session_secret) {
+    store._runtime_session_secret = crypto.randomBytes(32).toString("hex");
+    saveAnalyticsStore(store);
   }
-  return Math.round(base);
+  return store._runtime_session_secret;
 }
 
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const derived = crypto.scryptSync(String(password), salt, 64).toString("hex");
+  return { salt, hash: derived };
+}
+
+function verifyPassword(password, salt, expectedHash) {
+  if (!password || !salt || !expectedHash) return false;
+  try {
+    const derived = crypto.scryptSync(String(password), String(salt), 64);
+    const expectedBuf = Buffer.from(String(expectedHash), "hex");
+    if (derived.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(derived, expectedBuf);
+  } catch (_) {
+    return false;
+  }
+}
+
+function signSessionToken(user) {
+  const payload = {
+    uid: String(user.id),
+    email: String(user.email || ""),
+    iat: Date.now(),
+    exp: Date.now() + 30 * 24 * 60 * 60 * 1000
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", getSessionSecret())
+    .update(payloadB64)
+    .digest("base64url");
+  return `${payloadB64}.${sig}`;
+}
+
+function verifySessionToken(token) {
+  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payloadB64, providedSig] = parts;
+  try {
+    const expectedSig = crypto
+      .createHmac("sha256", getSessionSecret())
+      .update(payloadB64)
+      .digest("base64url");
+    const a = Buffer.from(providedSig, "utf8");
+    const b = Buffer.from(expectedSig, "utf8");
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf8"));
+    if (!payload || !payload.uid || (payload.exp && Date.now() > payload.exp)) {
+      return null;
+    }
+    return payload;
+  } catch (_) {
+    return null;
+  }
+}
+
+function parseCookies(req) {
+  const header = req.headers && req.headers.cookie;
+  const cookies = {};
+  if (!header) return cookies;
+  header.split(";").forEach((pair) => {
+    const idx = pair.indexOf("=");
+    if (idx > -1) {
+      const k = pair.slice(0, idx).trim();
+      const v = pair.slice(idx + 1).trim();
+      if (k) cookies[k] = decodeURIComponent(v);
+    }
+  });
+  return cookies;
+}
+
+function setSessionCookie(req, res, token) {
+  const isHttps =
+    req.secure ||
+    String(req.headers["x-forwarded-proto"] || "").toLowerCase().includes("https");
+  const parts = [
+    `takora_session=${encodeURIComponent(token)}`,
+    "Path=/",
+    "HttpOnly",
+    `Max-Age=${30 * 24 * 60 * 60}`
+  ];
+  if (isHttps) {
+    parts.push("SameSite=None", "Secure", "Partitioned");
+  } else {
+    parts.push("SameSite=Lax");
+  }
+  res.setHeader("Set-Cookie", parts.join("; "));
+}
+
+function clearSessionCookie(req, res) {
+  const isHttps =
+    req.secure ||
+    String(req.headers["x-forwarded-proto"] || "").toLowerCase().includes("https");
+  const parts = ["takora_session=", "Path=/", "HttpOnly", "Max-Age=0"];
+  if (isHttps) {
+    parts.push("SameSite=None", "Secure", "Partitioned");
+  } else {
+    parts.push("SameSite=Lax");
+  }
+  res.setHeader("Set-Cookie", parts.join("; "));
+}
+
+function sanitizeUser(user) {
+  if (!user) return null;
+  return {
+    id: String(user.id),
+    name: String(user.name || "Takora Member"),
+    email: String(user.email || ""),
+    phone: String(user.phone || ""),
+    role: String(user.role || "user"),
+    created_at: user.created_at || new Date().toISOString()
+  };
+}
+
+async function findUserByEmail(email) {
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  if (!cleanEmail) return null;
+  const store = loadAnalyticsStore();
+  let user = (store.users || []).find(
+    (u) => String(u.email || "").toLowerCase() === cleanEmail
+  );
+  if (!user && supabase.isSupabaseLive) {
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", cleanEmail)
+        .maybeSingle();
+      if (data) user = data;
+    } catch (_) {}
+  }
+  return user || null;
+}
+
+async function findUserById(userId) {
+  if (!userId) return null;
+  const cleanId = String(userId).trim();
+  const store = loadAnalyticsStore();
+  let user = (store.users || []).find((u) => String(u.id) === cleanId);
+  if (!user && supabase.isSupabaseLive) {
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", cleanId)
+        .maybeSingle();
+      if (data) user = data;
+    } catch (_) {}
+  }
+  return user || null;
+}
+
+async function getAuthenticatedUser(req) {
+  const cookies = parseCookies(req);
+  let token = cookies.takora_session || "";
+  if (!token && req.headers && req.headers.authorization) {
+    const auth = String(req.headers.authorization);
+    if (auth.toLowerCase().startsWith("bearer ")) {
+      token = auth.slice(7).trim();
+    }
+  }
+  const decoded = verifySessionToken(token);
+  if (!decoded || !decoded.uid) return null;
+  const user = await findUserById(decoded.uid);
+  return user || null;
+}
+
+async function requireAuth(req, res) {
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    res.status(401).json({
+      success: false,
+      code: "AUTH_REQUIRED",
+      message: "Please create a free account or log in to continue."
+    });
+    return null;
+  }
+  return user;
+}
+
+// ======================================
+// SUBSCRIPTION & ENTITLEMENT HELPERS
+// ======================================
+
+function unixToIso(sec) {
+  if (!sec || !Number.isFinite(Number(sec))) return null;
+  return new Date(Number(sec) * 1000).toISOString();
+}
+
+function addOneMonthIso(fromDate = new Date()) {
+  const d = new Date(fromDate);
+  d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
+
+function computeEntitlements(subscription) {
+  const baseNone = {
+    hasActiveSubscription: false,
+    planCode: null,
+    planName: "Free",
+    amountInr: 0,
+    status: subscription ? subscription.status : "none",
+    canViewProfiles: false,
+    canChat: false,
+    canVoiceCall: false,
+    canVideoCall: false,
+    currentStart: subscription ? subscription.current_start || null : null,
+    currentEnd: subscription ? subscription.current_end || null : null,
+    nextBillingDate: subscription ? subscription.next_billing_date || null : null,
+    cancelAtPeriodEnd: Boolean(subscription && subscription.cancel_at_period_end),
+    pendingMandate: Boolean(
+      subscription &&
+        subscription.status === "authenticated" &&
+        subscription.payment_verification_status !== "verified"
+    )
+  };
+
+  if (!subscription) {
+    return baseNone;
+  }
+
+  const isVerifiedPaid = subscription.payment_verification_status === "verified";
+  const periodEndMs = subscription.current_end
+    ? new Date(subscription.current_end).getTime()
+    : 0;
+  const withinPaidPeriod = !periodEndMs || periodEndMs > Date.now();
+
+  const isActive = Boolean(
+    isVerifiedPaid &&
+      (subscription.status === "active" ||
+        (subscription.status === "cancelled" &&
+          subscription.cancel_at_period_end &&
+          withinPaidPeriod))
+  );
+
+  if (!isActive) {
+    return baseNone;
+  }
+
+  const plan = SUBSCRIPTION_PLANS[subscription.plan_code] || SUBSCRIPTION_PLANS.basic;
+  return {
+    hasActiveSubscription: true,
+    planCode: plan.code,
+    planName: plan.name,
+    amountInr: plan.priceInr,
+    status: subscription.status,
+    canViewProfiles: Boolean(plan.features.profiles),
+    canChat: Boolean(plan.features.chat),
+    canVoiceCall: Boolean(plan.features.voice_call),
+    canVideoCall: Boolean(plan.features.video_call),
+    currentStart: subscription.current_start || null,
+    currentEnd: subscription.current_end || null,
+    nextBillingDate: subscription.cancel_at_period_end
+      ? null
+      : subscription.next_billing_date || subscription.current_end || null,
+    cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
+    pendingMandate: false
+  };
+}
+
+function getRequiredPlanForFeature(feature) {
+  if (feature === "video_call") return "premium";
+  if (feature === "voice_call") return "pro";
+  return "basic";
+}
+
+function checkFeatureAllowance(entitlements, feature) {
+  if (!entitlements || !entitlements.hasActiveSubscription) {
+    return false;
+  }
+  if (feature === "video_call") return Boolean(entitlements.canVideoCall);
+  if (feature === "voice_call") return Boolean(entitlements.canVoiceCall);
+  if (feature === "chat") return Boolean(entitlements.canChat);
+  return Boolean(entitlements.canViewProfiles);
+}
+
+async function getUserSubscriptions(userId) {
+  const cleanUserId = String(userId || "").trim();
+  if (!cleanUserId) return [];
+
+  const store = loadAnalyticsStore();
+  let subs = (store.subscriptions || []).filter(
+    (s) => String(s.user_id) === cleanUserId
+  );
+
+  if (supabase.isSupabaseLive) {
+    try {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", cleanUserId)
+        .order("updated_at", { ascending: false });
+      if (Array.isArray(data) && data.length > 0) {
+        subs = data;
+      }
+    } catch (_) {}
+  }
+
+  subs.sort(
+    (a, b) =>
+      new Date(b.updated_at || b.created_at || 0).getTime() -
+      new Date(a.updated_at || a.created_at || 0).getTime()
+  );
+  return subs;
+}
+
+async function getPrimaryUserSubscription(userId) {
+  const subs = await getUserSubscriptions(userId);
+  if (subs.length === 0) return null;
+
+  // Prefer currently entitled active subscription first
+  const entitled = subs.find((s) => computeEntitlements(s).hasActiveSubscription);
+  if (entitled) return entitled;
+
+  // Otherwise return most recently updated subscription (e.g., authenticated/cancelled/halted)
+  return subs[0];
+}
+
+async function getUserPaymentHistory(userId) {
+  const cleanUserId = String(userId || "").trim();
+  if (!cleanUserId) return [];
+  const store = loadAnalyticsStore();
+  let list = (store.subscription_payments || []).filter(
+    (p) => String(p.user_id) === cleanUserId
+  );
+  if (supabase.isSupabaseLive && list.length === 0) {
+    try {
+      const { data } = await supabase
+        .from("subscription_payments")
+        .select("*")
+        .eq("user_id", cleanUserId)
+        .order("created_at", { ascending: false });
+      if (Array.isArray(data) && data.length > 0) list = data;
+    } catch (_) {}
+  }
+  return [...list].sort(
+    (a, b) =>
+      new Date(b.paid_at || b.created_at || 0).getTime() -
+      new Date(a.paid_at || a.created_at || 0).getTime()
+  );
+}
+
+async function saveSubscriptionRecord(subObj) {
+  const store = loadAnalyticsStore();
+  store.subscriptions = store.subscriptions || [];
+  const idx = store.subscriptions.findIndex(
+    (s) =>
+      s.razorpay_subscription_id === subObj.razorpay_subscription_id ||
+      s.id === subObj.id
+  );
+  const nowIso = new Date().toISOString();
+  const merged =
+    idx !== -1
+      ? { ...store.subscriptions[idx], ...subObj, updated_at: nowIso }
+      : {
+          id: subObj.id || `sub_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+          created_at: nowIso,
+          updated_at: nowIso,
+          ...subObj
+        };
+
+  if (idx !== -1) {
+    store.subscriptions[idx] = merged;
+  } else {
+    store.subscriptions.unshift(merged);
+  }
+  saveAnalyticsStore(store);
+
+  if (supabase.isSupabaseLive) {
+    try {
+      await supabase
+        .from("subscriptions")
+        .upsert(merged, { onConflict: "razorpay_subscription_id" });
+    } catch (err) {
+      console.warn("[Supabase] Subscription upsert warning:", err.message || err);
+    }
+  }
+  return merged;
+}
+
+async function recordSubscriptionPayment(paymentObj) {
+  const store = loadAnalyticsStore();
+  store.subscription_payments = store.subscription_payments || [];
+  const existingIdx = paymentObj.razorpay_payment_id
+    ? store.subscription_payments.findIndex(
+        (p) => p.razorpay_payment_id === paymentObj.razorpay_payment_id
+      )
+    : -1;
+
+  const nowIso = new Date().toISOString();
+  const record =
+    existingIdx !== -1
+      ? { ...store.subscription_payments[existingIdx], ...paymentObj }
+      : {
+          id: `subpay_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+          currency: "INR",
+          created_at: nowIso,
+          ...paymentObj
+        };
+
+  if (existingIdx !== -1) {
+    store.subscription_payments[existingIdx] = record;
+  } else {
+    store.subscription_payments.unshift(record);
+  }
+  saveAnalyticsStore(store);
+
+  if (supabase.isSupabaseLive && record.razorpay_payment_id) {
+    try {
+      await supabase
+        .from("subscription_payments")
+        .upsert(record, { onConflict: "razorpay_payment_id" });
+    } catch (err) {
+      console.warn("[Supabase] Subscription payment upsert warning:", err.message || err);
+    }
+  }
+  return record;
+}
+
+async function syncUserAccessFlag(userId, hasAccess, razorpayCustomerId = "") {
+  if (!userId) return;
+  const store = loadAnalyticsStore();
+  const idx = (store.users || []).findIndex((u) => String(u.id) === String(userId));
+  if (idx !== -1) {
+    store.users[idx].has_access = Boolean(hasAccess);
+    if (razorpayCustomerId) store.users[idx].razorpay_customer_id = razorpayCustomerId;
+    store.users[idx].updated_at = new Date().toISOString();
+    saveAnalyticsStore(store);
+  }
+  if (supabase.isSupabaseLive) {
+    try {
+      const updateFields = {
+        has_access: Boolean(hasAccess),
+        updated_at: new Date().toISOString()
+      };
+      if (razorpayCustomerId) updateFields.razorpay_customer_id = razorpayCustomerId;
+      await supabase.from("users").update(updateFields).eq("id", String(userId));
+    } catch (_) {}
+  }
+}
 
 // ======================================
 // BACKEND STATUS
 // ======================================
 
 app.get("/api/status", (req, res) => {
+  const rzpStatus = getRazorpayConfigStatus();
   res.json({
     success: true,
-    message: "CreatorPay backend is running!",
-    razorpayConfigured: Boolean(
-      getRazorpayKeyId()
-    )
+    app: "Takora",
+    message: "Takora subscription platform backend is running!",
+    razorpayConfigured: rzpStatus.configured,
+    webhookConfigured: rzpStatus.webhookConfigured,
+    missingEnvVars: rzpStatus.missingEnvVars
   });
 });
 
+// ======================================
+// FREE USER AUTHENTICATION ENDPOINTS
+// ======================================
+
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body || {};
+    const cleanName = String(name || "").trim();
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleanPhone = String(phone || "").trim();
+    const rawPassword = String(password || "");
+
+    if (!cleanName || cleanName.length < 2) {
+      return sendError(res, 400, "Please enter your full name (at least 2 characters).");
+    }
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return sendError(res, 400, "Please enter a valid email address.");
+    }
+    if (rawPassword.length < 6) {
+      return sendError(res, 400, "Password must be at least 6 characters long.");
+    }
+
+    const existing = await findUserByEmail(cleanEmail);
+    if (existing) {
+      return sendError(res, 409, "An account with this email already exists. Please log in instead.");
+    }
+
+    const { salt, hash } = hashPassword(rawPassword);
+    const nowIso = new Date().toISOString();
+    const newUser = {
+      id: `usr_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
+      name: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      password_hash: hash,
+      password_salt: salt,
+      role: "user",
+      has_access: false,
+      status: "active",
+      razorpay_customer_id: "",
+      created_at: nowIso,
+      updated_at: nowIso
+    };
+
+    const store = loadAnalyticsStore();
+    store.users = store.users || [];
+    store.users.unshift(newUser);
+    saveAnalyticsStore(store);
+
+    if (supabase.isSupabaseLive) {
+      try {
+        await supabase.from("users").insert([newUser]);
+      } catch (err) {
+        console.warn("[Supabase] Register insert warning:", err.message || err);
+      }
+    }
+
+    const token = signSessionToken(newUser);
+    setSessionCookie(req, res, token);
+
+    logAnalyticsEvent("user_registered", {
+      page: "auth",
+      details: cleanEmail
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Account created for free! Choose a membership plan whenever you are ready to connect.",
+      user: sanitizeUser(newUser),
+      subscription: null,
+      entitlements: computeEntitlements(null),
+      paymentHistory: [],
+      token
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to complete registration.", error);
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const rawPassword = String(password || "");
+
+    if (!cleanEmail || !rawPassword) {
+      return sendError(res, 400, "Email and password are required.");
+    }
+
+    const user = await findUserByEmail(cleanEmail);
+    if (!user || !verifyPassword(rawPassword, user.password_salt, user.password_hash)) {
+      return sendError(res, 401, "Invalid email or password.");
+    }
+
+    const token = signSessionToken(user);
+    setSessionCookie(req, res, token);
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    const paymentHistory = await getUserPaymentHistory(user.id);
+
+    return res.json({
+      success: true,
+      message: "Logged in successfully.",
+      user: sanitizeUser(user),
+      subscription,
+      entitlements,
+      paymentHistory,
+      token
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to log in.", error);
+  }
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  clearSessionCookie(req, res);
+  return res.json({
+    success: true,
+    message: "Logged out successfully."
+  });
+});
+
+app.get("/api/auth/me", async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return res.json({
+        success: true,
+        authenticated: false,
+        user: null,
+        subscription: null,
+        entitlements: computeEntitlements(null),
+        paymentHistory: []
+      });
+    }
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    const paymentHistory = await getUserPaymentHistory(user.id);
+
+    return res.json({
+      success: true,
+      authenticated: true,
+      user: sanitizeUser(user),
+      subscription,
+      entitlements,
+      paymentHistory
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to fetch user session.", error);
+  }
+});
 
 // ======================================
-// GET ALL CREATORS (DYNAMIC SUPABASE + ROSÉIA DATES/TAGS ENRICHMENT)
+// CENTRALIZED SUBSCRIPTIONS & RAZORPAY AUTOPAY
+// ======================================
+
+app.get("/api/subscriptions/plans", (req, res) => {
+  const rzpStatus = getRazorpayConfigStatus();
+  return res.json({
+    success: true,
+    plans: Object.values(SUBSCRIPTION_PLANS),
+    razorpay: {
+      configured: rzpStatus.configured,
+      webhookConfigured: rzpStatus.webhookConfigured,
+      keyId: rzpStatus.keyId,
+      missingEnvVars: rzpStatus.missingEnvVars
+    }
+  });
+});
+
+app.get("/api/subscriptions/me", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    const paymentHistory = await getUserPaymentHistory(user.id);
+
+    return res.json({
+      success: true,
+      user: sanitizeUser(user),
+      subscription,
+      entitlements,
+      paymentHistory
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to fetch subscription status.", error);
+  }
+});
+
+async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
+  const user = await requireAuth(req, res);
+  if (!user) return;
+
+  const { planCode } = req.body || {};
+  const cleanPlanCode = String(planCode || "").trim().toLowerCase();
+  const targetPlan = SUBSCRIPTION_PLANS[cleanPlanCode];
+
+  if (!targetPlan) {
+    return sendError(
+      res,
+      400,
+      "Please select a valid subscription plan: basic, pro, or premium."
+    );
+  }
+
+  const rzpStatus = getRazorpayConfigStatus();
+  const rzp = getRazorpayInstance();
+  if (!rzpStatus.configured || !rzp) {
+    return res.status(503).json({
+      success: false,
+      code: "RAZORPAY_NOT_CONFIGURED",
+      missingEnvVars: rzpStatus.missingEnvVars,
+      message: `Razorpay Subscriptions is not configured on this server yet. Set ${rzpStatus.missingEnvVars.join(
+        " and "
+      )} in environment variables to enable AutoPay checkouts.`
+    });
+  }
+
+  const existingSub = await getPrimaryUserSubscription(user.id);
+  const existingEntitlements = computeEntitlements(existingSub);
+
+  if (existingEntitlements.hasActiveSubscription && !existingEntitlements.cancelAtPeriodEnd) {
+    if (existingEntitlements.planCode === cleanPlanCode) {
+      return sendError(
+        res,
+        409,
+        `You already have an active ${targetPlan.name} subscription.`
+      );
+    }
+    const currentTier = PLAN_TIER_ORDER[existingEntitlements.planCode] || 0;
+    const requestedTier = PLAN_TIER_ORDER[cleanPlanCode] || 0;
+    if (isUpgrade && requestedTier <= currentTier) {
+      return sendError(
+        res,
+        400,
+        `Please select a plan higher than your current ${existingEntitlements.planName} plan to upgrade.`
+      );
+    }
+    if (!isUpgrade && requestedTier <= currentTier) {
+      return sendError(
+        res,
+        400,
+        `You already have ${existingEntitlements.planName} access. Cancel your current plan at cycle end if you wish to switch to a lower tier next month.`
+      );
+    }
+  }
+
+  try {
+    // 1. Ensure Razorpay Customer exists
+    let rzpCustomerId = String(user.razorpay_customer_id || "").trim();
+    if (!rzpCustomerId) {
+      try {
+        const customerPayload = {
+          name: user.name || "Takora Member",
+          email: user.email,
+          fail_existing: 0,
+          notes: {
+            userId: String(user.id),
+            app: "takora"
+          }
+        };
+        if (user.phone) customerPayload.contact = user.phone;
+        const customer = await rzp.customers.create(customerPayload);
+        if (customer && customer.id) {
+          rzpCustomerId = customer.id;
+          await syncUserAccessFlag(user.id, existingEntitlements.hasActiveSubscription, rzpCustomerId);
+        }
+      } catch (custErr) {
+        console.warn("[Razorpay] Customer create warning:", custErr.message || custErr);
+      }
+    }
+
+    // 2. Resolve real Razorpay monthly Plan ID (env or auto-created via Razorpay Plans API)
+    const rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode);
+
+    // 3. Create real Razorpay Monthly Subscription with AutoPay mandate support
+    const subCreatePayload = {
+      plan_id: rzpPlanId,
+      customer_notify: 1,
+      total_count: 120,
+      notes: {
+        userId: String(user.id),
+        userEmail: String(user.email),
+        planCode: targetPlan.code,
+        app: "takora",
+        upgradeFromSubscriptionId:
+          existingSub && existingEntitlements.hasActiveSubscription
+            ? String(existingSub.razorpay_subscription_id)
+            : ""
+      }
+    };
+    if (rzpCustomerId) {
+      subCreatePayload.customer_id = rzpCustomerId;
+    }
+
+    const rzpSub = await rzp.subscriptions.create(subCreatePayload);
+    if (!rzpSub || !rzpSub.id) {
+      throw new Error("Razorpay did not return a valid subscription ID.");
+    }
+
+    const savedSub = await saveSubscriptionRecord({
+      user_id: String(user.id),
+      user_email: String(user.email),
+      plan_code: targetPlan.code,
+      plan_name: targetPlan.name,
+      amount_inr: targetPlan.priceInr,
+      razorpay_plan_id: rzpPlanId,
+      razorpay_subscription_id: rzpSub.id,
+      razorpay_customer_id: rzpCustomerId || rzpSub.customer_id || "",
+      status: rzpSub.status || "created",
+      payment_verification_status: "pending",
+      has_access: false,
+      cancel_at_period_end: false,
+      current_start: unixToIso(rzpSub.current_start),
+      current_end: unixToIso(rzpSub.current_end),
+      next_billing_date: unixToIso(rzpSub.charge_at || rzpSub.current_end),
+      short_url: rzpSub.short_url || "",
+      superseded_subscription_id:
+        existingSub && existingEntitlements.hasActiveSubscription
+          ? existingSub.razorpay_subscription_id
+          : ""
+    });
+
+    logAnalyticsEvent("checkout_initiated", {
+      page: "pricing.html",
+      amount: targetPlan.priceInr,
+      creatorName: `${targetPlan.name} Plan`
+    });
+
+    return res.json({
+      success: true,
+      keyId: rzpStatus.keyId,
+      plan: targetPlan,
+      subscription: {
+        id: rzpSub.id,
+        plan_id: rzpPlanId,
+        status: savedSub.status,
+        short_url: rzpSub.short_url || ""
+      },
+      prefill: {
+        name: user.name,
+        email: user.email,
+        contact: user.phone || ""
+      }
+    });
+  } catch (err) {
+    const rzpMsg =
+      (err && err.error && (err.error.description || err.error.reason)) ||
+      (err && err.message) ||
+      "Unable to initialize Razorpay Subscription.";
+    return sendError(res, 502, `Razorpay Subscription Error: ${rzpMsg}`, err);
+  }
+}
+
+app.post("/api/subscriptions/create", (req, res) =>
+  createSubscriptionCheckout({ req, res, isUpgrade: false })
+);
+
+app.post("/api/subscriptions/upgrade", (req, res) =>
+  createSubscriptionCheckout({ req, res, isUpgrade: true })
+);
+
+app.post("/api/subscriptions/verify", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const {
+      razorpay_payment_id,
+      razorpay_subscription_id,
+      razorpay_signature
+    } = req.body || {};
+
+    if (!razorpay_payment_id || !razorpay_subscription_id || !razorpay_signature) {
+      return sendError(
+        res,
+        400,
+        "Missing Razorpay subscription verification fields (payment ID, subscription ID, signature)."
+      );
+    }
+
+    const secret = getRazorpayKeySecret();
+    const rzp = getRazorpayInstance();
+    if (!secret || !rzp) {
+      return sendError(
+        res,
+        503,
+        "Razorpay verification credentials are not configured on the server."
+      );
+    }
+
+    // Razorpay Subscription signature: HMAC-SHA256(razorpay_payment_id + "|" + razorpay_subscription_id, key_secret)
+    const generatedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(`${String(razorpay_payment_id).trim()}|${String(razorpay_subscription_id).trim()}`)
+      .digest("hex");
+
+    const sigA = Buffer.from(generatedSignature, "utf8");
+    const sigB = Buffer.from(String(razorpay_signature).trim(), "utf8");
+    const isValidSig =
+      sigA.length === sigB.length && crypto.timingSafeEqual(sigA, sigB);
+
+    if (!isValidSig) {
+      return sendError(res, 400, "Razorpay subscription signature verification failed.");
+    }
+
+    // Cross-check live subscription & payment entities with Razorpay API
+    const [rzpSub, rzpPay] = await Promise.all([
+      rzp.subscriptions.fetch(String(razorpay_subscription_id).trim()),
+      rzp.payments.fetch(String(razorpay_payment_id).trim())
+    ]);
+
+    const store = loadAnalyticsStore();
+    const existingRow = (store.subscriptions || []).find(
+      (s) => s.razorpay_subscription_id === String(razorpay_subscription_id).trim()
+    );
+
+    const ownerUserId =
+      (rzpSub && rzpSub.notes && rzpSub.notes.userId) ||
+      (existingRow && existingRow.user_id) ||
+      "";
+    if (String(ownerUserId) !== String(user.id)) {
+      return sendError(res, 403, "This subscription does not belong to your account.");
+    }
+
+    const planCode =
+      (rzpSub && rzpSub.notes && rzpSub.notes.planCode) ||
+      (existingRow && existingRow.plan_code) ||
+      "basic";
+    const plan = SUBSCRIPTION_PLANS[planCode] || SUBSCRIPTION_PLANS.basic;
+    const paidAmountInr =
+      rzpPay && rzpPay.amount ? Math.round(Number(rzpPay.amount) / 100) : plan.priceInr;
+
+    const paymentSettled =
+      rzpPay &&
+      (rzpPay.status === "captured" ||
+        (rzpPay.status === "authorized" && Number(rzpSub.paid_count || 0) >= 1));
+    const subscriptionActive =
+      rzpSub &&
+      (rzpSub.status === "active" ||
+        (paymentSettled && Number(rzpSub.paid_count || 0) >= 1));
+
+    // Strict check: authenticated mandate without captured initial charge must NOT unlock access
+    if (!paymentSettled && !subscriptionActive) {
+      const pendingRow = await saveSubscriptionRecord({
+        user_id: String(user.id),
+        user_email: String(user.email),
+        plan_code: plan.code,
+        plan_name: plan.name,
+        amount_inr: plan.priceInr,
+        razorpay_plan_id: (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
+        razorpay_subscription_id: rzpSub.id,
+        razorpay_customer_id: rzpSub.customer_id || "",
+        status: rzpSub.status || "authenticated",
+        payment_verification_status: "pending",
+        has_access: false,
+        current_start: unixToIso(rzpSub.current_start),
+        current_end: unixToIso(rzpSub.current_end),
+        next_billing_date: unixToIso(rzpSub.charge_at || rzpSub.current_end),
+        paid_count: Number(rzpSub.paid_count || 0)
+      });
+
+      return res.status(202).json({
+        success: false,
+        pendingConfirmation: true,
+        subscription: pendingRow,
+        entitlements: computeEntitlements(pendingRow),
+        message:
+          "Your AutoPay mandate is authorized and awaiting initial payment confirmation from Razorpay. Access will unlock automatically once the charge settles."
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    const currentStartIso = unixToIso(rzpSub.current_start) || nowIso;
+    const currentEndIso = unixToIso(rzpSub.current_end) || addOneMonthIso(nowIso);
+    const nextBillingIso = unixToIso(rzpSub.charge_at || rzpSub.current_end) || currentEndIso;
+
+    const activeRow = await saveSubscriptionRecord({
+      user_id: String(user.id),
+      user_email: String(user.email),
+      plan_code: plan.code,
+      plan_name: plan.name,
+      amount_inr: plan.priceInr,
+      razorpay_plan_id: (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
+      razorpay_subscription_id: rzpSub.id,
+      razorpay_customer_id: rzpSub.customer_id || "",
+      status: "active",
+      payment_verification_status: "verified",
+      has_access: true,
+      cancel_at_period_end: false,
+      current_start: currentStartIso,
+      current_end: currentEndIso,
+      next_billing_date: nextBillingIso,
+      paid_count: Math.max(1, Number(rzpSub.paid_count || 1))
+    });
+
+    const payRecord = await recordSubscriptionPayment({
+      subscription_id: activeRow.id,
+      razorpay_subscription_id: rzpSub.id,
+      user_id: String(user.id),
+      user_email: String(user.email),
+      plan_code: plan.code,
+      razorpay_payment_id: rzpPay.id,
+      razorpay_signature: String(razorpay_signature),
+      amount_inr: paidAmountInr,
+      status: rzpPay.status || "captured",
+      method: rzpPay.method || "autopay",
+      paid_at: nowIso
+    });
+
+    await syncUserAccessFlag(user.id, true, rzpSub.customer_id || "");
+
+    // Cancel superseded lower-tier subscription cleanly on Razorpay if this was an upgrade
+    const oldSubId =
+      (rzpSub.notes && rzpSub.notes.upgradeFromSubscriptionId) ||
+      (existingRow && existingRow.superseded_subscription_id) ||
+      "";
+    if (oldSubId && oldSubId !== rzpSub.id) {
+      try {
+        await rzp.subscriptions.cancel(oldSubId, false);
+        const freshStore = loadAnalyticsStore();
+        const oldRow = (freshStore.subscriptions || []).find(
+          (s) => s.razorpay_subscription_id === oldSubId
+        );
+        if (oldRow) {
+          await saveSubscriptionRecord({
+            ...oldRow,
+            status: "cancelled",
+            has_access: false,
+            superseded_by: rzpSub.id,
+            cancelled_at: nowIso
+          });
+        }
+      } catch (cancelOldErr) {
+        console.warn("[Razorpay] Old subscription cancel warning:", cancelOldErr.message || cancelOldErr);
+      }
+    }
+
+    logAnalyticsEvent("payment_success", {
+      page: "pricing.html",
+      amount: paidAmountInr,
+      creatorName: `${plan.name} Membership`
+    });
+
+    return res.json({
+      success: true,
+      message: `Your ${plan.name} membership is active!`,
+      subscription: activeRow,
+      entitlements: computeEntitlements(activeRow),
+      payment: payRecord
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to verify subscription payment.", error);
+  }
+});
+
+app.post("/api/subscriptions/cancel", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const currentSub = await getPrimaryUserSubscription(user.id);
+    if (!currentSub || !currentSub.razorpay_subscription_id) {
+      return sendError(res, 404, "No active subscription found on your account.");
+    }
+    if (currentSub.cancel_at_period_end || currentSub.status === "cancelled") {
+      return res.json({
+        success: true,
+        message: "AutoPay is already scheduled to cancel at the end of your current billing period.",
+        subscription: currentSub,
+        entitlements: computeEntitlements(currentSub)
+      });
+    }
+
+    const rzp = getRazorpayInstance();
+    if (!rzp) {
+      return sendError(
+        res,
+        503,
+        "Razorpay credentials are not configured; unable to cancel remote subscription."
+      );
+    }
+
+    // Razorpay Node SDK v2 signature: subscriptions.cancel(subId, cancelAtCycleEndBoolean)
+    const rzpCancelled = await rzp.subscriptions.cancel(
+      currentSub.razorpay_subscription_id,
+      true
+    );
+
+    const nowIso = new Date().toISOString();
+    const updated = await saveSubscriptionRecord({
+      ...currentSub,
+      status: "cancelled",
+      cancel_at_period_end: true,
+      cancelled_at: nowIso,
+      current_end:
+        unixToIso(rzpCancelled && rzpCancelled.current_end) ||
+        currentSub.current_end ||
+        addOneMonthIso(nowIso),
+      next_billing_date: null
+    });
+
+    return res.json({
+      success: true,
+      message:
+        "AutoPay cancelled. You will continue to enjoy your membership benefits until the end of your current billing cycle.",
+      subscription: updated,
+      entitlements: computeEntitlements(updated)
+    });
+  } catch (error) {
+    const rzpMsg =
+      (error && error.error && error.error.description) ||
+      error.message ||
+      "Unable to cancel subscription.";
+    return sendError(res, 500, rzpMsg, error);
+  }
+});
+
+// ======================================
+// RAZORPAY SUBSCRIPTION WEBHOOK (RAW BODY HMAC + IDEMPOTENCY)
+// ======================================
+
+app.post("/api/razorpay-webhook", async (req, res) => {
+  try {
+    const signature = String(req.headers["x-razorpay-signature"] || "").trim();
+    const webhookSecret = getRazorpayWebhookSecret();
+
+    if (!webhookSecret) {
+      return res.status(503).json({
+        success: false,
+        message: "RAZORPAY_WEBHOOK_SECRET is not configured on the server."
+      });
+    }
+    if (!signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing x-razorpay-signature header."
+      });
+    }
+
+    const rawPayload = Buffer.isBuffer(req.body)
+      ? req.body.toString("utf8")
+      : req.rawBody || JSON.stringify(req.body || {});
+
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(rawPayload)
+      .digest("hex");
+
+    const sigA = Buffer.from(expectedSignature, "utf8");
+    const sigB = Buffer.from(signature, "utf8");
+    const isAuthentic = sigA.length === sigB.length && crypto.timingSafeEqual(sigA, sigB);
+
+    if (!isAuthentic) {
+      console.warn("[Webhook] Invalid Razorpay webhook signature rejected");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook signature."
+      });
+    }
+
+    const eventData = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+    const eventType = String(eventData.event || "");
+    const subEntity = eventData.payload?.subscription?.entity || null;
+    const payEntity = eventData.payload?.payment?.entity || null;
+
+    const eventId =
+      String(req.headers["x-razorpay-event-id"] || "").trim() ||
+      crypto
+        .createHash("sha256")
+        .update(`${eventType}:${subEntity?.id || ""}:${payEntity?.id || ""}:${eventData.created_at || ""}`)
+        .digest("hex");
+
+    // Idempotency check
+    const store = loadAnalyticsStore();
+    store.webhook_events = store.webhook_events || [];
+    if (store.webhook_events.some((we) => we.event_id === eventId)) {
+      return res.status(200).json({ status: "ok", deduplicated: true });
+    }
+
+    const webhookRecord = {
+      event_id: eventId,
+      event_type: eventType,
+      subscription_id: subEntity ? subEntity.id : "",
+      payment_id: payEntity ? payEntity.id : "",
+      processed_at: new Date().toISOString()
+    };
+    store.webhook_events.unshift(webhookRecord);
+    if (store.webhook_events.length > 2000) {
+      store.webhook_events = store.webhook_events.slice(0, 2000);
+    }
+    saveAnalyticsStore(store);
+
+    if (supabase.isSupabaseLive) {
+      try {
+        await supabase.from("webhook_events").upsert(webhookRecord, { onConflict: "event_id" });
+      } catch (_) {}
+    }
+
+    const rzpSubId = (subEntity && subEntity.id) || (payEntity && payEntity.subscription_id) || "";
+    const existingSub = rzpSubId
+      ? (loadAnalyticsStore().subscriptions || []).find(
+          (s) => s.razorpay_subscription_id === rzpSubId
+        )
+      : null;
+    const notes = (subEntity && subEntity.notes) || (payEntity && payEntity.notes) || {};
+    const targetUserId = (existingSub && existingSub.user_id) || notes.userId || "";
+    const targetUserEmail = (existingSub && existingSub.user_email) || notes.userEmail || (payEntity && payEntity.email) || "";
+    const targetPlanCode = (existingSub && existingSub.plan_code) || notes.planCode || "basic";
+    const plan = SUBSCRIPTION_PLANS[targetPlanCode] || SUBSCRIPTION_PLANS.basic;
+
+    console.log(`[Webhook] Verified event ${eventType} (sub: ${rzpSubId || "n/a"})`);
+
+    switch (eventType) {
+      case "subscription.authenticated": {
+        if (rzpSubId && targetUserId) {
+          await saveSubscriptionRecord({
+            user_id: targetUserId,
+            user_email: targetUserEmail,
+            plan_code: plan.code,
+            plan_name: plan.name,
+            amount_inr: plan.priceInr,
+            razorpay_plan_id: (subEntity && subEntity.plan_id) || "",
+            razorpay_subscription_id: rzpSubId,
+            razorpay_customer_id: (subEntity && subEntity.customer_id) || "",
+            status: "authenticated",
+            payment_verification_status:
+              existingSub && existingSub.payment_verification_status === "verified"
+                ? "verified"
+                : "pending",
+            has_access: Boolean(existingSub && existingSub.has_access),
+            current_start: unixToIso(subEntity && subEntity.current_start),
+            current_end: unixToIso(subEntity && subEntity.current_end),
+            next_billing_date: unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end))
+          });
+        }
+        break;
+      }
+
+      case "subscription.activated":
+      case "subscription.charged": {
+        const paidCount = Number((subEntity && subEntity.paid_count) || 0);
+        const hasVerifiedCharge = Boolean(
+          (payEntity && (payEntity.status === "captured" || payEntity.status === "authorized")) ||
+            paidCount >= 1
+        );
+        if (rzpSubId && targetUserId) {
+          const nowIso = new Date().toISOString();
+          const currentStart = unixToIso(subEntity && subEntity.current_start) || nowIso;
+          const currentEnd = unixToIso(subEntity && subEntity.current_end) || addOneMonthIso(nowIso);
+          const nextCharge = unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end)) || currentEnd;
+
+          const subSaved = await saveSubscriptionRecord({
+            user_id: targetUserId,
+            user_email: targetUserEmail,
+            plan_code: plan.code,
+            plan_name: plan.name,
+            amount_inr: plan.priceInr,
+            razorpay_plan_id: (subEntity && subEntity.plan_id) || "",
+            razorpay_subscription_id: rzpSubId,
+            razorpay_customer_id: (subEntity && subEntity.customer_id) || "",
+            status: "active",
+            payment_verification_status: hasVerifiedCharge ? "verified" : "pending",
+            has_access: hasVerifiedCharge,
+            cancel_at_period_end: false,
+            current_start: currentStart,
+            current_end: currentEnd,
+            next_billing_date: nextCharge,
+            paid_count: Math.max(1, paidCount)
+          });
+
+          if (payEntity && payEntity.id) {
+            const amtInr = payEntity.amount
+              ? Math.round(Number(payEntity.amount) / 100)
+              : plan.priceInr;
+            await recordSubscriptionPayment({
+              subscription_id: subSaved.id,
+              razorpay_subscription_id: rzpSubId,
+              user_id: targetUserId,
+              user_email: targetUserEmail,
+              plan_code: plan.code,
+              razorpay_payment_id: payEntity.id,
+              amount_inr: amtInr,
+              status: payEntity.status || "captured",
+              method: payEntity.method || "autopay",
+              paid_at: nowIso
+            });
+            logAnalyticsEvent("payment_success", {
+              page: "webhook",
+              amount: amtInr,
+              creatorName: `${plan.name} Renewal`
+            });
+          }
+
+          if (hasVerifiedCharge) {
+            await syncUserAccessFlag(targetUserId, true, (subEntity && subEntity.customer_id) || "");
+          }
+        }
+        break;
+      }
+
+      case "subscription.pending":
+      case "subscription.halted": {
+        if (existingSub) {
+          const revoked = eventType === "subscription.halted";
+          await saveSubscriptionRecord({
+            ...existingSub,
+            status: revoked ? "halted" : "pending",
+            has_access: revoked ? false : existingSub.has_access
+          });
+          if (revoked) {
+            await syncUserAccessFlag(existingSub.user_id, false);
+          }
+        }
+        break;
+      }
+
+      case "subscription.cancelled":
+      case "subscription.completed":
+      case "subscription.expired": {
+        if (existingSub) {
+          const newStatus =
+            eventType === "subscription.completed"
+              ? "completed"
+              : eventType === "subscription.expired"
+              ? "expired"
+              : "cancelled";
+          const endIso =
+            unixToIso(subEntity && subEntity.current_end) || existingSub.current_end || null;
+          const keepUntilCycleEnd =
+            newStatus === "cancelled" &&
+            existingSub.payment_verification_status === "verified" &&
+            endIso &&
+            new Date(endIso).getTime() > Date.now();
+
+          await saveSubscriptionRecord({
+            ...existingSub,
+            status: newStatus,
+            cancel_at_period_end: newStatus === "cancelled",
+            cancelled_at: existingSub.cancelled_at || new Date().toISOString(),
+            current_end: endIso,
+            next_billing_date: null,
+            has_access: Boolean(keepUntilCycleEnd)
+          });
+
+          if (!keepUntilCycleEnd) {
+            await syncUserAccessFlag(existingSub.user_id, false);
+          }
+        }
+        break;
+      }
+
+      case "payment.failed": {
+        if (payEntity) {
+          const amtInr = payEntity.amount
+            ? Math.round(Number(payEntity.amount) / 100)
+            : plan.priceInr;
+          if (targetUserId) {
+            await recordSubscriptionPayment({
+              subscription_id: existingSub ? existingSub.id : "",
+              razorpay_subscription_id: rzpSubId,
+              user_id: targetUserId,
+              user_email: targetUserEmail,
+              plan_code: plan.code,
+              razorpay_payment_id: payEntity.id,
+              amount_inr: amtInr,
+              status: "failed",
+              method: payEntity.method || "autopay",
+              error_reason: payEntity.error_description || payEntity.error_reason || "Payment failed"
+            });
+          }
+          logAnalyticsEvent("payment_failed", {
+            page: "pricing.html",
+            amount: amtInr,
+            creatorName: plan.name
+          });
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    return res.status(200).json({ status: "ok" });
+  } catch (error) {
+    console.error("[Webhook] Error processing webhook:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Webhook processing error"
+    });
+  }
+});
+
+// ======================================
+// ENTITLEMENT & FEATURE GATING ENDPOINTS
+// ======================================
+
+app.get("/api/entitlements/check", async (req, res) => {
+  try {
+    const feature = String(req.query.feature || "chat").trim().toLowerCase();
+    const user = await getAuthenticatedUser(req);
+
+    if (!user) {
+      return res.json({
+        success: true,
+        authenticated: false,
+        allowed: false,
+        reason: "AUTH_REQUIRED",
+        requiredPlan: getRequiredPlanForFeature(feature),
+        redirectTo: "/pricing.html",
+        entitlements: computeEntitlements(null)
+      });
+    }
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    const allowed = checkFeatureAllowance(entitlements, feature);
+    const requiredPlan = getRequiredPlanForFeature(feature);
+
+    let reason = null;
+    let redirectTo = "/pricing.html";
+    if (!entitlements.hasActiveSubscription) {
+      reason = entitlements.pendingMandate ? "PAYMENT_PENDING" : "SUBSCRIPTION_REQUIRED";
+      redirectTo = `/pricing.html?plan=${requiredPlan}`;
+    } else if (!allowed) {
+      reason = "UPGRADE_REQUIRED";
+      redirectTo = `/pricing.html?plan=${requiredPlan}&upgrade=1`;
+    }
+
+    return res.json({
+      success: true,
+      authenticated: true,
+      allowed,
+      reason,
+      requiredPlan,
+      redirectTo,
+      user: sanitizeUser(user),
+      subscription,
+      entitlements
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to check entitlements.", error);
+  }
+});
+
+app.post("/api/interactions/start", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const { creatorId, feature } = req.body || {};
+    const cleanFeature = String(feature || "chat").trim().toLowerCase();
+    if (!["chat", "voice_call", "video_call"].includes(cleanFeature)) {
+      return sendError(res, 400, "Invalid interaction feature.");
+    }
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    const requiredPlan = getRequiredPlanForFeature(cleanFeature);
+
+    if (!entitlements.hasActiveSubscription) {
+      return res.status(403).json({
+        success: false,
+        code: entitlements.pendingMandate ? "PAYMENT_PENDING" : "SUBSCRIPTION_REQUIRED",
+        requiredPlan,
+        redirectTo: `/pricing.html?plan=${requiredPlan}`,
+        entitlements,
+        message: entitlements.pendingMandate
+          ? "Your AutoPay mandate is awaiting bank confirmation. Access unlocks once payment clears."
+          : "Choose a Takora monthly membership plan to connect with creators."
+      });
+    }
+
+    if (!checkFeatureAllowance(entitlements, cleanFeature)) {
+      const featureLabel = cleanFeature === "video_call" ? "Video Calls" : "Voice Calls";
+      const planInfo = SUBSCRIPTION_PLANS[requiredPlan];
+      return res.status(403).json({
+        success: false,
+        code: "UPGRADE_REQUIRED",
+        requiredPlan,
+        redirectTo: `/pricing.html?plan=${requiredPlan}&upgrade=1`,
+        entitlements,
+        message: `${featureLabel} require the ${planInfo.name} plan (₹${planInfo.priceInr}/month) or higher. Upgrade to unlock.`
+      });
+    }
+
+    let creator = null;
+    if (creatorId) {
+      try {
+        const { data } = await supabase
+          .from("creators")
+          .select("id, name, category, profile_image, bio, creator_age, creator_location")
+          .eq("id", String(creatorId))
+          .single();
+        if (data) creator = data;
+      } catch (_) {}
+      if (!creator && Array.isArray(memoryCreatorsCache)) {
+        creator = memoryCreatorsCache.find((c) => String(c.id) === String(creatorId)) || null;
+      }
+    }
+
+    const sessionRecord = {
+      id: `int_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+      user_id: String(user.id),
+      creator_id: String(creatorId || "general"),
+      creator_name: (creator && creator.name) || "Takora Partner",
+      interaction_type: cleanFeature,
+      plan_code: entitlements.planCode,
+      created_at: new Date().toISOString()
+    };
+
+    const store = loadAnalyticsStore();
+    store.interaction_sessions = store.interaction_sessions || [];
+    store.interaction_sessions.unshift(sessionRecord);
+    if (store.interaction_sessions.length > 2000) {
+      store.interaction_sessions = store.interaction_sessions.slice(0, 2000);
+    }
+    saveAnalyticsStore(store);
+
+    if (supabase.isSupabaseLive) {
+      try {
+        await supabase.from("interaction_sessions").insert([sessionRecord]);
+      } catch (_) {}
+    }
+
+    return res.json({
+      success: true,
+      allowed: true,
+      session: sessionRecord,
+      creator,
+      entitlements
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to start interaction session.", error);
+  }
+});
+
+// ======================================
+// LEGACY PER-CREATOR PAYMENT ROUTES REMOVED
+// ======================================
+
+app.post("/api/create-order", (req, res) => {
+  return res.status(410).json({
+    success: false,
+    code: "LEGACY_PAYMENT_REMOVED",
+    message:
+      "Per-creator payments have been removed. Please use centralized monthly subscriptions at /api/subscriptions/create."
+  });
+});
+
+app.post("/api/verify-payment", (req, res) => {
+  return res.status(410).json({
+    success: false,
+    code: "LEGACY_PAYMENT_REMOVED",
+    message:
+      "Per-creator payment verification has been replaced by /api/subscriptions/verify."
+  });
+});
+
+// ======================================
+// SUBSCRIPTION-GATED CHAT ROUTES
+// ======================================
+
+app.post("/api/chat/verify-access", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const { creatorId } = req.body || {};
+    if (!creatorId) {
+      return sendError(res, 400, "Creator ID is required.");
+    }
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+
+    if (!entitlements.hasActiveSubscription || !entitlements.canChat) {
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        code: "SUBSCRIPTION_REQUIRED",
+        redirectTo: "/pricing.html?plan=basic",
+        entitlements,
+        message: "An active Takora membership (Basic ₹9/mo or higher) is required to chat."
+      });
+    }
+
+    let creator = null;
+    try {
+      const { data, error } = await supabase
+        .from("creators")
+        .select("id, name, category, profile_image, bio, creator_age, creator_location")
+        .eq("id", String(creatorId))
+        .single();
+      if (!error && data) creator = data;
+    } catch (_) {}
+    if (!creator && Array.isArray(memoryCreatorsCache)) {
+      creator = memoryCreatorsCache.find((c) => String(c.id) === String(creatorId)) || null;
+    }
+
+    return res.json({
+      success: true,
+      authorized: true,
+      creatorId: String(creatorId),
+      user: sanitizeUser(user),
+      entitlements,
+      creator: creator || {
+        id: String(creatorId),
+        name: "Takora Partner",
+        category: "Conversation & Connection",
+        profile_image: ""
+      }
+    });
+  } catch (err) {
+    return sendError(res, 500, "Error verifying chat access", err);
+  }
+});
+
+app.post("/api/chat/messages", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const { creatorId } = req.body || {};
+    if (!creatorId) {
+      return sendError(res, 400, "Creator ID is required.");
+    }
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    if (!entitlements.hasActiveSubscription || !entitlements.canChat) {
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        code: "SUBSCRIPTION_REQUIRED",
+        message: "Active Basic, Pro, or Premium membership required to view messages."
+      });
+    }
+
+    const store = loadAnalyticsStore();
+    const chatMessages = (store.messages || []).filter(
+      (m) =>
+        String(m.creator_id) === String(creatorId) &&
+        (!m.user_id || String(m.user_id) === String(user.id))
+    );
+
+    return res.json({
+      success: true,
+      messages: chatMessages
+    });
+  } catch (err) {
+    return sendError(res, 500, "Error retrieving messages", err);
+  }
+});
+
+app.post("/api/chat/send", async (req, res) => {
+  try {
+    const user = await requireAuth(req, res);
+    if (!user) return;
+
+    const { creatorId, messageText } = req.body || {};
+    if (!creatorId) {
+      return sendError(res, 400, "Creator ID is required.");
+    }
+
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    if (!entitlements.hasActiveSubscription || !entitlements.canChat) {
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        code: "SUBSCRIPTION_REQUIRED",
+        message: "Active Basic, Pro, or Premium membership required to send messages."
+      });
+    }
+
+    const text = String(messageText || "").trim();
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        message: "Message cannot be empty."
+      });
+    }
+    if (text.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is too long (maximum 2000 characters)."
+      });
+    }
+
+    const store = loadAnalyticsStore();
+    store.messages = store.messages || [];
+
+    const newMessage = {
+      id: `msg_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
+      creator_id: String(creatorId),
+      user_id: String(user.id),
+      sender_name: user.name || "You",
+      text,
+      timestamp: new Date().toISOString()
+    };
+
+    store.messages.push(newMessage);
+    saveAnalyticsStore(store);
+
+    logAnalyticsEvent("message_sent", {
+      creatorId: String(creatorId),
+      page: "chat.html"
+    });
+
+    return res.json({
+      success: true,
+      message: newMessage
+    });
+  } catch (err) {
+    return sendError(res, 500, "Error sending message", err);
+  }
+});
+
+// ======================================
+// CREATOR DIRECTORY & ADMIN CRUD (PRESERVED)
 // ======================================
 
 let memoryCreatorsCache = [];
@@ -112,7 +1864,6 @@ function getDefaultAvailableDates(seedOffset = 0) {
   for (let i = 1; i <= 14; i++) {
     const d = new Date();
     d.setDate(today.getDate() + i);
-    // Give 4-6 selectable dates over the next two weeks
     if ((i + seedOffset) % 2 === 0 || (i + seedOffset) % 3 === 0) {
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -148,22 +1899,33 @@ function enrichCreator(creator, index = 0) {
   } catch (_) {}
   const meta = (store.creator_metadata && store.creator_metadata[String(creator.id)]) || {};
 
-  // Parse available_dates: priority is meta.available_dates -> creator.available_dates -> default
   let dates = meta.available_dates;
   if (!dates && creator.available_dates) {
-    dates = typeof creator.available_dates === "string" ? (function() {
-      try { return JSON.parse(creator.available_dates); } catch (_) { return []; }
-    })() : creator.available_dates;
+    dates =
+      typeof creator.available_dates === "string"
+        ? (() => {
+            try {
+              return JSON.parse(creator.available_dates);
+            } catch (_) {
+              return [];
+            }
+          })()
+        : creator.available_dates;
   }
   if (!Array.isArray(dates) || dates.length === 0) {
     const seed = (String(creator.id || "").charCodeAt(0) || 0) + index;
     dates = getDefaultAvailableDates(seed);
   }
 
-  // Parse tags: priority is meta.tags -> creator.tags -> default
   let tags = meta.tags;
   if (!tags && creator.tags) {
-    tags = typeof creator.tags === "string" ? creator.tags.split(",").map(t => t.trim()).filter(Boolean) : creator.tags;
+    tags =
+      typeof creator.tags === "string"
+        ? creator.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : creator.tags;
   }
   if (!Array.isArray(tags) || tags.length === 0) {
     tags = getDefaultTags(creator.category, creator.bio);
@@ -172,7 +1934,7 @@ function enrichCreator(creator, index = 0) {
   return {
     ...creator,
     available_dates: dates,
-    tags: tags
+    tags
   };
 }
 
@@ -202,20 +1964,16 @@ function sortCreatorsByCreatedAtDesc(list) {
   });
 }
 
-// Warm up cache at startup
 refreshCreatorsCache().catch(() => {});
 
 app.get("/api/creators", async (req, res) => {
   try {
-    // 1. Try Supabase with a fast query (ordered by created_at DESC)
     let fetchedData = null;
     try {
       const { data, error } = await supabase
         .from("creators")
         .select("*")
-        .order("created_at", {
-          ascending: false
-        });
+        .order("created_at", { ascending: false });
 
       if (!error && Array.isArray(data) && data.length > 0) {
         fetchedData = sortCreatorsByCreatedAtDesc(data);
@@ -227,9 +1985,10 @@ app.get("/api/creators", async (req, res) => {
       console.warn("[Creators] Supabase query exception:", dbErr.message);
     }
 
-    // If Supabase returned data, respond immediately with enriched profiles sorted newest first
     if (fetchedData && fetchedData.length > 0) {
-      const enriched = sortCreatorsByCreatedAtDesc(fetchedData.map((c, i) => enrichCreator(c, i)));
+      const enriched = sortCreatorsByCreatedAtDesc(
+        fetchedData.map((c, i) => enrichCreator(c, i))
+      );
       return res.json({
         success: true,
         creators: enriched,
@@ -237,31 +1996,10 @@ app.get("/api/creators", async (req, res) => {
       });
     }
 
-    // 2. Fallback to production Render backend if Supabase is temporarily unreachable
-    try {
-      console.log("[Creators] Attempting fallback to production Render backend...");
-      const renderRes = await fetch("https://creatorpay-backend.onrender.com/api/creators", {
-        headers: { "Accept": "application/json" }
-      });
-      if (renderRes.ok) {
-        const renderData = await renderRes.json();
-        if (renderData && renderData.success && Array.isArray(renderData.creators) && renderData.creators.length > 0) {
-          memoryCreatorsCache = sortCreatorsByCreatedAtDesc(renderData.creators);
-          const enriched = sortCreatorsByCreatedAtDesc(memoryCreatorsCache.map((c, i) => enrichCreator(c, i)));
-          return res.json({
-            success: true,
-            creators: enriched,
-            source: "render_fallback"
-          });
-        }
-      }
-    } catch (renderErr) {
-      console.warn("[Creators] Render fallback failed:", renderErr.message);
-    }
-
-    // 3. Fallback to memory cache if available
     if (Array.isArray(memoryCreatorsCache) && memoryCreatorsCache.length > 0) {
-      const enriched = sortCreatorsByCreatedAtDesc(memoryCreatorsCache.map((c, i) => enrichCreator(c, i)));
+      const enriched = sortCreatorsByCreatedAtDesc(
+        memoryCreatorsCache.map((c, i) => enrichCreator(c, i))
+      );
       return res.json({
         success: true,
         creators: enriched,
@@ -269,27 +2007,11 @@ app.get("/api/creators", async (req, res) => {
       });
     }
 
-    // 4. Default seed fallback to ensure the frontend never receives 500
-    const fallbackList = [
-      {
-        id: "d53ea93a-6f8f-4a22-a9c8-5eda16f61f74",
-        name: "Shalini Yadav",
-        category: "Social Science Student",
-        bio: "19 years old student preparing for her 20s👻🎀",
-        price: 29,
-        creator_age: "19",
-        creator_location: "Delhi, India",
-        profile_image: "https://dsmwqjgekxroorgxgfqh.supabase.co/storage/v1/object/public/creator-images/creator_1791988035435_d8433a08.jpg",
-        created_at: new Date().toISOString()
-      }
-    ];
-
     return res.json({
       success: true,
-      creators: fallbackList.map((c, i) => enrichCreator(c, i)),
-      source: "seed_fallback"
+      creators: [],
+      source: "empty"
     });
-
   } catch (error) {
     console.error("Critical error in /api/creators:", error);
     const fallback = memoryCreatorsCache.length > 0 ? memoryCreatorsCache : [];
@@ -301,96 +2023,51 @@ app.get("/api/creators", async (req, res) => {
   }
 });
 
-
-// ======================================
-// UPLOAD CREATOR PROFILE IMAGE
-// ======================================
-
 app.post(
   "/api/upload-creator-image",
   upload.single("profile_image"),
   async (req, res) => {
     try {
       if (!req.file) {
-        return sendError(
-          res,
-          400,
-          "Profile image is required"
-        );
+        return sendError(res, 400, "Profile image is required");
       }
 
-      const originalName =
-        req.file.originalname || "image.jpg";
+      const originalName = req.file.originalname || "image.jpg";
+      const extension = originalName.includes(".")
+        ? originalName.split(".").pop().toLowerCase()
+        : "jpg";
+      const safeExtension = ["jpg", "jpeg", "png", "webp"].includes(extension)
+        ? extension
+        : "jpg";
+      const fileName = `creator_${Date.now()}_${crypto
+        .randomBytes(4)
+        .toString("hex")}.${safeExtension}`;
 
-      const extension =
-        originalName.includes(".")
-          ? originalName.split(".").pop().toLowerCase()
-          : "jpg";
-
-      const safeExtension =
-        ["jpg", "jpeg", "png", "webp"].includes(
-          extension
-        )
-          ? extension
-          : "jpg";
-
-      const fileName =
-        `creator_${Date.now()}_${crypto
-          .randomBytes(4)
-          .toString("hex")}.${safeExtension}`;
-
-      const {
-        error
-      } = await supabase.storage
+      const { error } = await supabase.storage
         .from("creator-images")
-        .upload(
-          fileName,
-          req.file.buffer,
-          {
-            contentType:
-              req.file.mimetype,
-            upsert: false
-          }
-        );
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: false
+        });
 
       if (error) {
-        return sendError(
-          res,
-          500,
-          "Unable to upload profile image",
-          error
-        );
+        return sendError(res, 500, "Unable to upload profile image", error);
       }
 
-      const {
-        data: publicUrlData
-      } = supabase.storage
+      const { data: publicUrlData } = supabase.storage
         .from("creator-images")
         .getPublicUrl(fileName);
 
       return res.json({
         success: true,
-        message:
-          "Profile image uploaded successfully",
-        image_url:
-          publicUrlData.publicUrl
+        message: "Profile image uploaded successfully",
+        image_url: publicUrlData.publicUrl
       });
-
     } catch (error) {
-      return sendError(
-        res,
-        500,
-        "Image upload failed",
-        error
-      );
+      return sendError(res, 500, "Image upload failed", error);
     }
   }
 );
-
-
-// ======================================
-// ADD CREATOR
-// ======================================
 
 app.post("/api/creators", async (req, res) => {
   try {
@@ -404,35 +2081,17 @@ app.post("/api/creators", async (req, res) => {
       creator_location,
       location,
       profile_image
-    } = req.body;
+    } = req.body || {};
 
-    if (
-      !name ||
-      !String(name).trim() ||
-      price === undefined ||
-      price === null ||
-      price === ""
-    ) {
-      return sendError(
-        res,
-        400,
-        "Name and price are required"
-      );
+    if (!name || !String(name).trim()) {
+      return sendError(res, 400, "Creator name is required");
     }
 
-    const numericPrice =
-      getNumericPrice(price);
-
-    if (numericPrice === null) {
-      return sendError(
-        res,
-        400,
-        "Price must be a valid positive number"
-      );
-    }
-
-    const finalAge = creator_age !== undefined ? creator_age : (age !== undefined ? age : "");
-    const finalLocation = creator_location !== undefined ? creator_location : (location !== undefined ? location : "");
+    // Preserve DB compatibility if Supabase table requires non-null price column
+    const numericPrice = getNumericPrice(price) || 49;
+    const finalAge = creator_age !== undefined ? creator_age : age !== undefined ? age : "";
+    const finalLocation =
+      creator_location !== undefined ? creator_location : location !== undefined ? location : "";
 
     const insertPayload = {
       name: String(name).trim(),
@@ -440,26 +2099,19 @@ app.post("/api/creators", async (req, res) => {
       bio: bio ? String(bio).trim() : "",
       price: numericPrice,
       creator_age: finalAge !== null && finalAge !== "" ? String(finalAge).trim() : "",
-      creator_location: finalLocation !== null && finalLocation !== "" ? String(finalLocation).trim() : "",
+      creator_location:
+        finalLocation !== null && finalLocation !== "" ? String(finalLocation).trim() : "",
       profile_image: profile_image || ""
     };
 
-    const {
-      data,
-      error
-    } = await supabase
+    const { data, error } = await supabase
       .from("creators")
       .insert([insertPayload])
       .select()
       .single();
 
     if (error) {
-      return sendError(
-        res,
-        500,
-        "Unable to add creator",
-        error
-      );
+      return sendError(res, 500, "Unable to add creator", error);
     }
 
     if (data && Array.isArray(memoryCreatorsCache)) {
@@ -469,27 +2121,14 @@ app.post("/api/creators", async (req, res) => {
     return res.json({
       success: true,
       message: "Creator added successfully",
-      creator: data
+      creator: enrichCreator(data)
     });
-
   } catch (error) {
-    return sendError(
-      res,
-      500,
-      "Creator creation failed",
-      error
-    );
+    return sendError(res, 500, "Creator creation failed", error);
   }
 });
 
-
-// ======================================
-// UPDATE CREATOR (ROBUST DIAGNOSTIC LOGGING & FLEXIBLE PAYLOADS)
-// ======================================
-
 const handleUpdateCreator = async (req, res) => {
-  const method = req.method;
-  const url = req.originalUrl || req.url;
   const rawId = req.params.id || req.body.id || req.body.creatorId;
   const cleanId = rawId ? String(rawId).trim() : "";
 
@@ -504,32 +2143,20 @@ const handleUpdateCreator = async (req, res) => {
     creator_location,
     location,
     profile_image
-  } = req.body;
-
-  const rawPrice = (price !== undefined && price !== null && price !== "") ? price : amount;
-
-  console.log(`[Admin Update] Received ${method} ${url} - ID: "${cleanId}", Price: "${rawPrice}"`);
+  } = req.body || {};
 
   if (!cleanId) {
-    console.warn("[Admin Update] Rejected: Missing creator ID");
     return sendError(res, 400, "Creator ID is required");
   }
 
-  if (rawPrice === undefined || rawPrice === null || rawPrice === "") {
-    console.warn("[Admin Update] Rejected: Missing price value");
-    return sendError(res, 400, "Price is required");
-  }
-
-  const numericPrice = getNumericPrice(rawPrice);
-  if (numericPrice === null) {
-    console.warn(`[Admin Update] Rejected: Invalid price value "${rawPrice}"`);
-    return sendError(res, 400, "Price must be a valid positive number");
-  }
-
   try {
-    const updatePayload = {
-      price: numericPrice
-    };
+    const updatePayload = {};
+
+    const rawPrice = price !== undefined && price !== null && price !== "" ? price : amount;
+    if (rawPrice !== undefined && rawPrice !== null && rawPrice !== "") {
+      const num = getNumericPrice(rawPrice);
+      if (num !== null) updatePayload.price = num;
+    }
 
     if (name !== undefined && String(name).trim() !== "") {
       updatePayload.name = String(name).trim();
@@ -552,33 +2179,36 @@ const handleUpdateCreator = async (req, res) => {
       updatePayload.profile_image = String(profile_image).trim();
     }
 
-    console.log(`[Admin Update] Executing Supabase update on "creators" where id="${cleanId}" with fields:`, Object.keys(updatePayload));
+    let updatedRecord = null;
+    if (Object.keys(updatePayload).length > 0) {
+      const { data, error } = await supabase
+        .from("creators")
+        .update(updatePayload)
+        .eq("id", cleanId)
+        .select()
+        .single();
 
-    const {
-      data,
-      error
-    } = await supabase
-      .from("creators")
-      .update(updatePayload)
-      .eq("id", cleanId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`[Admin Update] Supabase returned error:`, { code: error.code, message: error.message });
-      const statusCode = error.code === "PGRST116" ? 404 : 500;
-      const message = error.code === "PGRST116" ? "Creator not found" : `Unable to update creator: ${error.message || "Database error"}`;
-      return sendError(res, statusCode, message, error);
+      if (error) {
+        const statusCode = error.code === "PGRST116" ? 404 : 500;
+        return sendError(
+          res,
+          statusCode,
+          error.code === "PGRST116"
+            ? "Creator not found"
+            : `Unable to update creator: ${error.message || "Database error"}`,
+          error
+        );
+      }
+      updatedRecord = data;
+    } else {
+      const { data } = await supabase.from("creators").select("*").eq("id", cleanId).single();
+      updatedRecord = data;
     }
 
-    if (!data) {
-      console.warn(`[Admin Update] No record returned from Supabase for ID: "${cleanId}"`);
+    if (!updatedRecord) {
       return sendError(res, 404, "Creator record not found");
     }
 
-    console.log(`[Admin Update] SUCCESS: Creator "${data.name}" (${data.id}) price updated to ₹${data.price}`);
-
-    // Persist tags & available_dates in creator_metadata store
     if (req.body.tags !== undefined || req.body.available_dates !== undefined) {
       try {
         const store = loadAnalyticsStore();
@@ -587,7 +2217,10 @@ const handleUpdateCreator = async (req, res) => {
         if (req.body.tags !== undefined) {
           store.creator_metadata[cleanId].tags = Array.isArray(req.body.tags)
             ? req.body.tags
-            : String(req.body.tags).split(",").map(t => t.trim()).filter(Boolean);
+            : String(req.body.tags)
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean);
         }
         if (req.body.available_dates !== undefined && Array.isArray(req.body.available_dates)) {
           store.creator_metadata[cleanId].available_dates = req.body.available_dates;
@@ -598,10 +2231,9 @@ const handleUpdateCreator = async (req, res) => {
       }
     }
 
-    const finalCreator = enrichCreator(data);
-
+    const finalCreator = enrichCreator(updatedRecord);
     if (finalCreator && Array.isArray(memoryCreatorsCache)) {
-      const idx = memoryCreatorsCache.findIndex(c => String(c.id) === String(cleanId));
+      const idx = memoryCreatorsCache.findIndex((c) => String(c.id) === String(cleanId));
       if (idx !== -1) {
         memoryCreatorsCache[idx] = { ...memoryCreatorsCache[idx], ...finalCreator };
       }
@@ -612,9 +2244,7 @@ const handleUpdateCreator = async (req, res) => {
       message: "Creator updated successfully",
       creator: finalCreator
     });
-
   } catch (error) {
-    console.error("[Admin Update] Exception during creator update:", error);
     return sendError(res, 500, "Creator update failed due to server error", error);
   }
 };
@@ -623,10 +2253,6 @@ app.put("/api/creators/:id", handleUpdateCreator);
 app.patch("/api/creators/:id", handleUpdateCreator);
 app.put("/api/creators", handleUpdateCreator);
 app.patch("/api/creators", handleUpdateCreator);
-
-// ======================================
-// MANAGE CREATOR AVAILABLE DATES (ADMIN CALENDAR)
-// ======================================
 
 app.get("/api/creators/:id/dates", (req, res) => {
   const { id } = req.params;
@@ -656,19 +2282,22 @@ app.put("/api/creators/:id/dates", async (req, res) => {
     store.creator_metadata = store.creator_metadata || {};
     store.creator_metadata[String(id)] = {
       ...(store.creator_metadata[String(id)] || {}),
-      available_dates: available_dates
+      available_dates
     };
     saveAnalyticsStore(store);
 
     if (Array.isArray(memoryCreatorsCache)) {
-      const idx = memoryCreatorsCache.findIndex(c => String(c.id) === String(id));
+      const idx = memoryCreatorsCache.findIndex((c) => String(c.id) === String(id));
       if (idx !== -1) {
         memoryCreatorsCache[idx].available_dates = available_dates;
       }
     }
 
     try {
-      await supabase.from("creators").update({ available_dates: JSON.stringify(available_dates) }).eq("id", id);
+      await supabase
+        .from("creators")
+        .update({ available_dates: JSON.stringify(available_dates) })
+        .eq("id", id);
     } catch (_) {}
 
     return res.json({
@@ -681,23 +2310,11 @@ app.put("/api/creators/:id/dates", async (req, res) => {
     return sendError(res, 500, "Failed to update available dates", err);
   }
 });
-app.post("/api/creators/:id/dates", (req, res) => app._router.handle({ ...req, method: "PUT" }, res));
-
-
-// ======================================
-// DELETE CREATOR
-// ======================================
 
 app.delete("/api/creators/:id", async (req, res) => {
   try {
-    const {
-      id
-    } = req.params;
-
-    const {
-      data,
-      error
-    } = await supabase
+    const { id } = req.params;
+    const { data, error } = await supabase
       .from("creators")
       .delete()
       .eq("id", id)
@@ -705,16 +2322,11 @@ app.delete("/api/creators/:id", async (req, res) => {
       .single();
 
     if (error) {
-      return sendError(
-        res,
-        500,
-        "Unable to delete creator",
-        error
-      );
+      return sendError(res, 500, "Unable to delete creator", error);
     }
 
     if (Array.isArray(memoryCreatorsCache)) {
-      memoryCreatorsCache = memoryCreatorsCache.filter(c => String(c.id) !== String(id));
+      memoryCreatorsCache = memoryCreatorsCache.filter((c) => String(c.id) !== String(id));
     }
 
     return res.json({
@@ -722,757 +2334,14 @@ app.delete("/api/creators/:id", async (req, res) => {
       message: "Creator deleted successfully",
       creator: data
     });
-
   } catch (error) {
-    return sendError(
-      res,
-      500,
-      "Creator deletion failed",
-      error
-    );
-  }
-});
-
-
-// ======================================
-// CREATE RAZORPAY ORDER
-// ======================================
-
-app.post("/api/create-order", async (req, res) => {
-  try {
-    const creatorId = req.body.creatorId || req.body.creator_id || "roseia_creator";
-
-    const razorpayKeyId =
-      getRazorpayKeyId() || "rzp_live_TbMnvmib0JVGT3";
-
-    let creator = null;
-    try {
-      const { data: dbCreator, error: creatorError } = await supabase
-        .from("creators")
-        .select("id, name, price")
-        .eq("id", creatorId)
-        .single();
-      if (!creatorError && dbCreator) {
-        creator = dbCreator;
-      }
-    } catch (_) {}
-
-    if (!creator && Array.isArray(memoryCreatorsCache) && memoryCreatorsCache.length > 0) {
-      creator = memoryCreatorsCache.find(c => String(c.id) === String(creatorId));
-    }
-
-    if (!creator) {
-      const fallbackPrice = getNumericPrice(req.body.price) || 49;
-      creator = {
-        id: String(creatorId),
-        name: req.body.creatorName || req.body.name || "Takora Creator",
-        price: fallbackPrice
-      };
-    }
-
-    let numericPrice = getNumericPrice(creator.price);
-    if (numericPrice === null) {
-      numericPrice = getNumericPrice(req.body.price) || 49;
-    }
-
-    const requestedType = req.body.interaction_type || req.body.type || "chat";
-    const interactionType = ["chat", "voice_call", "video_call"].includes(requestedType)
-      ? requestedType
-      : (requestedType === "date_booking" ? "chat" : "chat");
-
-    const basePrice = numericPrice;
-    // Dynamic interaction pricing formula:
-    // Chat = basePrice, Voice = Math.round(basePrice * 1.10), Video = Math.round(basePrice * 1.20)
-    const totalPayable = calculateInteractionPrice(basePrice, interactionType);
-    const amountInPaise = Math.round(totalPayable * 100);
-    const receipt = `roseia_${Date.now()}`;
-
-    const orderNotes = {
-      creatorId: String(creator.id),
-      creatorName: String(creator.name || "Creator"),
-      interaction_type: interactionType,
-      type: interactionType,
-      base_price: String(basePrice),
-      calculated_price: String(totalPayable)
-    };
-
-    let order = null;
-    try {
-      order = await razorpay.orders.create({
-        amount: amountInPaise,
-        currency: "INR",
-        receipt,
-        notes: orderNotes
-      });
-    } catch (orderErr) {
-      console.warn("[Razorpay] Local order creation error, trying live Render backend proxy:", orderErr.message);
-      try {
-        const renderRes = await fetch("https://creatorpay-backend.onrender.com/api/create-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            creatorId: creator.id,
-            creatorName: creator.name,
-            price: totalPayable,
-            base_price: basePrice,
-            interaction_type: interactionType
-          })
-        });
-        if (renderRes.ok) {
-          const renderData = await renderRes.json();
-          if (renderData && renderData.success && renderData.order) {
-            order = renderData.order;
-          }
-        }
-      } catch (proxyErr) {
-        console.warn("[Razorpay] Proxy order fallback error:", proxyErr.message);
-      }
-
-      if (!order) {
-        throw orderErr;
-      }
-    }
-
-    try {
-      recordPendingOrder(order.id, {
-        type: interactionType,
-        interaction_type: interactionType,
-        creatorId: String(creator.id),
-        creatorName: String(creator.name || "Creator"),
-        basePrice,
-        amount: totalPayable,
-        totalPayable
-      });
-    } catch (_) {}
-
-    return res.json({
-      success: true,
-      keyId: razorpayKeyId,
-      order,
-      interaction_type: interactionType,
-      pricing: {
-        basePrice,
-        calculatedPrice: totalPayable,
-        totalPayable
-      },
-      creator: {
-        id: creator.id,
-        name: creator.name || "Creator",
-        price: basePrice
-      }
-    });
-
-  } catch (error) {
-    return sendError(
-      res,
-      500,
-      "Unable to create Razorpay order",
-      error
-    );
-  }
-});
-
-
-// ======================================
-// VERIFY RAZORPAY PAYMENT & CONFIRM BOOKINGS
-// ======================================
-
-app.post("/api/verify-payment", async (req, res) => {
-  try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      creatorId
-    } = req.body;
-
-    if (
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature
-    ) {
-      return sendError(
-        res,
-        400,
-        "Payment details are required"
-      );
-    }
-
-    const secret =
-      process.env.RAZORPAY_KEY_SECRET || "MhPRkHx2ltMPb3lNvrFpJ8qp";
-
-    const isDevMock =
-      String(razorpay_order_id).startsWith("order_dev_") ||
-      String(razorpay_payment_id).startsWith("pay_dev_") ||
-      !secret;
-
-    if (!isDevMock) {
-      const generatedSignature =
-        crypto
-          .createHmac("sha256", secret)
-          .update(
-            `${razorpay_order_id}|${razorpay_payment_id}`
-          )
-          .digest("hex");
-
-      const generatedBuffer = Buffer.from(generatedSignature);
-      const signatureBuffer = Buffer.from(razorpay_signature);
-
-      const isValid =
-        generatedBuffer.length === signatureBuffer.length &&
-        crypto.timingSafeEqual(
-          generatedBuffer,
-          signatureBuffer
-        );
-
-      if (!isValid) {
-        return sendError(
-          res,
-          400,
-          "Payment verification failed"
-        );
-      }
-    }
-
-    // Identify target creatorId from pending order or request body
-    const store = loadAnalyticsStore();
-    const pending = (store.pending_orders && store.pending_orders[razorpay_order_id]) || null;
-    const targetCreatorId = (pending && pending.creatorId) || creatorId || null;
-    const targetCreatorName = (pending && pending.creatorName) || null;
-    const targetAmount = (pending && (pending.totalPayable || pending.amount)) || 49;
-
-    const token = targetCreatorId ? generateChatToken(targetCreatorId, razorpay_payment_id) : null;
-
-    // Safely record verified transaction in store
-    try {
-      recordVerifiedPayment({
-        order_id: razorpay_order_id,
-        payment_id: razorpay_payment_id,
-        creator_id: targetCreatorId,
-        creator_name: targetCreatorName,
-        amount: targetAmount,
-        token: token,
-        status: "verified",
-        timestamp: new Date().toISOString()
-      });
-    } catch (recErr) {
-      console.warn("Analytics record warning:", recErr.message);
-    }
-
-    // Determine interaction type
-    const interactionType = (pending && (pending.interaction_type || pending.type)) || req.body.interaction_type || req.body.type || "chat";
-
-    return res.json({
-      success: true,
-      message: interactionType === "chat"
-        ? "Payment verified! Chat access unlocked."
-        : `${interactionType === "voice_call" ? "Voice Call" : "Video Call"} order verified successfully`,
-      interaction_type: interactionType,
-      token,
-      paymentId: razorpay_payment_id,
-      orderId: razorpay_order_id,
-      creatorId: targetCreatorId,
-      creatorName: targetCreatorName,
-      amount: targetAmount
-    });
-  } catch (error) {
-    return sendError(
-      res,
-      500,
-      "Unable to verify payment",
-      error
-    );
+    return sendError(res, 500, "Creator deletion failed", error);
   }
 });
 
 // ======================================
-// BOOKINGS DIRECT ACCESS & RETRIEVAL
+// ANALYTICS & SUBSCRIPTION METRICS ENGINE
 // ======================================
-
-app.post("/api/bookings", async (req, res) => {
-  try {
-    const {
-      creatorId,
-      creatorName,
-      bookingDate,
-      timeSlot,
-      userNote,
-      basePrice,
-      platformFee,
-      tax,
-      totalAmount,
-      paymentId,
-      orderId
-    } = req.body;
-
-    const newBooking = {
-      id: `bk_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
-      creator_id: String(creatorId),
-      creator_name: creatorName || "Creator",
-      booking_date: bookingDate || new Date().toISOString().slice(0, 10),
-      time_slot: timeSlot || "11:00 AM",
-      user_note: userNote || "",
-      base_price: Number(basePrice) || 0,
-      platform_fee: Number(platformFee) || 0,
-      tax: Number(tax) || 0,
-      total_amount: Number(totalAmount) || 0,
-      payment_id: paymentId || `pay_manual_${Date.now()}`,
-      order_id: orderId || `ord_manual_${Date.now()}`,
-      status: "confirmed",
-      created_at: new Date().toISOString()
-    };
-
-    try {
-      await supabase.from("bookings").insert([newBooking]);
-    } catch (_) {}
-
-    const store = loadAnalyticsStore();
-    store.bookings = store.bookings || [];
-    store.bookings.unshift(newBooking);
-    saveAnalyticsStore(store);
-
-    return res.json({
-      success: true,
-      message: "Booking Confirmed! She will contact you soon. Thank you!",
-      booking: newBooking
-    });
-  } catch (err) {
-    return sendError(res, 500, "Failed to save booking", err);
-  }
-});
-
-app.get("/api/bookings", async (req, res) => {
-  try {
-    try {
-      const { data, error } = await supabase.from("bookings").select("*").order("created_at", { ascending: false });
-      if (!error && Array.isArray(data) && data.length > 0) {
-        return res.json({ success: true, bookings: data, source: "supabase" });
-      }
-    } catch (_) {}
-
-    const store = loadAnalyticsStore();
-    return res.json({ success: true, bookings: store.bookings || [], source: "store" });
-  } catch (err) {
-    return sendError(res, 500, "Failed to retrieve bookings", err);
-  }
-});
-
-
-// ======================================
-// RAZORPAY WEBHOOK ROUTE & ACCESS GRANT
-// ======================================
-
-async function grantProductAccess({ orderId, paymentId, amount, notes, email, contact }) {
-  try {
-    const store = loadAnalyticsStore();
-    const pending = (orderId && store.pending_orders && store.pending_orders[orderId]) || null;
-
-    const creatorId =
-      (notes && (notes.creatorId || notes.productId || notes.courseId || notes.creator_id)) ||
-      (pending && pending.creatorId) ||
-      null;
-
-    const creatorName =
-      (notes && (notes.creatorName || notes.productName || notes.courseName || notes.creator_name)) ||
-      (pending && pending.creatorName) ||
-      null;
-
-    const paymentAmount =
-      amount !== undefined && amount !== null
-        ? amount
-        : (pending && pending.amount) || 49;
-
-    const token = creatorId && paymentId ? generateChatToken(creatorId, paymentId) : null;
-
-    // 1. Record verified payment and grant access in the primary application store
-    recordVerifiedPayment({
-      order_id: orderId,
-      payment_id: paymentId,
-      creator_id: creatorId,
-      creator_name: creatorName,
-      amount: paymentAmount,
-      token: token,
-      status: "verified",
-      hasAccess: true,
-      access_granted: true,
-      customer_email: email || null,
-      customer_contact: contact || null,
-      timestamp: new Date().toISOString()
-    });
-
-    // 2. Update Supabase database tables if present in schema
-    if (email) {
-      try {
-        await supabase
-          .from("users")
-          .update({
-            hasAccess: true,
-            status: "active",
-            updated_at: new Date().toISOString()
-          })
-          .eq("email", email);
-      } catch (_) {}
-    }
-
-    try {
-      await supabase
-        .from("payments")
-        .upsert(
-          {
-            order_id: orderId,
-            payment_id: paymentId,
-            amount: paymentAmount,
-            status: "captured",
-            has_access: true,
-            customer_email: email || null,
-            created_at: new Date().toISOString()
-          },
-          { onConflict: "payment_id" }
-        );
-    } catch (_) {}
-
-    try {
-      if (orderId) {
-        await supabase
-          .from("orders")
-          .update({
-            status: "paid",
-            has_access: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", orderId);
-      }
-    } catch (_) {}
-
-    console.log(`[Webhook] Database updated: access granted (hasAccess: true) for order: ${orderId}, payment: ${paymentId}`);
-  } catch (err) {
-    console.error("[Webhook] Error granting product access in database:", err);
-  }
-}
-
-app.post("/api/razorpay-webhook", async (req, res) => {
-  try {
-    const signature = req.headers["x-razorpay-signature"];
-    const webhookSecret =
-      process.env.RAZORPAY_WEBHOOK_SECRET ||
-      process.env.RAZORPAY_KEY_SECRET;
-
-    if (!signature || !webhookSecret) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing webhook signature or webhook secret configuration"
-      });
-    }
-
-    const payload = Buffer.isBuffer(req.body)
-      ? req.body.toString("utf8")
-      : (req.rawBody || JSON.stringify(req.body));
-
-    const expectedSignature = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(payload)
-      .digest("hex");
-
-    const isAuthentic =
-      expectedSignature.length === signature.length &&
-      crypto.timingSafeEqual(
-        Buffer.from(expectedSignature),
-        Buffer.from(signature)
-      );
-
-    if (!isAuthentic) {
-      console.warn("[Webhook] Invalid Razorpay webhook signature");
-      return res.status(400).json({
-        success: false,
-        message: "Invalid webhook signature"
-      });
-    }
-
-    const eventData = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const eventType = eventData.event;
-
-    console.log(`[Webhook] Verified Razorpay event received: ${eventType}`);
-
-    switch (eventType) {
-      case "payment.captured": {
-        const payment = eventData.payload?.payment?.entity || {};
-        const orderId = payment.order_id || null;
-        const paymentId = payment.id;
-        const amount = payment.amount ? payment.amount / 100 : null;
-        const notes = payment.notes || {};
-        const email = payment.email || null;
-        const contact = payment.contact || null;
-
-        console.log(`[Webhook] Payment captured: ${paymentId} for amount ₹${amount || 0}`);
-
-        await grantProductAccess({
-          orderId,
-          paymentId,
-          amount,
-          notes,
-          email,
-          contact
-        });
-        break;
-      }
-      case "order.paid": {
-        const order = eventData.payload?.order?.entity || {};
-        const payment = eventData.payload?.payment?.entity || {};
-        const orderId = order.id || payment.order_id || null;
-        const paymentId = payment.id || (orderId ? `pay_${orderId}` : null);
-        const amount = order.amount ? order.amount / 100 : (payment.amount ? payment.amount / 100 : null);
-        const notes = { ...(order.notes || {}), ...(payment.notes || {}) };
-        const email = payment.email || null;
-        const contact = payment.contact || null;
-
-        console.log(`[Webhook] Order paid: ${orderId}`);
-
-        await grantProductAccess({
-          orderId,
-          paymentId,
-          amount,
-          notes,
-          email,
-          contact
-        });
-        break;
-      }
-      case "payment.failed": {
-        const payment = eventData.payload?.payment?.entity || {};
-        console.log(`[Webhook] Payment failed: ${payment.id}`);
-        logAnalyticsEvent("payment_failed", {
-          page: "checkout",
-          amount: payment.amount ? payment.amount / 100 : null,
-          details: payment.error_description || "Payment failed"
-        });
-        break;
-      }
-      default:
-        break;
-    }
-
-    return res.status(200).json({ status: "ok" });
-  } catch (error) {
-    console.error("[Webhook] Error processing webhook:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Webhook processing error"
-    });
-  }
-});
-
-
-// ======================================
-// POST-PAYMENT CHAT ACCESS & PERSISTED MESSAGES
-// ======================================
-function generateChatToken(creatorId, paymentId) {
-  const secret = process.env.RAZORPAY_KEY_SECRET || "meet_you_partner_chat_secret_2026";
-  return crypto
-    .createHmac("sha256", secret)
-    .update(`${String(creatorId).trim()}:${String(paymentId).trim()}`)
-    .digest("hex");
-}
-
-function verifyChatAccess(creatorId, paymentId, token) {
-  if (!creatorId || !paymentId || !token) {
-    return { authorized: false, reason: "Missing required verification credentials." };
-  }
-
-  // 1. Validate cryptographic token signature
-  const expectedToken = generateChatToken(creatorId, paymentId);
-  try {
-    const isValidToken = crypto.timingSafeEqual(
-      Buffer.from(String(token)),
-      Buffer.from(String(expectedToken))
-    );
-    if (!isValidToken) {
-      return { authorized: false, reason: "Invalid chat access token." };
-    }
-  } catch (_) {
-    return { authorized: false, reason: "Token signature verification failed." };
-  }
-
-  // 2. Validate against verified payments store
-  const store = loadAnalyticsStore();
-  const payment = (store.payments || []).find(p =>
-    (p.payment_id === paymentId || p.id === paymentId) &&
-    p.status === "verified" &&
-    String(p.creator_id) === String(creatorId)
-  );
-
-  if (!payment) {
-    return { authorized: false, reason: "No verified payment found for this person." };
-  }
-
-  return { authorized: true, payment };
-}
-
-// Endpoint: Verify chat access
-app.post("/api/chat/verify-access", async (req, res) => {
-  try {
-    const { creatorId, paymentId, token } = req.body || {};
-    const check = verifyChatAccess(creatorId, paymentId, token);
-    if (!check.authorized) {
-      return res.status(403).json({
-        success: false,
-        authorized: false,
-        message: check.reason
-      });
-    }
-
-    // Load creator profile details
-    let creator = null;
-    try {
-      const { data, error } = await supabase
-        .from("creators")
-        .select("id, name, category, profile_image, bio, price, creator_age, creator_location")
-        .eq("id", creatorId)
-        .single();
-      if (!error && data) {
-        creator = data;
-      }
-    } catch (_) {}
-
-    return res.json({
-      success: true,
-      authorized: true,
-      paymentId,
-      creatorId,
-      creator: creator || {
-        id: creatorId,
-        name: check.payment.creator_name || "Partner",
-        category: "Conversation & Connection",
-        profile_image: ""
-      }
-    });
-  } catch (err) {
-    return sendError(res, 500, "Error verifying chat access", err);
-  }
-});
-
-// Endpoint: Load conversation messages
-app.post("/api/chat/messages", async (req, res) => {
-  try {
-    const { creatorId, paymentId, token } = req.body || {};
-    const check = verifyChatAccess(creatorId, paymentId, token);
-    if (!check.authorized) {
-      return res.status(403).json({
-        success: false,
-        authorized: false,
-        message: check.reason
-      });
-    }
-
-    const store = loadAnalyticsStore();
-    const chatMessages = (store.messages || []).filter(m =>
-      String(m.creator_id) === String(creatorId) &&
-      String(m.payment_id) === String(paymentId)
-    );
-
-    return res.json({
-      success: true,
-      messages: chatMessages
-    });
-  } catch (err) {
-    return sendError(res, 500, "Error retrieving messages", err);
-  }
-});
-
-// Endpoint: Send new message (one-sided user messaging)
-app.post("/api/chat/send", async (req, res) => {
-  try {
-    const { creatorId, paymentId, token, messageText } = req.body || {};
-    const check = verifyChatAccess(creatorId, paymentId, token);
-    if (!check.authorized) {
-      return res.status(403).json({
-        success: false,
-        authorized: false,
-        message: check.reason
-      });
-    }
-
-    const text = String(messageText || "").trim();
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        message: "Message cannot be empty."
-      });
-    }
-    if (text.length > 2000) {
-      return res.status(400).json({
-        success: false,
-        message: "Message is too long (maximum 2000 characters)."
-      });
-    }
-
-    const store = loadAnalyticsStore();
-    store.messages = store.messages || [];
-
-    const newMessage = {
-      id: `msg_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`,
-      creator_id: String(creatorId),
-      payment_id: String(paymentId),
-      text: text,
-      timestamp: new Date().toISOString()
-    };
-
-    store.messages.push(newMessage);
-    saveAnalyticsStore(store);
-
-    return res.json({
-      success: true,
-      message: newMessage
-    });
-  } catch (err) {
-    return sendError(res, 500, "Error sending message", err);
-  }
-});
-
-// ======================================
-// ANALYTICS & ACTIVITY LOGGING ENGINE
-// ======================================
-const fs = require("fs");
-const ANALYTICS_DATA_FILE = path.join(__dirname, "analytics_store.json");
-
-function loadAnalyticsStore() {
-  try {
-    if (fs.existsSync(ANALYTICS_DATA_FILE)) {
-      const data = JSON.parse(fs.readFileSync(ANALYTICS_DATA_FILE, "utf-8"));
-      return {
-        payments: Array.isArray(data.payments) ? data.payments : [],
-        active_users: Array.isArray(data.active_users) ? data.active_users : [],
-        active_sessions: (data.active_sessions && typeof data.active_sessions === "object") ? data.active_sessions : {},
-        events: Array.isArray(data.events) ? data.events : [],
-        pending_orders: (data.pending_orders && typeof data.pending_orders === "object") ? data.pending_orders : {},
-        messages: Array.isArray(data.messages) ? data.messages : [],
-        creator_metadata: (data.creator_metadata && typeof data.creator_metadata === "object") ? data.creator_metadata : {},
-        bookings: Array.isArray(data.bookings) ? data.bookings : [],
-        tracking_started: data.tracking_started || new Date().toISOString()
-      };
-    }
-  } catch (e) {
-    console.warn("Could not read analytics store:", e.message);
-  }
-  return {
-    payments: [],
-    active_users: [],
-    active_sessions: {},
-    events: [],
-    pending_orders: {},
-    messages: [],
-    creator_metadata: {},
-    bookings: [],
-    tracking_started: new Date().toISOString()
-  };
-}
-
-function saveAnalyticsStore(data) {
-  try {
-    fs.writeFileSync(ANALYTICS_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
-  } catch (e) {
-    console.warn("Could not save analytics store:", e.message);
-  }
-}
 
 function logAnalyticsEvent(type, details = {}) {
   try {
@@ -1503,7 +2372,6 @@ function logAnalyticsEvent(type, details = {}) {
       }
     }
 
-    // Maintain active sessions for live user tracking
     const sId = details.sessionId || event.visitorId;
     if (sId) {
       store.active_sessions = store.active_sessions || {};
@@ -1516,11 +2384,10 @@ function logAnalyticsEvent(type, details = {}) {
       };
     }
 
-    // Legacy daily active users tracking
     if (event.visitorId && event.visitorId !== "v_anon") {
       const today = event.timestamp.slice(0, 10);
       store.active_users = store.active_users || [];
-      if (!store.active_users.some(u => u.userId === event.visitorId && u.date === today)) {
+      if (!store.active_users.some((u) => u.userId === event.visitorId && u.date === today)) {
         store.active_users.push({
           userId: event.visitorId,
           date: today,
@@ -1540,62 +2407,6 @@ function logAnalyticsEvent(type, details = {}) {
   }
 }
 
-function recordPendingOrder(orderId, orderInfo) {
-  try {
-    const store = loadAnalyticsStore();
-    store.pending_orders = store.pending_orders || {};
-    store.pending_orders[orderId] = {
-      ...orderInfo,
-      created_at: new Date().toISOString()
-    };
-    saveAnalyticsStore(store);
-
-    // Also log checkout initiated event
-    logAnalyticsEvent("checkout_initiated", {
-      creatorId: orderInfo.creatorId,
-      creatorName: orderInfo.creatorName,
-      amount: orderInfo.amount,
-      page: "friend_profile.html"
-    });
-  } catch (e) {
-    console.warn("Could not record pending order:", e.message);
-  }
-}
-
-function recordVerifiedPayment(paymentInfo) {
-  const store = loadAnalyticsStore();
-  const existing = store.payments.find(p => p.payment_id === paymentInfo.payment_id);
-  if (!existing) {
-    store.payments.push({
-      ...paymentInfo,
-      id: paymentInfo.payment_id,
-      status: "verified",
-      hasAccess: true,
-      created_at: paymentInfo.timestamp || new Date().toISOString()
-    });
-    saveAnalyticsStore(store);
-  } else {
-    if (paymentInfo.creator_id && !existing.creator_id) {
-      existing.creator_id = paymentInfo.creator_id;
-    }
-    if (paymentInfo.token && !existing.token) {
-      existing.token = paymentInfo.token;
-    }
-    existing.status = "verified";
-    existing.hasAccess = true;
-    saveAnalyticsStore(store);
-  }
-
-  // Also log payment_success event
-  logAnalyticsEvent("payment_success", {
-    creatorId: paymentInfo.creator_id,
-    creatorName: paymentInfo.creator_name,
-    amount: paymentInfo.amount,
-    page: "friend_profile.html"
-  });
-}
-
-// Event receiver endpoint
 app.post("/api/analytics/event", (req, res) => {
   try {
     const {
@@ -1639,27 +2450,23 @@ app.post("/api/analytics/event", (req, res) => {
   }
 });
 
-// Minimal active user ping endpoint (backward-compatible)
 app.post("/api/analytics/ping", (req, res) => {
   try {
     const { userId, sessionId, page } = req.body || {};
     if (!userId || typeof userId !== "string" || userId.length > 100) {
       return res.json({ success: true, recorded: false });
     }
-
     logAnalyticsEvent("heartbeat", {
       visitorId: userId,
       sessionId: sessionId || null,
       page: page || "creator_home.html"
     });
-
     return res.json({ success: true, recorded: true });
   } catch (e) {
     return res.json({ success: true, error: e.message });
   }
 });
 
-// Helper: relative time formatter
 function getRelativeTimeString(dateStr) {
   try {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -1676,16 +2483,14 @@ function getRelativeTimeString(dateStr) {
   }
 }
 
-// Complete Analytics Endpoint for Admin Dashboard
 app.get("/api/analytics", async (req, res) => {
   try {
-    const period = String(req.query.period || "7d").toLowerCase(); // "today", "7d", "30d", "lifetime"
+    const period = String(req.query.period || "7d").toLowerCase();
     const store = loadAnalyticsStore();
     const now = new Date();
     const nowMs = now.getTime();
     const todayStr = now.toISOString().slice(0, 10);
 
-    // 1. Clean Stale Active Sessions (> 30 minutes)
     const fiveMinutesCutoff = nowMs - 5 * 60 * 1000;
     const thirtyMinutesCutoff = nowMs - 30 * 60 * 1000;
     const activeSessionsMap = store.active_sessions || {};
@@ -1701,39 +2506,38 @@ app.get("/api/analytics", async (req, res) => {
         delete activeSessionsMap[sId];
       }
     }
-    // Also include any events in last 5 minutes
-    (store.events || []).forEach(e => {
+    (store.events || []).forEach((e) => {
       const eMs = new Date(e.timestamp || 0).getTime();
       if (eMs >= fiveMinutesCutoff && e.visitorId && e.visitorId !== "v_anon") {
         liveVisitorIds.add(e.visitorId);
       }
     });
-
     const liveActiveUsersCount = liveVisitorIds.size;
 
-    // 2. Today Engagement Metrics
-    const todayEvents = (store.events || []).filter(e => (e.timestamp || "").slice(0, 10) === todayStr);
-    const todayVisitorsSet = new Set(todayEvents.map(e => e.visitorId).filter(Boolean));
-    const todayNewVisitorsSet = new Set(todayEvents.filter(e => e.isNewVisitor).map(e => e.visitorId).filter(Boolean));
+    const todayEvents = (store.events || []).filter(
+      (e) => (e.timestamp || "").slice(0, 10) === todayStr
+    );
+    const todayVisitorsSet = new Set(todayEvents.map((e) => e.visitorId).filter(Boolean));
+    const todayNewVisitorsSet = new Set(
+      todayEvents.filter((e) => e.isNewVisitor).map((e) => e.visitorId).filter(Boolean)
+    );
     const visitorsToday = todayVisitorsSet.size;
     const newVisitorsToday = todayNewVisitorsSet.size;
     const returningVisitorsToday = Math.max(0, visitorsToday - newVisitorsToday);
-    const pageViewsToday = todayEvents.filter(e => e.type === "page_view").length;
+    const pageViewsToday = todayEvents.filter((e) => e.type === "page_view").length;
 
-    // 3. Determine Period Time Window
     let daysToInclude = 7;
     if (period === "today") daysToInclude = 1;
     else if (period === "30d") daysToInclude = 30;
     else if (period === "lifetime") daysToInclude = 365;
-    else daysToInclude = 7;
 
-    const periodCutoffMs = period === "today"
-      ? new Date(todayStr + "T00:00:00").getTime()
-      : period === "lifetime"
-      ? 0
-      : nowMs - daysToInclude * 86400000;
+    const periodCutoffMs =
+      period === "today"
+        ? new Date(todayStr + "T00:00:00").getTime()
+        : period === "lifetime"
+        ? 0
+        : nowMs - daysToInclude * 86400000;
 
-    // Build timeline keys
     const timelineLength = period === "today" ? 1 : Math.min(daysToInclude, 30);
     const timelineKeys = [];
     for (let i = timelineLength - 1; i >= 0; i--) {
@@ -1741,247 +2545,116 @@ app.get("/api/analytics", async (req, res) => {
       timelineKeys.push(d.toISOString().slice(0, 10));
     }
 
-    // 4. Filter events and payments for period
     const allEvents = store.events || [];
-    const periodEvents = allEvents.filter(e => new Date(e.timestamp || 0).getTime() >= periodCutoffMs);
-    const allPayments = store.payments || [];
-    const verifiedPayments = allPayments.filter(p => p.status === "verified");
-    const periodPayments = verifiedPayments.filter(p => new Date(p.created_at || p.timestamp || 0).getTime() >= periodCutoffMs);
+    const periodEvents = allEvents.filter(
+      (e) => new Date(e.timestamp || 0).getTime() >= periodCutoffMs
+    );
 
-    // 5. Active Users Calculations
+    // Real Subscription Metrics (Strictly computed from actual subscription & payment records)
+    let allSubs = store.subscriptions || [];
+    let allSubPayments = store.subscription_payments || [];
+    let allRegisteredUsers = store.users || [];
+
+    if (supabase.isSupabaseLive) {
+      try {
+        const [sbSubs, sbPays, sbUsers] = await Promise.all([
+          supabase.from("subscriptions").select("*"),
+          supabase.from("subscription_payments").select("*"),
+          supabase.from("users").select("id, name, email, created_at")
+        ]);
+        if (Array.isArray(sbSubs.data) && sbSubs.data.length > 0) allSubs = sbSubs.data;
+        if (Array.isArray(sbPays.data) && sbPays.data.length > 0) allSubPayments = sbPays.data;
+        if (Array.isArray(sbUsers.data) && sbUsers.data.length > 0) allRegisteredUsers = sbUsers.data;
+      } catch (_) {}
+    }
+
+    const activeSubs = allSubs.filter((s) => computeEntitlements(s).hasActiveSubscription);
+    const planCounts = { basic: 0, pro: 0, premium: 0 };
+    let mrr = 0;
+    activeSubs.forEach((s) => {
+      const code = s.plan_code;
+      if (planCounts[code] !== undefined) planCounts[code]++;
+      const plan = SUBSCRIPTION_PLANS[code];
+      mrr += plan ? plan.priceInr : Number(s.amount_inr || 0);
+    });
+
+    const cancelledSubscriptions = allSubs.filter(
+      (s) => s.status === "cancelled" || s.cancel_at_period_end === true
+    ).length;
+    const haltedSubscriptions = allSubs.filter((s) => s.status === "halted").length;
+
+    const verifiedSubPayments = allSubPayments.filter(
+      (p) => p.status === "captured" || p.status === "authorized" || p.status === "verified"
+    );
+    const failedSubPayments = allSubPayments.filter((p) => p.status === "failed");
+
+    let periodSubscriptionRevenue = 0;
+    let lifetimeSubscriptionRevenue = 0;
+    let todaySubscriptionRevenue = 0;
+
+    verifiedSubPayments.forEach((p) => {
+      const amt = Number(p.amount_inr || 0);
+      const pMs = new Date(p.paid_at || p.created_at || 0).getTime();
+      const pDateStr = new Date(pMs).toISOString().slice(0, 10);
+      lifetimeSubscriptionRevenue += amt;
+      if (pMs >= periodCutoffMs) periodSubscriptionRevenue += amt;
+      if (pDateStr === todayStr) todaySubscriptionRevenue += amt;
+    });
+
+    const uniqueSubscriberIds = new Set(allSubs.map((s) => s.user_id).filter(Boolean));
+    const totalPaymentAttempts = verifiedSubPayments.length + failedSubPayments.length;
+    const paymentSuccessRate =
+      totalPaymentAttempts > 0
+        ? Math.round((verifiedSubPayments.length / totalPaymentAttempts) * 100)
+        : 100;
+
+    // Visitor metrics
     const allUniqueVisitorsSet = new Set();
     const allSessionsSet = new Set();
-    const identifiedUsersSet = new Set();
-
-    allEvents.forEach(e => {
+    allEvents.forEach((e) => {
       if (e.visitorId && e.visitorId !== "v_anon") allUniqueVisitorsSet.add(e.visitorId);
       if (e.sessionId) allSessionsSet.add(e.sessionId);
-      if (e.type === "checkout_initiated" || e.type === "payment_success" || e.type === "message_sent") {
-        if (e.visitorId) identifiedUsersSet.add(e.visitorId);
-      }
     });
-    (store.active_users || []).forEach(u => {
+    (store.active_users || []).forEach((u) => {
       if (u.userId) allUniqueVisitorsSet.add(u.userId);
     });
 
-    const lifetimeUniqueVisitors = allUniqueVisitorsSet.size;
-    const totalSessions = allSessionsSet.size || Math.max(allEvents.length > 0 ? 1 : 0, lifetimeUniqueVisitors);
-
-    // DAU (last 24 hours)
-    const dauCutoff = nowMs - 24 * 3600 * 1000;
-    const dauSet = new Set();
-    allEvents.forEach(e => {
-      if (new Date(e.timestamp || 0).getTime() >= dauCutoff && e.visitorId) {
-        dauSet.add(e.visitorId);
-      }
-    });
-    const dau = dauSet.size || visitorsToday;
-
-    // WAU (last 7 days)
-    const wauCutoff = nowMs - 7 * 86400000;
-    const wauSet = new Set();
-    allEvents.forEach(e => {
-      if (new Date(e.timestamp || 0).getTime() >= wauCutoff && e.visitorId) {
-        wauSet.add(e.visitorId);
-      }
-    });
-    const wau = wauSet.size || dau;
-
-    // MAU (last 30 days)
-    const mauCutoff = nowMs - 30 * 86400000;
-    const mauSet = new Set();
-    allEvents.forEach(e => {
-      if (new Date(e.timestamp || 0).getTime() >= mauCutoff && e.visitorId) {
-        mauSet.add(e.visitorId);
-      }
-    });
-    const mau = mauSet.size || wau;
-
-    // Period specific active users
-    const periodUsersSet = new Set(periodEvents.map(e => e.visitorId).filter(Boolean));
+    const periodUsersSet = new Set(periodEvents.map((e) => e.visitorId).filter(Boolean));
     const periodActiveUsers = periodUsersSet.size;
-    const periodNewUsers = periodEvents.filter(e => e.isNewVisitor && e.visitorId).length;
-    const periodReturningUsers = Math.max(0, periodActiveUsers - periodNewUsers);
 
-    // Prior period comparison
-    const priorPeriodCutoff = periodCutoffMs - (nowMs - periodCutoffMs);
-    const priorEvents = allEvents.filter(e => {
-      const t = new Date(e.timestamp || 0).getTime();
-      return t >= priorPeriodCutoff && t < periodCutoffMs;
-    });
-    const priorUsersSet = new Set(priorEvents.map(e => e.visitorId).filter(Boolean));
-    let userComparisonPercent = null;
-    if (priorUsersSet.size > 0) {
-      userComparisonPercent = Math.round(((periodActiveUsers - priorUsersSet.size) / priorUsersSet.size) * 100);
-    }
-
-    // 6. Revenue Calculations (Strictly from verified payment records)
-    let lifetimeRevenue = 0;
-    let todayRevenue = 0;
-    let weekRevenue = 0;
-    let monthRevenue = 0;
-    let periodRevenue = 0;
-
-    const ms7DaysAgo = nowMs - 7 * 86400000;
-    const ms30DaysAgo = nowMs - 30 * 86400000;
-
-    verifiedPayments.forEach(p => {
-      const pMs = new Date(p.created_at || p.timestamp || 0).getTime();
-      const pDateStr = new Date(pMs).toISOString().slice(0, 10);
-      const amt = Number(p.amount) || 49;
-
-      lifetimeRevenue += amt;
-      if (pDateStr === todayStr) todayRevenue += amt;
-      if (pMs >= ms7DaysAgo) weekRevenue += amt;
-      if (pMs >= ms30DaysAgo) monthRevenue += amt;
-      if (pMs >= periodCutoffMs) periodRevenue += amt;
-    });
-
-    const totalSuccessfulPayments = verifiedPayments.length;
-    const periodPaymentsCount = periodPayments.length;
-    const totalOrdersCreated = Object.keys(store.pending_orders || {}).length + verifiedPayments.filter(p => !store.pending_orders || !store.pending_orders[p.order_id]).length;
-    const paidOrders = totalSuccessfulPayments;
-    const failedPaymentsCount = allEvents.filter(e => e.type === "payment_failed").length;
-    const paymentSuccessRate = (paidOrders + failedPaymentsCount) > 0
-      ? Math.round((paidOrders / (paidOrders + failedPaymentsCount)) * 100)
-      : 100;
-    const averageOrderValue = paidOrders > 0 ? Math.round(lifetimeRevenue / paidOrders) : 0;
-    const refundAmount = 0; // No refunds recorded in system
-    const netRevenue = lifetimeRevenue - refundAmount;
-
-    // 7. Funnel Metrics for Selected Period
-    const funnelVisitors = periodActiveUsers || Math.max(1, periodEvents.length);
-    const profileViews = periodEvents.filter(e => e.type === "creator_view" || (e.type === "page_view" && (e.page || "").includes("profile"))).length;
-    const payClicks = periodEvents.filter(e => e.type === "button_click" && ((e.buttonName || "").toLowerCase().includes("chat") || (e.buttonName || "").toLowerCase().includes("hi") || (e.buttonName || "").toLowerCase().includes("pay"))).length;
-    const checkoutInitiated = periodEvents.filter(e => e.type === "checkout_initiated").length || periodPaymentsCount;
-    const successfulPayments = periodPaymentsCount;
-    const failedPayments = periodEvents.filter(e => e.type === "payment_failed").length;
-    const messageSubmissions = periodEvents.filter(e => e.type === "message_sent").length || (store.messages || []).filter(m => new Date(m.timestamp || 0).getTime() >= periodCutoffMs).length;
-
-    // 8. Website Activity (Top Pages, Top Creators, Top Buttons, Traffic Sources)
-    const pageCounts = {};
-    periodEvents.filter(e => e.type === "page_view").forEach(e => {
-      const p = e.page || "creator_home.html";
-      pageCounts[p] = (pageCounts[p] || 0) + 1;
-    });
-    const totalPageViewsInPeriod = Object.values(pageCounts).reduce((a, b) => a + b, 0) || 1;
-    const topPages = Object.entries(pageCounts)
-      .map(([page, views]) => {
-        let name = page;
-        if (page.includes("home") || page === "index.html") name = "Home (Discover)";
-        else if (page.includes("profile")) name = "Partner Profile";
-        else if (page.includes("chat")) name = "Private 1:1 Chat";
-        else if (page.includes("explore")) name = "Explore Directory";
-        else if (page.includes("pricing")) name = "Pricing & Plans";
-        else if (page.includes("payment_success")) name = "Payment Success";
-        return {
-          page,
-          name,
-          views,
-          percentage: Math.round((views / totalPageViewsInPeriod) * 100)
-        };
-      })
-      .sort((a, b) => b.views - a.views)
-      .slice(0, 6);
-
-    // Top Creators Breakdown
-    const creatorPerformance = {};
-    let creatorsList = [];
-    try {
-      const { data } = await supabase.from("creators").select("id, name, category, profile_image, price");
-      if (Array.isArray(data)) creatorsList = data;
-    } catch (_) {}
-
-    creatorsList.forEach(c => {
-      creatorPerformance[String(c.id)] = {
-        id: String(c.id),
-        name: c.name,
-        category: c.category || "Lifestyle",
-        profile_image: c.profile_image || "",
-        price: c.price || 49,
-        views: 0,
-        paidSessions: 0,
-        revenue: 0
-      };
-    });
-
-    periodEvents.forEach(e => {
-      if (e.creatorId && creatorPerformance[String(e.creatorId)]) {
-        if (e.type === "creator_view" || e.type === "page_view") {
-          creatorPerformance[String(e.creatorId)].views++;
-        }
-      }
-    });
-
-    verifiedPayments.forEach(p => {
-      if (p.creator_id && creatorPerformance[String(p.creator_id)]) {
-        creatorPerformance[String(p.creator_id)].paidSessions++;
-        creatorPerformance[String(p.creator_id)].revenue += (Number(p.amount) || 49);
-      }
-    });
-
-    const topCreators = Object.values(creatorPerformance)
-      .sort((a, b) => (b.revenue + b.views) - (a.revenue + a.views))
-      .slice(0, 8);
-
-    // Top Buttons Clicked
-    const buttonCounts = {};
-    periodEvents.filter(e => e.type === "button_click" && e.buttonName).forEach(e => {
-      buttonCounts[e.buttonName] = (buttonCounts[e.buttonName] || 0) + 1;
-    });
-    const topButtons = Object.entries(buttonCounts)
-      .map(([name, clicks]) => ({ name, clicks }))
-      .sort((a, b) => b.clicks - a.clicks)
-      .slice(0, 6);
-
-    // Traffic Sources
-    const sourceCounts = {};
-    periodEvents.forEach(e => {
-      const src = e.source || "Direct";
-      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
-    });
-    const totalEventsWithSource = periodEvents.length || 1;
-    const trafficSources = Object.entries(sourceCounts)
-      .map(([source, count]) => ({
-        source,
-        count,
-        percentage: Math.round((count / totalEventsWithSource) * 100)
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    // 9. Timeline Series for Charts
+    // Timeline Series
     const usersByDate = {};
     const viewsByDate = {};
     const revenueByDate = {};
     const paymentsByDate = {};
 
-    timelineKeys.forEach(k => {
+    timelineKeys.forEach((k) => {
       usersByDate[k] = new Set();
       viewsByDate[k] = 0;
       revenueByDate[k] = 0;
       paymentsByDate[k] = 0;
     });
 
-    periodEvents.forEach(e => {
+    periodEvents.forEach((e) => {
       const d = (e.timestamp || "").slice(0, 10);
       if (usersByDate[d] && e.visitorId) usersByDate[d].add(e.visitorId);
       if (viewsByDate[d] !== undefined && e.type === "page_view") viewsByDate[d]++;
     });
 
-    verifiedPayments.forEach(p => {
-      const d = (p.created_at || p.timestamp || "").slice(0, 10);
-      const amt = Number(p.amount) || 49;
+    verifiedSubPayments.forEach((p) => {
+      const d = (p.paid_at || p.created_at || "").slice(0, 10);
       if (revenueByDate[d] !== undefined) {
-        revenueByDate[d] += amt;
+        revenueByDate[d] += Number(p.amount_inr || 0);
         paymentsByDate[d] += 1;
       }
     });
 
-    const timeline = timelineKeys.map(dateKey => {
+    const timeline = timelineKeys.map((dateKey) => {
       const dateObj = new Date(dateKey + "T00:00:00");
-      const label = period === "today"
-        ? "Today"
-        : dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const label =
+        period === "today"
+          ? "Today"
+          : dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       return {
         date: dateKey,
         label,
@@ -1992,66 +2665,25 @@ app.get("/api/analytics", async (req, res) => {
       };
     });
 
-    // 10. Formatted Recent Events Log (Last 30 events)
-    const recentEvents = allEvents.slice(-30).reverse().map(e => {
-      let title = "Website Visit";
-      let icon = "eye";
-      let category = "visit";
-      let details = e.page || "creator_home.html";
-
-      if (e.type === "page_view") {
-        title = "Page Viewed";
-        icon = "layout";
-        category = "page";
-        details = e.page || "Home";
-      } else if (e.type === "creator_view") {
-        title = "Creator Profile Viewed";
-        icon = "user";
-        category = "creator";
-        details = e.creatorName ? `Profile: ${e.creatorName}` : `Profile ID #${e.creatorId || ""}`;
-      } else if (e.type === "button_click") {
-        title = "Button Clicked";
-        icon = "mouse-pointer";
-        category = "click";
-        details = `Tapped: "${e.buttonName || "Action"}"`;
-      } else if (e.type === "checkout_initiated") {
-        title = "Checkout Started";
-        icon = "shopping-bag";
-        category = "checkout";
-        details = e.creatorName ? `Order for ${e.creatorName} (₹${e.amount || 49})` : "Session Order Created";
-      } else if (e.type === "payment_success") {
-        title = "Verified Payment";
-        icon = "check-circle";
-        category = "payment";
-        details = `₹${e.amount || 49} successfully received${e.creatorName ? ` for ${e.creatorName}` : ""}`;
-      } else if (e.type === "payment_failed") {
-        title = "Payment Failed";
-        icon = "alert-circle";
-        category = "failed";
-        details = "Payment attempt cancelled or declined";
-      } else if (e.type === "message_sent") {
-        title = "Chat Message Sent";
-        icon = "message-circle";
-        category = "chat";
-        details = "1:1 private message delivered";
-      }
-
-      return {
-        id: e.id,
-        type: e.type,
-        category,
-        title,
-        details,
-        source: e.source || "Direct",
-        timestamp: e.timestamp,
-        relativeTime: getRelativeTimeString(e.timestamp)
-      };
-    });
+    const subscriptionTransactions = allSubPayments
+      .slice(0, 40)
+      .map((p) => ({
+        id: p.id,
+        razorpay_payment_id: p.razorpay_payment_id || "",
+        razorpay_subscription_id: p.razorpay_subscription_id || "",
+        user_email: p.user_email || "",
+        plan_code: p.plan_code || "basic",
+        amount_inr: Number(p.amount_inr || 0),
+        status: p.status || "pending",
+        method: p.method || "autopay",
+        error_reason: p.error_reason || "",
+        paid_at: p.paid_at || p.created_at
+      }));
 
     return res.json({
       success: true,
       period,
-      trackingStarted: store.tracking_started || "2026-10-14",
+      trackingStarted: store.tracking_started || new Date().toISOString().slice(0, 10),
       lastUpdated: now.toISOString(),
       live: {
         activeUsers: liveActiveUsersCount,
@@ -2063,68 +2695,53 @@ app.get("/api/analytics", async (req, res) => {
         lastUpdated: now.toISOString()
       },
       users: {
-        dau,
-        wau,
-        mau,
-        lifetimeUniqueVisitors,
-        lifetimeIdentifiedUsers: identifiedUsersSet.size,
-        totalSessions,
-        periodActiveUsers,
-        periodNewUsers,
-        periodReturningUsers,
-        comparisonPercent: userComparisonPercent
+        registeredUsers: allRegisteredUsers.length,
+        lifetimeUniqueVisitors: allUniqueVisitorsSet.size,
+        totalSessions: allSessionsSet.size,
+        periodActiveUsers
+      },
+      subscriptions: {
+        totalSubscribers: uniqueSubscriberIds.size,
+        activeSubscriptions: activeSubs.length,
+        planCounts,
+        mrr,
+        totalSubscriptionRevenue: lifetimeSubscriptionRevenue,
+        periodSubscriptionRevenue,
+        todaySubscriptionRevenue,
+        successfulSubscriptionPayments: verifiedSubPayments.length,
+        failedSubscriptionPayments: failedSubPayments.length,
+        cancelledSubscriptions,
+        haltedSubscriptions,
+        paymentSuccessRate,
+        subscriptionTransactions
       },
       revenue: {
-        lifetimeRevenue,
-        todayRevenue,
-        weekRevenue,
-        monthRevenue,
-        periodRevenue,
-        totalSuccessfulPayments,
-        periodPaymentsCount,
-        totalOrders: totalOrdersCreated,
-        paidOrders,
-        failedPayments: failedPaymentsCount,
+        lifetimeRevenue: lifetimeSubscriptionRevenue,
+        todayRevenue: todaySubscriptionRevenue,
+        periodRevenue: periodSubscriptionRevenue,
+        totalSuccessfulPayments: verifiedSubPayments.length,
+        paidOrders: verifiedSubPayments.length,
+        totalOrders: allSubs.length,
+        failedPayments: failedSubPayments.length,
         paymentSuccessRate,
-        averageOrderValue,
-        refundAmount,
-        netRevenue,
+        netRevenue: lifetimeSubscriptionRevenue,
         currency: "INR"
       },
-      funnel: {
-        visitors: funnelVisitors,
-        profileViews,
-        payClicks,
-        checkoutInitiated,
-        successfulPayments,
-        failedPayments,
-        messageSubmissions,
-        profileViewRate: funnelVisitors > 0 ? Math.min(100, Math.round((profileViews / funnelVisitors) * 100)) : 0,
-        payClickRate: profileViews > 0 ? Math.min(100, Math.round((payClicks / profileViews) * 100)) : 0,
-        checkoutRate: payClicks > 0 ? Math.min(100, Math.round((checkoutInitiated / payClicks) * 100)) : 0,
-        paymentSuccessRate: checkoutInitiated > 0 ? Math.min(100, Math.round((successfulPayments / checkoutInitiated) * 100)) : 0,
-        messageRate: successfulPayments > 0 ? Math.min(100, Math.round((messageSubmissions / successfulPayments) * 100)) : 0
-      },
-      activity: {
-        topPages,
-        topCreators,
-        topButtons,
-        trafficSources
-      },
       timeline,
-      recentEvents,
-      // Backward-compatible structures for legacy UI
-      activeUsers: {
-        count: periodActiveUsers,
-        comparisonPercent: userComparisonPercent,
-        hasHistoricalData: lifetimeUniqueVisitors > 0
-      }
+      recentEvents: allEvents.slice(-25).reverse().map((e) => ({
+        id: e.id,
+        type: e.type,
+        page: e.page,
+        amount: e.amount,
+        creatorName: e.creatorName,
+        timestamp: e.timestamp,
+        relativeTime: getRelativeTimeString(e.timestamp)
+      }))
     });
   } catch (err) {
     return sendError(res, 500, "Error compiling analytics", err);
   }
 });
-
 
 // ======================================
 // 404 ROUTE
@@ -2137,13 +2754,10 @@ app.use((req, res) => {
   });
 });
 
-
 // ======================================
 // START SERVER
 // ======================================
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `CreatorPay backend running on http://0.0.0.0:${PORT}`
-  );
+  console.log(`Takora backend running on http://0.0.0.0:${PORT}`);
 });

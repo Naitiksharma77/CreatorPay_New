@@ -4,19 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#FFF7FA">
-    <meta name="description" content="Discover compatible people, explore profiles, and book personal dates on Takora.">
-    <title>Takora — Curated In-Person Dating</title>
+    <meta name="theme-color" content="#F8FAFC">
+    <meta name="description" content="Connect with verified creators on Takora through 1-on-1 Chat, Voice Calls, and HD Video Calls with simple monthly plans.">
+    <title>Takora — Private Creator Connections</title>
 
-    <!-- Google Fonts for Editorial Roséia Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="ios_app.css">
     <link rel="stylesheet" href="interaction_modal.css">
 
-    <!-- Razorpay Checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <!-- Google tag (gtag.js) -->
@@ -35,7 +33,7 @@
     <div class="app-shell">
 
         <!-- =========================================================
-             ROSÉIA HEADER WITH DESKTOP NAVIGATION
+             TAKORA HEADER WITH CLEAN 3-ZONE NAVIGATION
         ========================================================= -->
         <header class="app-header">
             <div class="header-inner">
@@ -48,25 +46,39 @@
                     <button type="button" class="desktop-nav-link" data-tab="search" onclick="switchTab('search')">Search</button>
                     <button type="button" class="desktop-nav-link" data-tab="favorites" onclick="switchTab('favorites')">Favorites</button>
                     <button type="button" class="desktop-nav-link" data-tab="bookings" onclick="switchTab('bookings')">Connections</button>
+                    <a href="pricing.html" class="desktop-nav-link">Plans</a>
                 </nav>
 
-                <button type="button" class="header-avatar-btn" onclick="toggleProfileSheet()" aria-label="My Account" title="My Profile &amp; Settings">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </button>
+                <div class="header-actions-group">
+                    <button type="button" id="headerAuthButton" class="tk-header-auth-btn solid" onclick="window.TakoraAuth && window.TakoraAuth.openAccountModal()">
+                        Sign In Free
+                    </button>
+                    <button type="button" class="header-avatar-btn" onclick="toggleProfileSheet()" aria-label="My Account" title="My Profile &amp; Membership">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </header>
 
 
         <!-- =========================================================
-             APP VIEWPORT (PRIMARY TABS)
+             APP VIEWPORT
         ========================================================= -->
         <main class="app-viewport">
 
             <!-- TAB 1: EXPLORE (HOME FEED) -->
             <section id="tab-home" class="tab-view active" aria-label="Explore Feed">
+                <div class="membership-banner-card">
+                    <div class="membership-banner-copy">
+                        <h2>One Monthly Plan. Every Creator.</h2>
+                        <p>Browse profiles free. Unlock Chat, Voice Call &amp; HD Video Call starting at ₹9/month.</p>
+                    </div>
+                    <a href="pricing.html" class="membership-banner-btn">View Plans (from ₹9/mo)</a>
+                </div>
+
                 <div id="homePeopleList" class="people-feed">
                     <div class="loading-state">
                         <span class="loading-spinner"></span>
@@ -80,14 +92,12 @@
             <section id="tab-discover" class="tab-view" aria-label="Search & Filters">
                 <div class="search-page-header">
                     <h1 class="search-page-title">Search &amp; Filters</h1>
-                    <p class="search-page-subtitle">Find creators by interests, interaction budget, or name.</p>
+                    <p class="search-page-subtitle">Find creators by name, interests, or location.</p>
                 </div>
 
-                <!-- Comprehensive Search & Filter Card -->
                 <div class="search-filter-card">
-                    <!-- Top Search Bar -->
                     <div class="search-bar-wrap">
-                        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D93B78" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <circle cx="11" cy="11" r="7.5"></circle>
                             <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
                         </svg>
@@ -97,39 +107,34 @@
                         </button>
                     </div>
 
-                    <!-- 2-Column Dropdowns: Interaction Mode, Sort By -->
                     <div class="filter-three-grid" style="grid-template-columns: repeat(2, 1fr);">
                         <div class="filter-field-col">
                             <label class="filter-field-label" for="filterSortSelect">Sort By</label>
                             <div class="filter-select-wrap">
                                 <select id="filterSortSelect" class="filter-field-select">
-                                    <option value="popularity">Popularity</option>
-                                    <option value="price_low">Price: Low to High</option>
-                                    <option value="price_high">Price: High to Low</option>
+                                    <option value="popularity">Featured</option>
+                                    <option value="name_asc">Name: A to Z</option>
+                                    <option value="age_young">Age: Young to Old</option>
                                 </select>
-                                <svg class="filter-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#817783" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="filter-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
                             </div>
                         </div>
 
                         <div class="filter-field-col">
-                            <label class="filter-field-label" for="filterPriceDisplay">Budget Range</label>
-                            <div class="filter-select-wrap" style="padding: 10px 14px; background: #FFF7FA; border: 1px solid #FCE7F3; border-radius: 12px; font-size: 13.5px; font-weight: 700; color: #E11D48;">
-                                <span id="priceSliderReadout">Up to ₹500</span>
+                            <label class="filter-field-label" for="filterCitySelect">City</label>
+                            <div class="filter-select-wrap">
+                                <select id="filterCitySelect" class="filter-field-select">
+                                    <option value="all">All Cities</option>
+                                </select>
+                                <svg class="filter-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Maximum Interaction Price Slider -->
-                    <div class="filter-slider-wrap">
-                        <div class="filter-slider-header">
-                            <span class="filter-slider-title">Maximum Interaction Price</span>
-                        </div>
-                        <input type="range" id="priceRangeSlider" min="0" max="1000" step="10" value="500" class="filter-range-track">
-                    </div>
-
-                    <!-- Interests Filter Chips -->
                     <div class="filter-interests-section">
                         <span class="filter-field-label">Interests</span>
                         <div id="filterInterestsChips" class="filter-chips-list">
@@ -143,15 +148,14 @@
                     </div>
                 </div>
 
-                <!-- Showing count text -->
                 <div class="results-meta-row">
-                    <span id="discoverResultCount" class="results-count-text">Showing 26 creator profiles</span>
+                    <span id="discoverResultCount" class="results-count-text">Showing creator profiles</span>
                 </div>
 
                 <div id="discoverPeopleList" class="people-feed">
                     <div class="loading-state">
                         <span class="loading-spinner"></span>
-                        <p>Searching lovely people...</p>
+                        <p>Searching profiles...</p>
                     </div>
                 </div>
             </section>
@@ -161,19 +165,17 @@
             <section id="tab-chats" class="tab-view" aria-label="My Connections">
                 <div class="app-greeting">
                     <h1 class="greeting-title">My Connections &amp; Chats</h1>
-                    <p class="greeting-subtitle">Your unlocked conversations and creator interactions.</p>
+                    <p class="greeting-subtitle">Your conversations unlocked with your monthly membership.</p>
                 </div>
 
-                <div id="chatsContent">
-                    <!-- Populated dynamically -->
-                </div>
+                <div id="chatsContent"></div>
             </section>
 
         </main>
 
 
         <!-- =========================================================
-             FIXED 5-ITEM BOTTOM NAVIGATION BAR (ROSÉIA)
+             FIXED MOBILE BOTTOM NAVIGATION BAR
         ========================================================= -->
         <nav class="bottom-tab-bar" aria-label="Main App Navigation">
             <button type="button" class="tab-btn active" data-tab="explore" onclick="switchTab('explore')" aria-label="Explore Tab">
@@ -196,14 +198,14 @@
                 <span>Search</span>
             </button>
 
-            <button type="button" class="tab-btn" data-tab="favorites" onclick="switchTab('favorites')" aria-label="Favorites Tab">
+            <a href="pricing.html" class="tab-btn" aria-label="Plans">
                 <span class="tab-icon-wrap">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                 </span>
-                <span>Favorites</span>
-            </button>
+                <span>Plans</span>
+            </a>
 
             <button type="button" class="tab-btn" data-tab="bookings" onclick="switchTab('bookings')" aria-label="Connections Tab">
                 <span class="tab-icon-wrap">
@@ -211,7 +213,7 @@
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                 </span>
-                <span>Connections</span>
+                <span>Chats</span>
             </button>
 
             <button type="button" class="tab-btn" data-tab="profile" onclick="toggleProfileSheet()" aria-label="Profile Tab">
@@ -221,13 +223,13 @@
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                 </span>
-                <span>Profile</span>
+                <span>Account</span>
             </button>
         </nav>
 
 
         <!-- =========================================================
-             PROFILE & ACCOUNT iOS BOTTOM SHEET MODAL
+             PROFILE & ACCOUNT BOTTOM SHEET MODAL
         ========================================================= -->
         <div id="profileSheetModal" class="profile-sheet-modal" aria-hidden="true">
             <div class="sheet-backdrop" onclick="toggleProfileSheet()"></div>
@@ -246,35 +248,37 @@
 
                 <div class="sheet-profile-header">
                     <div class="sheet-avatar">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </div>
                     <div class="sheet-user-info">
-                        <h3>You</h3>
-                        <p>Takora Member</p>
+                        <h3 id="sheetUserName">Guest Visitor</h3>
+                        <p id="sheetUserSubtitle">Sign in or register free to subscribe</p>
                     </div>
                 </div>
 
                 <div class="sheet-stats-grid">
-                    <div class="sheet-stat-box" onclick="toggleProfileSheet(); switchTab('chats');">
+                    <div class="sheet-stat-box" onclick="toggleProfileSheet(); switchTab('bookings');">
                         <span id="sheetConnectionsCount" class="stat-num">0</span>
                         <span class="stat-lbl">My Connections</span>
                     </div>
-                    <div class="sheet-stat-box" onclick="toggleProfileSheet(); switchTab('discover');">
+                    <div class="sheet-stat-box" onclick="toggleProfileSheet(); switchTab('favorites');">
                         <span id="sheetFavoritesCount" class="stat-num">0</span>
                         <span class="stat-lbl">Saved Profiles</span>
                     </div>
                 </div>
+
+                <div id="sheetAuthSection"></div>
             </div>
         </div>
 
     </div>
 
-    <!-- Container for Interaction Modal (Chat, Voice Call, Video Call) -->
     <div id="roseiaInteractionModalContainer"></div>
 
+    <script src="takora_auth.js"></script>
     <script src="interaction_modal.js"></script>
     <script src="ios_app.js"></script>
 

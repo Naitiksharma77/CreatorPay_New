@@ -1,7 +1,9 @@
 /* =========================================================
-   MEET YOU PARTNER — iOS SOCIAL APP STYLESHEET
-   Romantic, modern, premium partner-discovery platform
-========================================================= */
+   TAKORA — iOS SOCIAL APP STYLESHEET
+   iPhone-Inspired Blue Design System
+   Primary: #2563EB | Deep: #1D4ED8 | Soft: #EFF6FF
+   Canvas: #F8FAFC | Surface: #FFFFFF | Ink: #0F172A | Muted: #64748B
+   ========================================================= */
 
 *,
 *::before,
@@ -13,54 +15,55 @@
 }
 
 :root {
-    --myp-pink: #EC4899;
-    --myp-rose: #DB2777;
-    --myp-blush: #FFF7FA;
-    --myp-card-bg: #FFFFFF;
-    --myp-text: #25202A;
-    --myp-text-muted: #817783;
-    --myp-border: #F6DCE8;
-    --myp-border-subtle: #FDF2F7;
-    --myp-pink-soft: #FDF2F7;
-    --myp-shadow-card: 0 4px 20px -2px rgba(236, 72, 153, 0.08), 0 2px 6px -1px rgba(37, 32, 42, 0.03);
-    --myp-shadow-btn: 0 4px 14px rgba(236, 72, 153, 0.28);
+    --tk-blue: #2563EB;
+    --tk-blue-dark: #1D4ED8;
+    --tk-blue-soft: #EFF6FF;
+    --tk-blue-border: #DBEAFE;
+    --tk-bg: #F8FAFC;
+    --tk-surface: #FFFFFF;
+    --tk-text: #0F172A;
+    --tk-muted: #64748B;
+    --tk-border: #E2E8F0;
+    --tk-green: #16A34A;
+    --tk-shadow-card: 0 4px 20px -2px rgba(37, 99, 235, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    --tk-shadow-btn: 0 4px 14px rgba(37, 99, 235, 0.25);
 
-    /* Legacy mapping for consistency */
-    --fc-blue: #EC4899;
-    --fc-blue-dark: #DB2777;
-    --fc-blue-soft: #FDF2F7;
-    --fc-blue-border: #F6DCE8;
-    --fc-dark: #25202A;
-    --fc-gray: #817783;
-    --fc-light-gray: #9D94A0;
-    --fc-border: #F6DCE8;
-    --fc-border-subtle: #FDF2F7;
-    --fc-card-bg: #ffffff;
-    --fc-bg: #FFF7FA;
-    --fc-shadow-card: 0 4px 20px -2px rgba(236, 72, 153, 0.08), 0 2px 6px -1px rgba(37, 32, 42, 0.03);
-    --fc-shadow-float: 0 10px 30px rgba(236, 72, 153, 0.12);
+    /* Legacy variable mapping */
+    --fc-blue: #2563EB;
+    --fc-blue-dark: #1D4ED8;
+    --fc-blue-soft: #EFF6FF;
+    --fc-blue-border: #DBEAFE;
+    --fc-dark: #0F172A;
+    --fc-gray: #64748B;
+    --fc-light-gray: #94A3B8;
+    --fc-border: #E2E8F0;
+    --fc-border-subtle: #F1F5F9;
+    --fc-card-bg: #FFFFFF;
+    --fc-bg: #F8FAFC;
+    --fc-shadow-card: 0 4px 20px -2px rgba(37, 99, 235, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    --fc-shadow-float: 0 10px 30px rgba(37, 99, 235, 0.12);
 }
 
 html {
     scroll-behavior: smooth;
-    background-color: var(--fc-bg);
+    background-color: var(--tk-bg);
 }
 
 body {
     min-height: 100vh;
     font-family:
+        "Plus Jakarta Sans",
         -apple-system,
         BlinkMacSystemFont,
         "SF Pro Text",
         "SF Pro Display",
-        "Inter",
         "Segoe UI",
         Roboto,
         Helvetica,
         Arial,
         sans-serif;
-    color: var(--fc-dark);
-    background-color: var(--fc-bg);
+    color: var(--tk-text);
+    background-color: var(--tk-bg);
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -81,15 +84,16 @@ button {
 }
 
 button:focus-visible,
-a:focus-visible {
-    outline: 2px solid var(--fc-blue);
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--tk-blue);
     outline-offset: 2px;
 }
 
-
 /* =========================================================
-   APP SHELL (RESPONSIVE FULL DESKTOP & MOBILE EXPERIENCE)
-========================================================= */
+   APP SHELL
+   ========================================================= */
 
 .app-shell {
     width: 100%;
@@ -99,53 +103,50 @@ a:focus-visible {
     position: relative;
     display: flex;
     flex-direction: column;
-    background-color: var(--fc-bg);
+    background-color: var(--tk-bg);
     padding: 0 20px 80px 20px;
 }
 
 @media (min-width: 900px) {
     body {
-        background-color: #FFF7F9;
+        background-color: var(--tk-bg);
     }
 
     .app-shell {
         width: 100%;
         max-width: 1240px;
-        box-shadow: none;
-        border: none;
         background-color: transparent;
         padding: 0 28px 90px 28px;
     }
 }
 
-
 /* =========================================================
-   APP HEADER — ROSÉIA BRAND & DESKTOP NAVIGATION
-========================================================= */
+   APP HEADER — CLEAN 3-ZONE TOP BAR
+   ========================================================= */
 
 .app-header {
     position: sticky;
     top: 0;
     z-index: 90;
     width: 100%;
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(246, 220, 232, 0.7);
+    border-bottom: 1px solid var(--tk-border);
     padding-top: env(safe-area-inset-top, 0px);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .app-header.is-scrolled {
-    border-color: #F6DCE8;
-    box-shadow: 0 4px 16px rgba(219, 39, 119, 0.05);
+    border-color: var(--tk-blue-border);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);
 }
 
 .header-inner {
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    height: 64px;
+    height: 62px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -157,9 +158,11 @@ a:focus-visible {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #D93B78;
+    color: var(--tk-blue);
     text-decoration: none;
     user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
     transition: opacity 0.16s ease;
 }
 
@@ -167,23 +170,18 @@ a:focus-visible {
     opacity: 0.88;
 }
 
-.brand-glyph {
-    display: none;
-}
-
 .brand-name {
-    font-family: "Playfair Display", "Cormorant Garamond", Georgia, "Times New Roman", serif;
-    font-size: 26px;
+    font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+    font-size: 25px;
     font-weight: 700;
-    color: #D93B78;
+    color: var(--tk-blue);
     letter-spacing: -0.3px;
 }
 
-/* Desktop Navigation in Header */
 .desktop-nav {
     display: none;
     align-items: center;
-    gap: 32px;
+    gap: 28px;
     height: 100%;
 }
 
@@ -194,25 +192,27 @@ a:focus-visible {
 }
 
 .desktop-nav-link {
-    font-size: 14.5px;
-    font-weight: 500;
-    color: #6B7280;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tk-muted);
     background: none;
     border: none;
-    padding: 20px 4px;
+    padding: 18px 2px;
     cursor: pointer;
     position: relative;
     transition: color 0.16s ease;
     text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .desktop-nav-link:hover {
-    color: #D93B78;
+    color: var(--tk-blue);
 }
 
 .desktop-nav-link.active {
-    color: #D93B78;
-    font-weight: 600;
+    color: var(--tk-blue);
+    font-weight: 700;
 }
 
 .desktop-nav-link.active::after {
@@ -222,54 +222,51 @@ a:focus-visible {
     left: 0;
     right: 0;
     height: 2.5px;
-    background: #D93B78;
+    background: var(--tk-blue);
     border-radius: 2px 2px 0 0;
 }
 
+.header-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
 .header-avatar-btn {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: #ffffff;
-    border: 1px solid #F6DCE8;
+    background: #FFFFFF;
+    border: 1px solid var(--tk-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #817783;
+    color: var(--tk-muted);
     position: relative;
-    box-shadow: 0 1px 4px rgba(236, 72, 153, 0.08);
-    transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background 0.16s ease, border-color 0.16s ease;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.header-avatar-btn:hover {
+    background: var(--tk-blue-soft);
+    border-color: var(--tk-blue-border);
+    color: var(--tk-blue);
 }
 
 .header-avatar-btn:active {
-    transform: scale(0.9);
-    background: #FDF2F7;
-    border-color: #EC4899;
+    transform: scale(0.92);
 }
-
-.header-avatar-btn img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.avatar-online-dot,
-.active-status-dot,
-.status-indicator {
-    display: none !important;
-}
-
 
 /* =========================================================
    APP VIEWPORT & TABS
-========================================================= */
+   ========================================================= */
 
 .app-viewport {
     flex: 1;
-    width: 92%;
+    width: 96%;
     margin: 0 auto;
-    padding-top: 14px;
+    padding-top: 16px;
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px));
 }
 
@@ -286,128 +283,79 @@ a:focus-visible {
     transform: translateY(0);
 }
 
-
 /* =========================================================
-   COMPACT SOCIAL GREETING HEADERS
-========================================================= */
+   COMPACT HEADERS & MEMBERSHIP CTA STRIP
+   ========================================================= */
 
 .app-greeting {
-    padding: 4px 0 12px;
+    padding: 4px 0 14px;
 }
 
 .greeting-title {
-    color: var(--fc-dark);
-    font-size: clamp(21px, 4vw, 26px);
-    font-weight: 850;
-    letter-spacing: -0.6px;
+    color: var(--tk-text);
+    font-size: clamp(22px, 4vw, 27px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
     line-height: 1.15;
 }
 
 .greeting-subtitle {
-    color: var(--fc-gray);
-    font-size: 13px;
-    margin-top: 3px;
-    line-height: 1.4;
+    color: var(--tk-muted);
+    font-size: 13.5px;
+    margin-top: 4px;
+    line-height: 1.45;
 }
 
-/* =========================================================
-   PREMIUM iOS HOME INTRO CARD — MEET YOU PARTNER
-========================================================= */
-
-.home-intro-card {
-    background: #ffffff;
-    border: 1px solid #F6DCE8;
-    border-radius: 22px;
-    padding: 16px 18px;
-    margin: 4px 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow:
-        0 6px 22px -3px rgba(236, 72, 153, 0.08),
-        0 2px 6px -1px rgba(37, 32, 42, 0.02);
-}
-
-.intro-card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: #FDF2F7;
-    border: 1px solid #F6DCE8;
-    color: #EC4899;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.intro-card-text {
-    flex: 1;
-    min-width: 0;
-}
-
-.intro-card-title {
-    color: #25202A;
-    font-size: 16.5px;
-    font-weight: 800;
-    letter-spacing: -0.35px;
-    line-height: 1.25;
-    margin: 0 0 3px 0;
-}
-
-.intro-card-subtitle {
-    color: #817783;
-    font-size: 13px;
-    line-height: 1.4;
-    font-weight: 450;
-    margin: 0;
-}
-
-.app-section-header {
+.membership-banner-card {
+    background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%);
+    border: 1px solid var(--tk-blue-border);
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 8px 0 12px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
-.section-title {
-    color: var(--fc-dark);
-    font-size: 17px;
+.membership-banner-copy h2 {
+    font-size: 16px;
     font-weight: 800;
-    letter-spacing: -0.4px;
+    color: var(--tk-text);
+    margin: 0 0 2px;
 }
 
-.section-sub {
-    color: var(--fc-gray);
-    font-size: 11.5px;
-    margin-top: 1px;
+.membership-banner-copy p {
+    font-size: 13px;
+    color: var(--tk-muted);
+    margin: 0;
 }
 
-.people-stat-pill {
+.membership-banner-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    background: #ffffff;
-    border: 1px solid #F6DCE8;
-    border-radius: 999px;
-    color: #EC4899;
-    font-size: 11px;
+    justify-content: center;
+    padding: 10px 18px;
+    min-height: 40px;
+    border-radius: 12px;
+    background: var(--tk-blue);
+    color: #FFFFFF;
+    font-size: 13.5px;
     font-weight: 700;
     white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(236, 72, 153, 0.08);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+    transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.people-stat-pill svg {
-    color: #EC4899;
-    flex-shrink: 0;
+.membership-banner-btn:hover {
+    background: var(--tk-blue-dark);
+    transform: translateY(-1px);
 }
-
 
 /* =========================================================
-   SEARCH & FILTERS TAB (IMAGE_F4877EA7.PNG SPECIFICATION)
-========================================================= */
+   SEARCH & FILTERS TAB
+   ========================================================= */
 
 .search-page-header {
     padding: 6px 0 16px 0;
@@ -417,7 +365,7 @@ a:focus-visible {
     font-family: "Playfair Display", Georgia, "Times New Roman", serif;
     font-size: 28px;
     font-weight: 700;
-    color: #29232A;
+    color: var(--tk-text);
     letter-spacing: -0.4px;
     line-height: 1.2;
     margin: 0;
@@ -425,7 +373,7 @@ a:focus-visible {
 
 .search-page-subtitle {
     font-size: 14px;
-    color: #6B7280;
+    color: var(--tk-muted);
     margin-top: 4px;
     line-height: 1.45;
 }
@@ -433,15 +381,15 @@ a:focus-visible {
 .search-filter-card {
     background: #FFFFFF;
     border-radius: 24px;
-    padding: 24px;
-    border: 1px solid #F6EAF0;
-    box-shadow: 0 4px 24px rgba(217, 59, 120, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
+    padding: 22px;
+    border: 1px solid var(--tk-border);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
     margin-bottom: 8px;
 }
 
 @media (max-width: 679px) {
     .search-filter-card {
-        padding: 18px 14px;
+        padding: 16px 14px;
         border-radius: 20px;
     }
 }
@@ -457,45 +405,45 @@ a:focus-visible {
     width: 100%;
     height: 48px;
     padding: 0 38px 0 44px;
-    border-radius: 16px;
-    background: #FFF8FA;
-    border: 1px solid #F6DCE8;
+    border-radius: 14px;
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
     font-family: inherit;
     font-size: 14px;
-    color: #29232A;
+    color: var(--tk-text);
     outline: none;
     transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .search-input::placeholder {
-    color: #8E8A93;
+    color: #94A3B8;
 }
 
 .search-input:focus {
     background: #FFFFFF;
-    border-color: #D93B78;
-    box-shadow: 0 0 0 3px rgba(217, 59, 120, 0.12);
+    border-color: var(--tk-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .search-icon {
     position: absolute;
     left: 14px;
     pointer-events: none;
-    color: #D93B78;
+    color: var(--tk-blue);
 }
 
 .clear-search-btn {
     position: absolute;
     right: 12px;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #817783;
-    background: #FFF0F5;
-    border: 1px solid #F6DCE8;
+    color: var(--tk-muted);
+    background: var(--tk-blue-soft);
+    border: 1px solid var(--tk-blue-border);
     cursor: pointer;
     transition: transform 0.15s ease;
 }
@@ -504,12 +452,11 @@ a:focus-visible {
     transform: scale(0.9);
 }
 
-/* 3-Column Inputs: City, Available Date, Sort By */
 .filter-three-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
-    margin-top: 18px;
+    margin-top: 16px;
 }
 
 @media (max-width: 768px) {
@@ -528,8 +475,7 @@ a:focus-visible {
 .filter-field-label {
     font-size: 12px;
     font-weight: 600;
-    color: #6B7280;
-    letter-spacing: -0.1px;
+    color: var(--tk-muted);
 }
 
 .filter-select-wrap,
@@ -543,13 +489,13 @@ a:focus-visible {
     width: 100%;
     height: 44px;
     border-radius: 12px;
-    border: 1px solid #F0D9E5;
+    border: 1px solid var(--tk-border);
     background: #FFFFFF;
     padding: 0 32px 0 14px;
     font-family: inherit;
     font-size: 13.5px;
-    color: #29232A;
-    font-weight: 500;
+    color: var(--tk-text);
+    font-weight: 550;
     outline: none;
     appearance: none;
     -webkit-appearance: none;
@@ -562,8 +508,8 @@ a:focus-visible {
 
 .filter-field-select:focus,
 .filter-field-date:focus {
-    border-color: #D93B78;
-    box-shadow: 0 0 0 3px rgba(217, 59, 120, 0.1);
+    border-color: var(--tk-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .filter-select-chevron {
@@ -572,44 +518,9 @@ a:focus-visible {
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
-    color: #817783;
+    color: var(--tk-muted);
 }
 
-/* Slider Section */
-.filter-slider-wrap {
-    margin-top: 20px;
-}
-
-.filter-slider-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.filter-slider-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: #6B7280;
-}
-
-.filter-slider-val {
-    font-size: 13px;
-    font-weight: 650;
-    color: #29232A;
-}
-
-.filter-range-track {
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
-    background: #FCE7F3;
-    outline: none;
-    accent-color: #D93B78;
-    cursor: pointer;
-}
-
-/* Interests Section */
 .filter-interests-section {
     margin-top: 18px;
 }
@@ -622,30 +533,30 @@ a:focus-visible {
 }
 
 .interest-tag-btn {
-    padding: 7px 15px;
-    border-radius: 999px;
-    background: #FFF8FA;
-    border: 1px solid #F6DCE8;
-    color: #5A525E;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
+    color: var(--tk-text);
     font-family: inherit;
     font-size: 12.5px;
-    font-weight: 550;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
 }
 
 .interest-tag-btn:hover {
-    background: #FFF0F5;
-    border-color: #F472B6;
-    color: #D93B78;
+    background: var(--tk-blue-soft);
+    border-color: #93C5FD;
+    color: var(--tk-blue-dark);
 }
 
 .interest-tag-btn.active {
-    background: #D93B78;
+    background: var(--tk-blue);
     color: #FFFFFF;
-    border-color: #D93B78;
-    box-shadow: 0 2px 8px rgba(217, 59, 120, 0.28);
+    border-color: var(--tk-blue);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
 .results-meta-row {
@@ -654,27 +565,26 @@ a:focus-visible {
 
 .results-count-text {
     font-size: 13px;
-    font-weight: 500;
-    color: #6B7280;
+    font-weight: 600;
+    color: var(--tk-muted);
 }
 
-
 /* =========================================================
-   PEOPLE FEED & PROFILE CARDS (ROSÉIA REFERENCE DESIGN)
-========================================================= */
+   PEOPLE FEED & PROFILE CARDS
+   ========================================================= */
 
 .people-feed {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
     gap: 24px;
     width: 100%;
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 @media (min-width: 1024px) {
     .people-feed {
         grid-template-columns: repeat(3, 1fr);
-        gap: 28px;
+        gap: 26px;
     }
 }
 
@@ -688,7 +598,7 @@ a:focus-visible {
 @media (max-width: 679px) {
     .people-feed {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 18px;
     }
 }
 
@@ -706,10 +616,10 @@ a:focus-visible {
 .roseia-card,
 .social-card {
     background: #FFFFFF;
-    border: 1px solid #F3E8EE;
-    border-radius: 20px;
+    border: 1px solid var(--tk-border);
+    border-radius: 22px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
     display: flex;
     flex-direction: column;
     cursor: pointer;
@@ -722,24 +632,23 @@ a:focus-visible {
 .roseia-card:hover,
 .social-card:hover {
     transform: translateY(-4px);
-    border-color: #FBCFE8;
-    box-shadow: 0 16px 32px rgba(217, 59, 120, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-color: #93C5FD;
+    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.10), 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
-/* Card Top: Tall Portrait Image with floating heart and bottom gradient */
 .card-image-wrap {
     position: relative;
     width: 100%;
     height: 380px;
     overflow: hidden;
-    background-color: #FDF2F7;
+    background-color: var(--tk-blue-soft);
 }
 
 .card-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center top;
+    object-position: 50% 20%;
     display: block;
     transition: transform 0.35s ease;
 }
@@ -749,19 +658,18 @@ a:focus-visible {
     transform: scale(1.025);
 }
 
-/* Floating White Circular Heart Button (Top-Right) */
 .card-fav-btn {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 42px;
-    height: 42px;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: #FFFFFF;
+    background: rgba(255, 255, 255, 0.96);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16);
     border: none;
     cursor: pointer;
     z-index: 3;
@@ -779,25 +687,24 @@ a:focus-visible {
 .card-fav-btn svg {
     width: 19px;
     height: 19px;
-    stroke: #1F2937;
+    stroke: #0F172A;
     stroke-width: 2.2;
     fill: none;
     transition: all 0.18s ease;
 }
 
 .card-fav-btn.is-fav svg {
-    stroke: #E11D48 !important;
-    fill: #E11D48 !important;
+    stroke: #2563EB !important;
+    fill: #2563EB !important;
 }
 
-/* Bottom Dark Gradient Overlay on Image */
 .card-image-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 130px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 100%);
+    height: 120px;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.86) 0%, rgba(15, 23, 42, 0.42) 55%, transparent 100%);
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
@@ -819,7 +726,7 @@ a:focus-visible {
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.2px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 .card-overlay-location {
@@ -832,21 +739,6 @@ a:focus-visible {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-.card-overlay-location svg {
-    flex-shrink: 0;
-    stroke: rgba(255, 255, 255, 0.92);
-}
-
-.card-overlay-price {
-    color: #FFFFFF;
-    font-size: 20px;
-    font-weight: 700;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    white-space: nowrap;
-    line-height: 1;
-}
-
-/* Card Body Section */
 .card-content-wrap {
     padding: 18px 20px 20px 20px;
     display: flex;
@@ -857,10 +749,10 @@ a:focus-visible {
 }
 
 .card-bio-text {
-    color: #1F2937;
+    color: #1E293B;
     font-size: 14.5px;
     font-weight: 500;
-    line-height: 1.42;
+    line-height: 1.45;
     margin: 0;
     min-height: 42px;
     display: -webkit-box;
@@ -870,61 +762,31 @@ a:focus-visible {
 }
 
 .card-tags-line {
-    color: #6B7280;
+    color: var(--tk-muted);
     font-size: 13px;
-    font-weight: 450;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.card-availability-line {
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    margin-top: 2px;
-    margin-bottom: 4px;
-}
-
-.card-open-date {
-    color: #059669;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.card-open-date svg {
-    flex-shrink: 0;
-}
-
-.card-meta-dot {
-    color: #9CA3AF;
-    margin: 0 6px;
-}
-
-.card-duration {
-    color: #6B7280;
-    font-size: 13px;
-}
-
-/* Card Action Buttons Row */
 .card-actions-row {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-top: 8px;
     width: 100%;
 }
 
 .btn-view-profile {
     flex: 1;
+    min-height: 44px;
     text-align: center;
-    background: #F9FAFB;
-    border: 1px solid #E5E7EB;
-    color: #1F2937;
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
+    color: var(--tk-text);
     font-size: 14px;
-    font-weight: 600;
-    padding: 11px 16px;
+    font-weight: 650;
+    padding: 10px 14px;
     border-radius: 12px;
     text-decoration: none;
     display: inline-flex;
@@ -932,41 +794,44 @@ a:focus-visible {
     justify-content: center;
     transition: all 0.15s ease;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .btn-view-profile:hover {
-    background: #F3F4F6;
-    border-color: #D1D5DB;
+    background: #F1F5F9;
+    border-color: #CBD5E1;
 }
 
 .btn-book-date {
     flex: 1;
+    min-height: 44px;
     text-align: center;
-    background: #D93B78;
+    background: var(--tk-blue);
     color: #FFFFFF;
     font-size: 14px;
-    font-weight: 600;
-    padding: 11px 16px;
+    font-weight: 650;
+    padding: 10px 14px;
     border-radius: 12px;
     text-decoration: none;
     border: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(217, 59, 120, 0.25);
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
     transition: all 0.15s ease;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .btn-book-date:hover {
-    background: #C2185B;
-    box-shadow: 0 4px 12px rgba(217, 59, 120, 0.35);
+    background: var(--tk-blue-dark);
+    box-shadow: 0 5px 14px rgba(37, 99, 235, 0.34);
     transform: translateY(-1px);
 }
 
 /* =========================================================
-   CHATS TAB: CONVERSATIONS & EMPTY STATE
-========================================================= */
+   CHATS & CONNECTIONS TAB
+   ========================================================= */
 
 .chats-list {
     display: flex;
@@ -978,23 +843,19 @@ a:focus-visible {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
-    border-radius: 20px;
-    background: #ffffff;
-    border: 1px solid #F6DCE8;
-    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.05);
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: #FFFFFF;
+    border: 1px solid var(--tk-border);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
     cursor: pointer;
     transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
 .chat-row:hover {
     transform: translateY(-1px);
-    border-color: #F472B6;
-    box-shadow: 0 6px 18px rgba(236, 72, 153, 0.1);
-}
-
-.chat-row:active {
-    transform: scale(0.985);
+    border-color: #93C5FD;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
 }
 
 .chat-avatar-wrap {
@@ -1009,8 +870,8 @@ a:focus-visible {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #F6DCE8;
-    background: #FDF2F7;
+    border: 2px solid var(--tk-blue-border);
+    background: var(--tk-blue-soft);
 }
 
 .chat-info {
@@ -1029,28 +890,27 @@ a:focus-visible {
 .chat-name {
     font-size: 14.5px;
     font-weight: 750;
-    color: var(--fc-dark);
+    color: var(--tk-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .chat-time {
-    font-size: 11px;
-    color: #EC4899;
-    font-weight: 600;
+    font-size: 11.5px;
+    color: var(--tk-blue);
+    font-weight: 700;
     flex-shrink: 0;
 }
 
 .chat-preview {
     font-size: 12.5px;
-    color: var(--fc-gray);
+    color: var(--tk-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* Empty Chats State */
 .empty-chats-state {
     display: flex;
     flex-direction: column;
@@ -1059,37 +919,37 @@ a:focus-visible {
     text-align: center;
     padding: 50px 20px;
     min-height: 280px;
-    background: #ffffff;
-    border: 1px solid #F6DCE8;
+    background: #FFFFFF;
+    border: 1px solid var(--tk-border);
     border-radius: 24px;
-    box-shadow: 0 4px 20px rgba(236, 72, 153, 0.05);
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
 }
 
 .empty-chat-icon {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: #FDF2F7;
-    border: 1px solid #F6DCE8;
+    background: var(--tk-blue-soft);
+    border: 1px solid var(--tk-blue-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #EC4899;
+    color: var(--tk-blue);
     margin-bottom: 14px;
 }
 
 .empty-title {
-    font-size: 16.5px;
+    font-size: 17px;
     font-weight: 800;
-    color: var(--fc-dark);
+    color: var(--tk-text);
     margin-bottom: 6px;
 }
 
 .empty-desc {
-    font-size: 13px;
-    color: var(--fc-gray);
-    max-width: 270px;
-    line-height: 1.45;
+    font-size: 13.5px;
+    color: var(--tk-muted);
+    max-width: 290px;
+    line-height: 1.5;
     margin-bottom: 18px;
 }
 
@@ -1097,28 +957,24 @@ a:focus-visible {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 20px;
-    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
-    color: #ffffff;
-    font-size: 13px;
+    padding: 10px 22px;
+    min-height: 44px;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    color: #FFFFFF;
+    font-size: 13.5px;
     font-weight: 700;
-    border-radius: 999px;
-    box-shadow: 0 3px 12px rgba(236, 72, 153, 0.32);
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
     transition: transform 0.16s ease, filter 0.16s ease;
 }
 
 .empty-action-btn:hover {
-    filter: brightness(1.05);
+    filter: brightness(1.06);
 }
-
-.empty-action-btn:active {
-    transform: scale(0.95);
-}
-
 
 /* =========================================================
-   FIXED iOS 3-ITEM BOTTOM NAVIGATION BAR
-========================================================= */
+   FIXED BOTTOM NAVIGATION BAR (MOBILE)
+   ========================================================= */
 
 .bottom-tab-bar {
     position: fixed;
@@ -1130,22 +986,17 @@ a:focus-visible {
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid #F6DCE8;
+    border-top: 1px solid var(--tk-border);
     display: flex;
     align-items: center;
     justify-content: space-around;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    box-shadow: 0 -2px 16px rgba(236, 72, 153, 0.05);
+    box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.05);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .bottom-tab-bar {
-        width: min(92%, 760px);
-        left: 50%;
-        transform: translateX(-50%);
-        border-left: 1px solid #F6DCE8;
-        border-right: 1px solid #F6DCE8;
-        border-radius: 24px 24px 0 0;
+        display: none;
     }
 }
 
@@ -1158,10 +1009,10 @@ a:focus-visible {
     gap: 2.5px;
     height: 100%;
     min-height: 48px;
-    color: #817783;
+    color: var(--tk-muted);
     font-size: 10.5px;
-    font-weight: 550;
-    transition: color 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 600;
+    transition: color 0.18s ease;
     user-select: none;
     cursor: pointer;
 }
@@ -1175,35 +1026,23 @@ a:focus-visible {
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.tab-btn:active .tab-icon-wrap {
-    transform: scale(0.88);
-}
-
 .tab-btn.active {
-    color: #EC4899;
+    color: var(--tk-blue);
     font-weight: 750;
-}
-
-.tab-btn.active .tab-icon-wrap {
-    transform: scale(1.06);
 }
 
 .tab-btn.active svg {
     stroke-width: 2.3;
 }
 
-
 /* =========================================================
    PROFILE & ACCOUNT iOS BOTTOM SHEET MODAL
-========================================================= */
+   ========================================================= */
 
 .profile-sheet-modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     z-index: 120;
 }
 
@@ -1215,11 +1054,8 @@ a:focus-visible {
 
 .sheet-backdrop {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(37, 32, 42, 0.4);
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     animation: fadeIn 0.2s ease;
@@ -1229,13 +1065,13 @@ a:focus-visible {
     position: relative;
     width: min(100%, 540px);
     max-height: 85vh;
-    background: #ffffff;
-    border-radius: 28px 28px 0 0;
-    border-top: 1px solid #F6DCE8;
+    background: #FFFFFF;
+    border-radius: 26px 26px 0 0;
+    border-top: 1px solid var(--tk-border);
     padding: 12px 20px calc(24px + env(safe-area-inset-bottom, 16px));
     display: flex;
     flex-direction: column;
-    box-shadow: 0 -10px 40px rgba(236, 72, 153, 0.12);
+    box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.14);
     animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-y: auto;
 }
@@ -1243,7 +1079,7 @@ a:focus-visible {
 .sheet-grab-bar {
     width: 36px;
     height: 4px;
-    background: #F6DCE8;
+    background: #CBD5E1;
     border-radius: 999px;
     margin: 0 auto 12px;
 }
@@ -1253,46 +1089,45 @@ a:focus-visible {
     align-items: center;
     justify-content: space-between;
     padding-bottom: 12px;
-    border-bottom: 1px solid #FDF2F7;
-    margin-bottom: 16px;
+    border-bottom: 1px solid var(--tk-border);
+    margin-bottom: 14px;
 }
 
 .sheet-title {
     font-size: 18px;
     font-weight: 800;
-    color: var(--fc-dark);
+    color: var(--tk-text);
 }
 
 .sheet-close-btn {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    background: #FDF2F7;
-    border: 1px solid #F6DCE8;
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--fc-gray);
+    color: var(--tk-muted);
 }
 
 .sheet-profile-header {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 0 16px;
+    padding: 8px 0 14px;
 }
 
 .sheet-avatar {
-    width: 58px;
-    height: 58px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
-    background: #FDF2F7;
-    border: 2px solid #F6DCE8;
-    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.1);
+    background: var(--tk-blue-soft);
+    border: 2px solid var(--tk-blue-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #EC4899;
+    color: var(--tk-blue);
     font-size: 20px;
     font-weight: 700;
 }
@@ -1300,92 +1135,48 @@ a:focus-visible {
 .sheet-user-info h3 {
     font-size: 16.5px;
     font-weight: 750;
-    color: var(--fc-dark);
+    color: var(--tk-text);
 }
 
 .sheet-user-info p {
     font-size: 12.5px;
-    color: var(--fc-gray);
-    margin-top: 1px;
+    color: var(--tk-muted);
+    margin-top: 2px;
 }
 
 .sheet-stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
-    margin-bottom: 16px;
 }
 
 .sheet-stat-box {
-    background: #FFF7FA;
-    border: 1px solid #F6DCE8;
-    border-radius: 16px;
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
+    border-radius: 14px;
     padding: 14px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition: border-color 0.15s ease;
 }
 
 .sheet-stat-box:hover {
-    border-color: #F472B6;
-}
-
-.sheet-stat-box:active {
-    transform: scale(0.96);
+    border-color: #93C5FD;
 }
 
 .stat-num {
     display: block;
     font-size: 20px;
-    font-weight: 850;
-    color: #EC4899;
+    font-weight: 800;
+    color: var(--tk-blue);
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-lbl {
-    font-size: 11.5px;
-    color: var(--fc-gray);
+    font-size: 12px;
+    color: var(--tk-muted);
     font-weight: 600;
 }
-
-.sheet-nav-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.sheet-nav-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    background: #FFF7FA;
-    border: 1px solid #F6DCE8;
-    border-radius: 14px;
-    font-size: 13.5px;
-    font-weight: 650;
-    color: var(--fc-dark);
-    transition: background 0.15s ease, transform 0.15s ease;
-}
-
-.sheet-nav-item:active {
-    transform: scale(0.985);
-    background: #FDF2F7;
-}
-
-.sheet-nav-item-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sheet-nav-item-left svg {
-    color: #EC4899;
-}
-
-
-/* =========================================================
-   ANIMATIONS
-========================================================= */
 
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -1404,8 +1195,8 @@ a:focus-visible {
 .loading-spinner {
     width: 24px;
     height: 24px;
-    border: 2.5px solid #F6DCE8;
-    border-top-color: #EC4899;
+    border: 2.5px solid var(--tk-blue-border);
+    border-top-color: var(--tk-blue);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -1417,14 +1208,9 @@ a:focus-visible {
     justify-content: center;
     gap: 10px;
     min-height: 200px;
-    color: var(--fc-gray);
+    color: var(--tk-muted);
     font-size: 13px;
 }
-
-
-/* =========================================================
-   REDUCED MOTION
-========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
     *,
@@ -1437,126 +1223,46 @@ a:focus-visible {
     }
 }
 
-
-/* =========================================================
-   MOBILE RESPONSIVE ALIGNMENT FIX
-   Preserve existing design and functionality
-========================================================= */
-
 @media (max-width: 679px) {
+    .app-shell {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-inner {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
 
     .app-viewport {
         width: 100%;
         max-width: 100%;
-        margin-left: 0;
-        margin-right: 0;
-        min-width: 0;
+        padding-left: 16px;
+        padding-right: 16px;
     }
 
     .people-feed {
         width: 100%;
         grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
     }
 
     .roseia-card,
     .social-card {
         width: 100%;
+        max-width: 100%;
         min-width: 0;
-    }
-
-    .card-image-wrap {
-        width: 100%;
-    }
-
-    .card-content-wrap {
-        min-width: 0;
-    }
-
-    .card-actions-row {
-        width: 100%;
-        gap: 10px;
     }
 
     .btn-view-profile,
     .btn-book-date {
+        flex: 1 1 0;
         min-width: 0;
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 8px;
+        padding-right: 8px;
     }
-}
-
-/* Mobile header and profile card alignment refinement */
-@media (max-width: 679px) {
-
-/* Remove unnecessary horizontal spacing from the app shell */
-.app-shell {
-    width: 100%;
-    max-width: 100%;
-    padding-left: 0;
-    padding-right: 0;
-}
-
-/* Make the header span the full available width */
-.app-header {
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-.header-inner {
-    width: 100%;
-    max-width: 100%;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
-/* Give the main content a consistent 16px side margin matching mobile bezel */
-.app-viewport {
-    width: 100%;
-    max-width: 100%;
-    padding-left: 16px;
-    padding-right: 16px;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-/* Let profile cards use the available content width */
-.people-feed {
-    width: 100%;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-}
-
-.roseia-card,
-.social-card {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-.card-image-wrap {
-    width: 100%;
-}
-
-.card-content-wrap {
-    min-width: 0;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
-.card-actions-row {
-    width: 100%;
-    gap: 10px;
-}
-
-.btn-view-profile,
-.btn-book-date {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-left: 8px;
-    padding-right: 8px;
-}
-
 }

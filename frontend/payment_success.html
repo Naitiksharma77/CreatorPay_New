@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Payment Successful | Takora</title>
+    <title>Membership Confirmation | Takora</title>
 
     <link rel="stylesheet" href="payment_success_styles.css">
-    
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
 
-    gtag('config', 'G-3ZVP8Q457D');
-</script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZVP8Q457D"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-3ZVP8Q457D');
+    </script>
 
     <script src="tracking.js" defer></script>
 </head>
@@ -24,121 +22,138 @@
 <body>
 
     <main class="success-container">
-
         <div class="success-card">
+            <div id="statusIcon" class="success-icon">✓</div>
+            <p id="statusEyebrow" class="eyebrow">CHECKING MEMBERSHIP</p>
+            <h1 id="statusHeading">Verifying your plan...</h1>
+            <p id="statusMessage" class="success-message">Confirming your monthly Takora membership status with the server.</p>
 
-            <div class="success-icon">
-                ✓
+            <div id="detailsCard" class="success-note" style="display: none;">
+                <div class="detail-row">
+                    <span class="detail-label">Membership Plan</span>
+                    <span id="planNameVal" class="detail-val blue">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Monthly Billing</span>
+                    <span id="planAmountVal" class="detail-val">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">AutoPay Status</span>
+                    <span id="autoPayStatusVal" class="detail-val green">—</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Next Renewal Date</span>
+                    <span id="nextBillingVal" class="detail-val">—</span>
+                </div>
+                <div class="perm-grid" id="permGrid">
+                    <div id="permChat" class="perm-chip">Chat</div>
+                    <div id="permVoice" class="perm-chip">Voice Call</div>
+                    <div id="permVideo" class="perm-chip">HD Video Call</div>
+                </div>
             </div>
 
-            <p class="eyebrow">
-                PAYMENT SUCCESSFUL
-            </p>
-
-            <h1>
-                Thank you!
-            </h1>
-
-            <p class="success-message">
-                Your payment has been completed successfully.
-            </p>
-
-            <div class="success-note">
-
-                <p>
-                    You selected:
-                    <strong id="creatorName">
-                        Friend
-                    </strong>
-                </p>
-
-                <p>
-                    Amount:
-                    <strong id="paymentAmount">
-                        ₹0
-                    </strong>
-                </p>
-
-            </div>
-
-            <div id="chatActionWrap" style="display: none; margin-top: 26px;">
-                <a id="startChatBtn" href="chat.html" class="home-button" style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); box-shadow: 0 4px 16px rgba(236,72,153,0.35); margin-top: 0; margin-bottom: 12px; display: block;">
-                    Start Chat with <span id="chatCreatorBtnName">Partner</span>
-                </a>
-            </div>
-
-            <a
-                href="explore.html"
-                class="home-button"
-            >
-                Back to Explore
-            </a>
-
-            <a
-                href="creator_home.html"
-                class="secondary-link"
-            >
-                Go to Home
-            </a>
-
+            <a href="creator_home.html" class="home-button">Explore Creators</a>
+            <button type="button" id="manageBtn" class="secondary-button">Manage Membership &amp; AutoPay</button>
+            <a href="pricing.html" class="secondary-link">View All Monthly Plans</a>
         </div>
-
     </main>
 
+    <script src="takora_auth.js"></script>
     <script>
+        (function () {
+            const statusIcon = document.getElementById("statusIcon");
+            const statusEyebrow = document.getElementById("statusEyebrow");
+            const statusHeading = document.getElementById("statusHeading");
+            const statusMessage = document.getElementById("statusMessage");
+            const detailsCard = document.getElementById("detailsCard");
+            const manageBtn = document.getElementById("manageBtn");
 
-        const savedPayment =
-            localStorage.getItem("creatorpay_payment");
-        let targetCreatorId = null;
+            function formatDate(iso) {
+                if (!iso) return "—";
+                try {
+                    return new Date(iso).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                    });
+                } catch (_) {
+                    return "—";
+                }
+            }
 
-        if (savedPayment) {
-            try {
-                const paymentDetails =
-                    JSON.parse(savedPayment);
+            async function loadConfirmation() {
+                if (!window.TakoraAuth) return;
+                await window.TakoraAuth.refreshSession();
+                const auth = window.TakoraAuth.getState();
 
-                if (paymentDetails.creatorName) {
-                    document.getElementById(
-                        "creatorName"
-                    ).textContent =
-                        paymentDetails.creatorName;
+                if (!auth.authenticated) {
+                    statusIcon.className = "success-icon pending";
+                    statusIcon.textContent = "!";
+                    statusEyebrow.textContent = "SIGN IN REQUIRED";
+                    statusHeading.textContent = "Check Your Membership";
+                    statusMessage.textContent = "Please sign in with the free account used during checkout to view your active subscription details.";
+                    manageBtn.textContent = "Sign In to View Membership";
+                    manageBtn.onclick = () => window.TakoraAuth.openAuthModal("login", loadConfirmation);
+                    return;
                 }
 
-                if (paymentDetails.amount) {
-                    document.getElementById(
-                        "paymentAmount"
-                    ).textContent =
-                        "₹" +
-                        Number(
-                            paymentDetails.amount
-                        ).toLocaleString("en-IN");
+                const { res, data } = await window.TakoraAuth.apiFetch("/api/subscriptions/me", { method: "GET" });
+                const sub = res.ok && data ? data.subscription : auth.subscription;
+                const ent = res.ok && data ? data.entitlements : auth.entitlements;
+
+                if (ent && ent.hasActiveSubscription && sub) {
+                    statusIcon.className = "success-icon";
+                    statusIcon.textContent = "✓";
+                    statusEyebrow.textContent = "MEMBERSHIP ACTIVE";
+                    statusHeading.textContent = `Welcome to ${ent.planName}!`;
+                    statusMessage.textContent = "Your monthly Razorpay AutoPay subscription is verified. Your unlocked creator features are ready right away.";
+
+                    detailsCard.style.display = "block";
+                    document.getElementById("planNameVal").textContent = `${ent.planName} Plan`;
+                    document.getElementById("planAmountVal").textContent = `₹${ent.amountInr}/month`;
+                    document.getElementById("autoPayStatusVal").textContent = ent.cancelAtPeriodEnd
+                        ? "Cancels at Cycle End"
+                        : "Active · AutoPay On";
+                    document.getElementById("nextBillingVal").textContent = ent.cancelAtPeriodEnd
+                        ? `Ends ${formatDate(ent.currentEnd)}`
+                        : formatDate(ent.nextBillingDate || ent.currentEnd);
+
+                    const chatEl = document.getElementById("permChat");
+                    const voiceEl = document.getElementById("permVoice");
+                    const videoEl = document.getElementById("permVideo");
+                    chatEl.textContent = ent.canChat ? "✓ 1:1 Chat" : "✕ 1:1 Chat";
+                    chatEl.className = `perm-chip ${ent.canChat ? "unlocked" : ""}`;
+                    voiceEl.textContent = ent.canVoiceCall ? "✓ Voice Call" : "✕ Voice Call";
+                    voiceEl.className = `perm-chip ${ent.canVoiceCall ? "unlocked" : ""}`;
+                    videoEl.textContent = ent.canVideoCall ? "✓ HD Video Call" : "✕ HD Video Call";
+                    videoEl.className = `perm-chip ${ent.canVideoCall ? "unlocked" : ""}`;
+
+                    manageBtn.onclick = () => window.TakoraAuth.openAccountModal();
+                    return;
                 }
 
-                if (paymentDetails.creatorId) {
-                    targetCreatorId = paymentDetails.creatorId;
+                if (ent && ent.pendingMandate) {
+                    statusIcon.className = "success-icon pending";
+                    statusIcon.textContent = "⏳";
+                    statusEyebrow.textContent = "PENDING SETTLEMENT";
+                    statusHeading.textContent = "Mandate Authorized";
+                    statusMessage.textContent = "Your AutoPay mandate is authorized and awaiting final payment confirmation from Razorpay. Access unlocks automatically once payment settles.";
+                    manageBtn.onclick = () => loadConfirmation();
+                    manageBtn.textContent = "Refresh Membership Status";
+                    return;
                 }
-            } catch (_) {}
-        }
 
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("id")) targetCreatorId = params.get("id");
+                statusIcon.className = "success-icon pending";
+                statusIcon.textContent = "!";
+                statusEyebrow.textContent = "NO ACTIVE SUBSCRIPTION";
+                statusHeading.textContent = "Plan Not Yet Active";
+                statusMessage.textContent = "No verified monthly payment was found for this account yet. Choose a plan to activate membership access.";
+                manageBtn.textContent = "Choose a Monthly Plan";
+                manageBtn.onclick = () => { window.location.href = "pricing.html"; };
+            }
 
-        if (targetCreatorId) {
-            try {
-                const sessRaw = localStorage.getItem(`fc_chat_session_${targetCreatorId}`);
-                if (sessRaw) {
-                    const sess = JSON.parse(sessRaw);
-                    if (sess && sess.token && sess.paymentId) {
-                        const chatWrap = document.getElementById("chatActionWrap");
-                        const chatBtn = document.getElementById("startChatBtn");
-                        const chatName = document.getElementById("chatCreatorBtnName");
-                        chatBtn.href = `chat.html?id=${encodeURIComponent(targetCreatorId)}&payment_id=${encodeURIComponent(sess.paymentId)}&token=${encodeURIComponent(sess.token)}`;
-                        if (sess.creatorName) chatName.textContent = sess.creatorName;
-                        chatWrap.style.display = "block";
-                    }
-                }
-            } catch (_) {}
-        }
-
+            document.addEventListener("DOMContentLoaded", loadConfirmation);
+        })();
     </script>
 
 </body>

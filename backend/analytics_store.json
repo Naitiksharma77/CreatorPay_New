@@ -74,6 +74,11 @@
       "userId": "v_mvb2b0vn_ufptm4",
       "date": "2026-11-04",
       "timestamp": "2026-11-04T07:50:10.694Z"
+    },
+    {
+      "userId": "v_mvb2b0vn_ufptm4",
+      "date": "2026-11-22",
+      "timestamp": "2026-11-22T09:01:08.733Z"
     }
   ],
   "active_sessions": {
@@ -143,6 +148,13 @@
     "s_mw1tgy6d_7t3b48": {
       "visitorId": "v_mvb2b0vn_ufptm4",
       "lastSeen": "2026-11-04T08:13:17.887Z",
+      "page": "creator_home.html",
+      "creatorId": null,
+      "source": "Google"
+    },
+    "s_mwrlxjp8_q420si": {
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "lastSeen": "2026-11-22T09:17:03.819Z",
       "page": "creator_home.html",
       "creatorId": null,
       "source": "Google"
@@ -884,6 +896,54 @@
       "source": "Direct",
       "referrer": "",
       "timestamp": "2026-11-06T03:36:37.708Z"
+    },
+    {
+      "id": "evt_1795338066722_ec402a",
+      "type": "page_view",
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "sessionId": "s_mwrlxjp8_q420si",
+      "isNewVisitor": false,
+      "page": "creator_home.html",
+      "title": "Takora — Curated In-Person Dating",
+      "creatorId": null,
+      "creatorName": null,
+      "buttonName": null,
+      "amount": null,
+      "source": "Google",
+      "referrer": "https://aistudio.google.com/",
+      "timestamp": "2026-11-22T09:01:08.733Z"
+    },
+    {
+      "id": "evt_1795338794165_c4bb4a",
+      "type": "page_view",
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "sessionId": "s_mwrlxjp8_q420si",
+      "isNewVisitor": false,
+      "page": "creator_home.html",
+      "title": "Takora — Curated In-Person Dating",
+      "creatorId": null,
+      "creatorName": null,
+      "buttonName": null,
+      "amount": null,
+      "source": "Google",
+      "referrer": "https://aistudio.google.com/",
+      "timestamp": "2026-11-22T09:13:15.932Z"
+    },
+    {
+      "id": "evt_1795339021851_c8c564",
+      "type": "button_click",
+      "visitorId": "v_mvb2b0vn_ufptm4",
+      "sessionId": "s_mwrlxjp8_q420si",
+      "isNewVisitor": false,
+      "page": "creator_home.html",
+      "title": "Takora — Curated In-Person Dating",
+      "creatorId": null,
+      "creatorName": null,
+      "buttonName": "Close",
+      "amount": null,
+      "source": "Google",
+      "referrer": "https://aistudio.google.com/",
+      "timestamp": "2026-11-22T09:17:03.819Z"
     }
   ],
   "pending_orders": {

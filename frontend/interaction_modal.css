@@ -1,449 +1,382 @@
-/**
- * Roséia — Interaction Modal Styles (Chat, Voice Call, Video Call)
- * Clean, mobile-first design with shared transparent pricing
- */
+/* ==========================================================================
+   Takora — Interaction Modal Styles (Chat, Voice Call, Video Call)
+   iOS-Inspired Clean Blue Palette
+   ========================================================================== */
 
 :root {
-    --ros-bg: #FFF7FA;
-    --ros-card: #FFFFFF;
-    --ros-pink: #E11D48;
-    --ros-pink-soft: #FFF1F5;
-    --ros-pink-hover: #BE123C;
-    --ros-border: #FCE7F3;
-    --ros-border-hover: #F43F5E;
-    --ros-text-dark: #25202A;
-    --ros-text-muted: #817783;
-    --ros-shadow: 0 16px 40px rgba(225, 29, 72, 0.12);
+    --tk-bg: #F8FAFC;
+    --tk-surface: #FFFFFF;
+    --tk-blue: #2563EB;
+    --tk-blue-dark: #1D4ED8;
+    --tk-blue-soft: #EFF6FF;
+    --tk-border: #E2E8F0;
+    --tk-border-blue: #DBEAFE;
+    --tk-text: #0F172A;
+    --tk-muted: #64748B;
+    --tk-green: #16A34A;
 }
 
-.ros-modal-backdrop {
+.roseia-modal-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 9999;
-    background: rgba(37, 32, 42, 0.65);
+    z-index: 9000;
+    background: rgba(15, 23, 42, 0.48);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding: 0;
-    animation: rosBackdropFadeIn 0.22s ease-out;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
 }
 
 @media (min-width: 640px) {
-    .ros-modal-backdrop {
+    .roseia-modal-backdrop {
         align-items: center;
         padding: 20px;
     }
 }
 
-.ros-modal-card {
-    background: #FFFFFF;
+.roseia-modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.roseia-modal-sheet {
     width: 100%;
-    max-width: 480px;
-    border-radius: 28px 28px 0 0;
-    padding: 24px 22px 28px;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
-    position: relative;
+    max-width: 440px;
+    background: var(--tk-surface);
+    border-radius: 26px 26px 0 0;
+    padding: 12px 20px max(24px, env(safe-area-inset-bottom));
+    box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.16);
+    border-top: 1px solid var(--tk-border);
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 92vh;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    animation: rosSlideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 640px) {
-    .ros-modal-card {
-        border-radius: 28px;
-        box-shadow: var(--ros-shadow);
-        animation: rosCardPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        padding: 28px 26px 32px;
+    .roseia-modal-sheet {
+        border-radius: 26px;
+        padding: 22px 24px 26px;
+        border: 1px solid var(--tk-border);
+        transform: translateY(20px) scale(0.97);
     }
 }
 
-@keyframes rosBackdropFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.roseia-modal-backdrop.open .roseia-modal-sheet {
+    transform: translateY(0) scale(1);
 }
 
-@keyframes rosSlideUpMobile {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-
-@keyframes rosCardPop {
-    from { opacity: 0; transform: scale(0.96) translateY(12px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-/* Modal Grab Bar (Mobile) */
-.ros-modal-grab-bar {
-    width: 44px;
-    height: 4px;
-    background: #E5E7EB;
-    border-radius: 999px;
-    margin: 0 auto 16px;
-    display: block;
+.modal-drag-handle {
+    width: 36px;
+    height: 4.5px;
+    border-radius: 3px;
+    background: #CBD5E1;
+    margin: 0 auto 14px;
 }
 
 @media (min-width: 640px) {
-    .ros-modal-grab-bar {
+    .modal-drag-handle {
         display: none;
     }
 }
 
-/* Header */
-.ros-modal-header {
+.modal-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
-.ros-modal-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: var(--ros-text-dark);
+.modal-creator-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.modal-creator-mini img {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--tk-border-blue);
+    flex-shrink: 0;
+}
+
+.modal-creator-mini h4 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--tk-text);
     margin: 0;
-    letter-spacing: -0.01em;
+    line-height: 1.2;
 }
 
-.ros-modal-close-btn {
+.modal-creator-mini p {
+    font-size: 12.5px;
+    color: var(--tk-muted);
+    margin: 2px 0 0;
+}
+
+.modal-close-x {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #F3F4F6;
-    border: none;
-    color: var(--ros-text-dark);
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
+    color: var(--tk-text);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 20px;
-    line-height: 1;
-    transition: background 0.15s, transform 0.15s;
-}
-
-.ros-modal-close-btn:hover {
-    background: #E5E7EB;
-    transform: scale(1.05);
-}
-
-/* Creator Snapshot */
-.ros-creator-snapshot {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 14px;
-    background: var(--ros-pink-soft);
-    border: 1px solid var(--ros-border);
-    border-radius: 18px;
-    margin-bottom: 22px;
-}
-
-.ros-snapshot-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #FFFFFF;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
-.ros-snapshot-info {
-    flex: 1;
-    min-width: 0;
+.modal-close-x:hover {
+    background: var(--tk-blue-soft);
+    color: var(--tk-blue);
+    border-color: var(--tk-border-blue);
 }
 
-.ros-snapshot-name {
-    font-size: 1.1rem;
+.modal-section-title {
+    font-size: 13px;
     font-weight: 700;
-    color: var(--ros-text-dark);
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--tk-muted);
+    margin-bottom: 10px;
 }
 
-.ros-snapshot-tagline {
-    font-size: 0.82rem;
-    color: var(--ros-text-muted);
-}
-
-/* Section Title */
-.ros-section-label {
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ros-text-muted);
-    margin-bottom: 12px;
-    display: block;
-}
-
-/* Interaction Options Grid / List */
-.ros-options-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 22px;
-}
-
-.ros-option-card {
+/* Plan status banner inside modal */
+.tk-modal-plan-banner {
+    background: var(--tk-blue-soft);
+    border: 1px solid var(--tk-border-blue);
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
-    border-radius: 18px;
-    border: 1.5px solid #F1ECEF;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--tk-text);
+}
+
+.tk-modal-plan-link {
+    color: var(--tk-blue);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.tk-modal-plan-link:hover {
+    text-decoration: underline;
+}
+
+/* Interaction Mode Options */
+.interaction-option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.interaction-option-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 14px;
+    border-radius: 16px;
+    border: 1.5px solid var(--tk-border);
     background: #FFFFFF;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: left;
+    transition: all 0.15s ease;
     width: 100%;
 }
 
-.ros-option-card:hover {
-    border-color: #FBCFE8;
-    background: #FFFBFD;
+.interaction-option-btn:hover {
+    border-color: #93C5FD;
+    background: #F8FAFC;
 }
 
-.ros-option-card.is-selected {
-    border-color: var(--ros-pink);
-    background: var(--ros-pink-soft);
-    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.08);
+.interaction-option-btn.selected {
+    border-color: var(--tk-blue);
+    background: var(--tk-blue-soft);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.10);
 }
 
-.ros-opt-left {
+.option-left-wrap {
     display: flex;
     align-items: center;
-    gap: 13px;
+    gap: 12px;
     min-width: 0;
 }
 
-.ros-opt-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-    background: #FCE7F3;
-    color: var(--ros-pink);
+.option-icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--tk-blue-soft);
+    color: var(--tk-blue);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: background 0.2s, color 0.2s;
 }
 
-.ros-option-card.is-selected .ros-opt-icon-wrap {
-    background: var(--ros-pink);
+.interaction-option-btn.selected .option-icon-circle {
+    background: var(--tk-blue);
     color: #FFFFFF;
 }
 
-.ros-opt-details {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.ros-opt-title {
-    font-size: 0.96rem;
+.option-info h5 {
+    font-size: 14.5px;
     font-weight: 700;
-    color: var(--ros-text-dark);
-    margin-bottom: 2px;
+    color: var(--tk-text);
+    margin: 0;
 }
 
-.ros-opt-sub {
-    font-size: 0.78rem;
-    color: var(--ros-text-muted);
-    line-height: 1.25;
+.option-info span {
+    font-size: 12px;
+    color: var(--tk-muted);
+    display: block;
+    margin-top: 2px;
 }
 
-.ros-opt-right {
+.option-right-wrap {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-shrink: 0;
 }
 
-.ros-opt-price-tag {
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: #059669;
+.option-tier-status {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--tk-blue);
+    white-space: nowrap;
 }
 
-.ros-opt-radio {
-    width: 20px;
-    height: 20px;
+.option-tier-status.included {
+    color: var(--tk-green);
+}
+
+.option-tier-status.locked {
+    color: var(--tk-muted);
+}
+
+.option-radio-dot {
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    border: 2px solid #D1D5DB;
+    border: 2px solid #CBD5E1;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.2s;
+    transition: all 0.15s ease;
 }
 
-.ros-option-card.is-selected .ros-opt-radio {
-    border-color: var(--ros-pink);
+.interaction-option-btn.selected .option-radio-dot {
+    border-color: var(--tk-blue);
+    background: var(--tk-blue);
 }
 
-.ros-opt-radio-dot {
-    width: 10px;
-    height: 10px;
+.interaction-option-btn.selected .option-radio-dot::after {
+    content: "";
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: var(--ros-pink);
-    opacity: 0;
-    transform: scale(0.5);
-    transition: all 0.18s ease-out;
+    background: #FFFFFF;
 }
 
-.ros-option-card.is-selected .ros-opt-radio-dot {
-    opacity: 1;
-    transform: scale(1);
-}
-
-/* Pricing Breakdown (Transparent Single Price) */
-.ros-price-summary-box {
-    background: #FAF7F9;
-    border-radius: 16px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    border: 1px solid #F3EDF1;
-}
-
-.ros-summary-row {
+/* Selected Summary */
+.modal-summary-box {
+    background: var(--tk-bg);
+    border: 1px solid var(--tk-border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 0.88rem;
-    color: var(--ros-text-muted);
-    margin-bottom: 8px;
+    gap: 12px;
 }
 
-.ros-summary-row:last-child {
-    margin-bottom: 0;
-    padding-top: 8px;
-    border-top: 1px dashed #E5E7EB;
-    font-weight: 700;
-    color: var(--ros-text-dark);
-    font-size: 1rem;
+.summary-left-text span {
+    display: block;
+    font-size: 12px;
+    color: var(--tk-muted);
+    font-weight: 600;
 }
 
-.ros-total-val {
-    color: #059669;
-    font-size: 1.25rem;
+.summary-left-text strong {
+    display: block;
+    font-size: 14px;
+    color: var(--tk-text);
+    font-weight: 750;
+    margin-top: 2px;
+}
+
+.summary-tier-text {
+    font-size: 13px;
     font-weight: 800;
+    color: var(--tk-blue);
+    white-space: nowrap;
 }
 
-/* Action CTA Button */
-.ros-pay-btn {
+.summary-tier-text.included {
+    color: var(--tk-green);
+}
+
+/* Modal CTA Button */
+.modal-pay-btn {
     width: 100%;
-    padding: 15px 20px;
-    background: linear-gradient(135deg, #E11D48 0%, #DB2777 100%);
-    color: #FFFFFF;
-    border: none;
+    height: 50px;
     border-radius: 16px;
-    font-size: 1rem;
+    border: none;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    color: #FFFFFF;
+    font-size: 15px;
     font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.28);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.28);
-    transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
-    min-height: 52px;
+    transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-.ros-pay-btn:hover {
+.modal-pay-btn:hover:not(:disabled) {
     filter: brightness(1.06);
-    box-shadow: 0 8px 24px rgba(225, 29, 72, 0.35);
 }
 
-.ros-pay-btn:active {
-    transform: scale(0.98);
+.modal-pay-btn:active:not(:disabled) {
+    transform: scale(0.985);
 }
 
-.ros-pay-btn:disabled {
-    opacity: 0.55;
+.modal-pay-btn:disabled {
+    opacity: 0.65;
     cursor: not-allowed;
-    box-shadow: none;
 }
 
-.ros-security-note {
+.modal-trust-footer {
     text-align: center;
-    font-size: 0.74rem;
-    color: #9CA3AF;
+    font-size: 12px;
+    color: var(--tk-muted);
     margin-top: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
 }
 
-/* Call Confirmation Notice (Transparent & Honest Calling State) */
-.ros-notice-card {
-    text-align: center;
-    padding: 10px 0;
+.modal-trust-footer a {
+    color: var(--tk-blue);
+    font-weight: 650;
+    text-decoration: none;
 }
 
-.ros-notice-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #ECFDF5;
-    color: #059669;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 16px;
-}
-
-.ros-notice-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--ros-text-dark);
-    margin-bottom: 8px;
-}
-
-.ros-notice-body {
-    font-size: 0.88rem;
-    color: #4B5563;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    background: #F9FAFB;
-    padding: 14px 16px;
-    border-radius: 14px;
-    border: 1px solid #E5E7EB;
-    text-align: left;
-}
-
-.ros-notice-meta {
-    font-size: 0.82rem;
-    color: #6B7280;
-    margin-bottom: 12px;
-}
-
-.ros-notice-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.ros-btn-secondary {
-    width: 100%;
-    padding: 13px 18px;
-    background: #F3F4F6;
-    color: var(--ros-text-dark);
-    border: none;
-    border-radius: 14px;
-    font-size: 0.92rem;
-    font-weight: 600;
-    cursor: pointer;
-    min-height: 46px;
-}
-
-.ros-btn-secondary:hover {
-    background: #E5E7EB;
+.modal-trust-footer a:hover {
+    text-decoration: underline;
 }

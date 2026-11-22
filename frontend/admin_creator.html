@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#FDF4F8">
-    <title>Takora — Executive Pink Dashboard</title>
+    <meta name="theme-color" content="#F8FAFC">
+    <title>Takora — Admin &amp; Subscription Dashboard</title>
 
     <link rel="stylesheet" href="admin_creator_styles.css">
 </head>
@@ -13,57 +13,57 @@
 
     <div class="app-layout">
 
-        <!-- =========================================================
-             LEFT MINI ICON SIDEBAR (REFERENCE IMAGE STYLE)
-        ========================================================= -->
+        <!-- Left Sidebar -->
         <aside class="dashboard-sidebar">
             <a href="creator_home.html" class="sidebar-logo" title="Takora Home">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
             </a>
 
-            <nav class="sidebar-nav" aria-label="Main Navigation">
-                <!-- Overview Dashboard -->
+            <nav class="sidebar-nav" aria-label="Admin Navigation">
                 <button type="button" class="nav-icon-btn active" title="Dashboard Overview" id="navDashboardBtn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                 </button>
 
-                <!-- Creator / Order Management -->
-                <button type="button" class="nav-icon-btn" title="Creator & Partner List" id="navCreatorsBtn" onclick="document.getElementById('creatorsSection').scrollIntoView({ behavior: 'smooth' })">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
+                <button type="button" class="nav-icon-btn" title="Subscription Analytics" id="navSubscriptionsBtn" onclick="document.getElementById('subscriptionsSection').scrollIntoView({ behavior: 'smooth' })">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
                     </svg>
                 </button>
 
-                <!-- Public Directory / Explore -->
-                <a href="explore.html" class="nav-icon-btn" title="Explore Platform" target="_blank" rel="noopener">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="nav-icon-btn" title="Creator Directory" id="navCreatorsBtn" onclick="document.getElementById('creatorsSection').scrollIntoView({ behavior: 'smooth' })">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </button>
+
+                <a href="pricing.html" class="nav-icon-btn" title="Membership Plans" target="_blank" rel="noopener">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </a>
+
+                <a href="explore.html" class="nav-icon-btn" title="Explore Creators" target="_blank" rel="noopener">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
                         <rect x="14" y="14" width="7" height="7"></rect>
                         <rect x="3" y="14" width="7" height="7"></rect>
                     </svg>
                 </a>
-
-                <!-- Connections -->
-                <a href="creator_home.html#chats" class="nav-icon-btn" title="Conversations" target="_blank" rel="noopener">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                </a>
             </nav>
 
             <div class="sidebar-footer">
-                <a href="creator_home.html" class="nav-icon-btn" title="Exit to Public App">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <a href="creator_home.html" class="nav-icon-btn" title="Return to Takora App">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -72,12 +72,9 @@
             </div>
         </aside>
 
-        <!-- =========================================================
-             MAIN DASHBOARD CANVAS
-        ========================================================= -->
+        <!-- Main Dashboard Canvas -->
         <main class="dashboard-main-area">
 
-            <!-- Topbar (Search, Date, Actions, Profile) -->
             <header class="dashboard-topbar">
                 <div class="topbar-search-wrap">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -88,14 +85,14 @@
                         type="text"
                         class="topbar-search-input"
                         id="globalSearchInput"
-                        placeholder="Search partners, orders..."
+                        placeholder="Search creators or subscriber emails..."
                         aria-label="Search"
                     >
                 </div>
 
                 <div class="topbar-right-group">
                     <div class="date-pill" id="currentDatePill">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dash-pink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dash-blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                             <line x1="16" y1="2" x2="16" y2="6"></line>
                             <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -116,16 +113,15 @@
                         src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
                         alt="Admin Profile"
                         class="topbar-avatar"
-                        title="Meet You Partner Admin"
+                        title="Takora Admin"
                     >
                 </div>
             </header>
 
-            <!-- Greeting & Period Filter -->
             <section class="greeting-row">
                 <div>
-                    <h1 class="greeting-title">Hello, Admin! 👋</h1>
-                    <p class="greeting-sub">This is what's happening on your platform this period.</p>
+                    <h1 class="greeting-title">Takora Admin Overview</h1>
+                    <p class="greeting-sub">Monthly membership subscriptions, Razorpay AutoPay health, and creator management.</p>
                 </div>
 
                 <div class="period-select-wrap" role="group" aria-label="Date range selector">
@@ -136,91 +132,78 @@
                 </div>
             </section>
 
-            <!-- =========================================================
-                 SECTION 1: TOP OVERVIEW GRID (4 STATS + REVENUE BAR CHART)
-            ========================================================= -->
+            <!-- SECTION 1: TOP OVERVIEW METRICS -->
             <section class="dashboard-overview-grid" aria-label="Overview Metrics">
-
-                <!-- 2x2 Subgrid of Stat Cards -->
                 <div class="stats-subgrid-2x2">
-
-                    <!-- Card 1: Primary Pink Highlight Card -->
-                    <div class="stat-box primary-pink">
+                    <!-- Card 1: Primary Blue MRR Highlight -->
+                    <div class="stat-box primary-blue">
                         <div class="stat-box-top">
-                            <span class="stat-label">Total revenue</span>
-                            <button type="button" class="arrow-badge-btn" aria-label="Revenue details">↗</button>
+                            <span class="stat-label">Monthly Recurring (MRR)</span>
+                            <span class="arrow-badge-btn" aria-hidden="true">₹</span>
+                        </div>
+                        <div class="stat-value" id="statMrr">₹0</div>
+                        <div class="stat-bottom-row">
+                            <span class="trend-pill" id="statActiveSubsTrend">0 active</span>
+                            <span class="stat-sub">Active recurring plans</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Period Subscription Revenue -->
+                    <div class="stat-box">
+                        <div class="stat-box-top">
+                            <span class="stat-label">Subscription revenue</span>
+                            <span class="arrow-badge-btn" aria-hidden="true">↗</span>
                         </div>
                         <div class="stat-value" id="statRevenue">₹0</div>
                         <div class="stat-bottom-row">
-                            <span class="trend-pill" id="statRevenueTrend">↑ Verified</span>
-                            <span class="stat-sub">Razorpay confirmed</span>
+                            <span class="trend-pill up" id="statRevenueTrend">0 verified</span>
+                            <span class="stat-sub">Razorpay settled</span>
                         </div>
                     </div>
 
-                    <!-- Card 2: Total Orders -->
+                    <!-- Card 3: Active Subscribers -->
                     <div class="stat-box">
                         <div class="stat-box-top">
-                            <span class="stat-label">Total orders</span>
-                            <button type="button" class="arrow-badge-btn" aria-label="Orders details">↗</button>
+                            <span class="stat-label">Active subscriptions</span>
+                            <span class="arrow-badge-btn" aria-hidden="true">✓</span>
                         </div>
-                        <div class="stat-value" id="statOrders">0</div>
+                        <div class="stat-value" id="statActiveSubs">0</div>
                         <div class="stat-bottom-row">
-                            <span class="trend-pill up" id="statOrdersTrend">Active</span>
-                            <span class="stat-sub">Checkout created</span>
+                            <span class="trend-pill blue" id="statSubscribersTotal">0 total</span>
+                            <span class="stat-sub">Unique subscribers</span>
                         </div>
                     </div>
 
-                    <!-- Card 3: Total Visitors -->
+                    <!-- Card 4: Registered Free Accounts -->
                     <div class="stat-box">
                         <div class="stat-box-top">
-                            <span class="stat-label">Total visitors</span>
-                            <button type="button" class="arrow-badge-btn" aria-label="Visitors details">↗</button>
+                            <span class="stat-label">Registered users</span>
+                            <span class="arrow-badge-btn" aria-hidden="true">☺</span>
                         </div>
-                        <div class="stat-value" id="statVisitors">0</div>
+                        <div class="stat-value" id="statRegisteredUsers">0</div>
                         <div class="stat-bottom-row">
-                            <span class="trend-pill up" id="statVisitorsTrend">Live</span>
-                            <span class="stat-sub">Tracked visitors</span>
+                            <span class="trend-pill up" id="statVisitorsTrend">0 visitors</span>
+                            <span class="stat-sub">Free signup enabled</span>
                         </div>
                     </div>
-
-                    <!-- Card 4: Net Profit / Payout -->
-                    <div class="stat-box">
-                        <div class="stat-box-top">
-                            <span class="stat-label">Net revenue</span>
-                            <button type="button" class="arrow-badge-btn" aria-label="Net revenue details">↗</button>
-                        </div>
-                        <div class="stat-value" id="statNetRevenue">₹0</div>
-                        <div class="stat-bottom-row">
-                            <span class="trend-pill up">0% refunds</span>
-                            <span class="stat-sub">100% net payout</span>
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- Right: Sleek Bar Chart (Matching Reference Image) -->
+                <!-- Revenue Bar Chart -->
                 <div class="bar-chart-card">
                     <div class="bar-chart-header">
                         <div class="chart-header-titles">
-                            <h3>Revenue</h3>
-                            <p id="barChartSubtitle">Daily verified transaction volume</p>
+                            <h3>Subscription Revenue</h3>
+                            <p id="barChartSubtitle">Daily settled Razorpay subscription volume</p>
                         </div>
-                        <button type="button" class="chart-arrow-btn" title="View details" aria-label="Chart details">↗</button>
+                        <button type="button" class="chart-arrow-btn" title="Refresh Chart" aria-label="Refresh chart" onclick="loadAnalytics(currentPeriod, true)">↻</button>
                     </div>
 
-                    <div class="chart-canvas-wrap" id="revenueBarChartContainer">
-                        <!-- Bar chart rendered dynamically via JS -->
-                    </div>
+                    <div class="chart-canvas-wrap" id="revenueBarChartContainer"></div>
                 </div>
-
             </section>
 
-            <!-- =========================================================
-                 SECTION 2: MIDDLE ROW (ORDERS, CUSTOMERS, DONUT CHART)
-            ========================================================= -->
-            <section class="dashboard-middle-grid" aria-label="Breakdowns and Categories">
-
-                <!-- Card 1: Orders Status (Wavy graphic) -->
+            <!-- SECTION 2: MIDDLE ROW -->
+            <section class="dashboard-middle-grid" aria-label="Payment Health and Categories">
                 <div class="status-wavy-card">
                     <div class="wavy-top-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -228,19 +211,17 @@
                         </svg>
                     </div>
 
-                    <!-- Subtle Pink Wavy Accent Lines -->
                     <svg class="wavy-card-bg-lines" width="140" height="100" viewBox="0 0 140 100" fill="none">
-                        <path d="M10 20 C 40 80, 80 10, 130 60" stroke="#EC4899" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4,4"/>
-                        <path d="M20 40 C 50 100, 90 30, 140 80" stroke="#EC4899" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M10 20 C 40 80, 80 10, 130 60" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4,4"/>
+                        <path d="M20 40 C 50 100, 90 30, 140 80" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
 
                     <div>
-                        <div class="wavy-main-count"><span id="statOrdersCount">0</span> orders</div>
-                        <p class="wavy-subtext"><strong id="statOrdersAwaiting">100%</strong> confirmed &amp; verified.</p>
+                        <div class="wavy-main-count"><span id="statPaymentSuccessRate">100%</span> settled</div>
+                        <p class="wavy-subtext"><strong id="statFailedSummary">0 failed · 0 cancelled</strong> subscription checks.</p>
                     </div>
                 </div>
 
-                <!-- Card 2: Customers Status (Wavy graphic) -->
                 <div class="status-wavy-card">
                     <div class="wavy-top-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -249,89 +230,129 @@
                         </svg>
                     </div>
 
-                    <!-- Subtle Pink Wavy Accent Lines -->
                     <svg class="wavy-card-bg-lines" width="140" height="100" viewBox="0 0 140 100" fill="none">
-                        <path d="M10 15 C 50 60, 90 10, 140 50" stroke="#EC4899" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M20 35 C 60 80, 100 30, 150 70" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-dasharray="3,3"/>
+                        <path d="M10 15 C 50 60, 90 10, 140 50" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M20 35 C 60 80, 100 30, 150 70" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-dasharray="3,3"/>
                     </svg>
 
                     <div>
-                        <div class="wavy-main-count"><span id="statCustomersCount">0</span> partners</div>
-                        <p class="wavy-subtext"><strong id="statCustomersLive">Live &amp; active</strong> connections available.</p>
+                        <div class="wavy-main-count"><span id="statCustomersCount">0</span> creators</div>
+                        <p class="wavy-subtext"><strong>Centralized plans</strong> apply across all profiles.</p>
                     </div>
                 </div>
 
-                <!-- Card 3: Donut Chart - Categories (Reference Image Style) -->
                 <div class="donut-chart-card">
                     <div class="bar-chart-header" style="margin-bottom: 8px;">
                         <div class="chart-header-titles">
-                            <h3>Sales by Category</h3>
-                            <p>Partner distribution &amp; popularity</p>
+                            <h3>Creators by Category</h3>
+                            <p>Directory breakdown</p>
                         </div>
-                        <button type="button" class="chart-arrow-btn" title="View categories" aria-label="Category details">↗</button>
                     </div>
 
                     <div class="donut-inner-content">
-                        <div class="donut-svg-wrap" id="donutSvgWrap">
-                            <!-- Rendered dynamically -->
-                        </div>
-                        <div class="donut-legend" id="donutLegend">
-                            <!-- Populated dynamically -->
-                        </div>
+                        <div class="donut-svg-wrap" id="donutSvgWrap"></div>
+                        <div class="donut-legend" id="donutLegend"></div>
                     </div>
                 </div>
-
             </section>
 
-            <!-- =========================================================
-                 SECTION 3: PARTNER & CREATOR LIST (REFERENCE PANEL 2 STYLE)
-            ========================================================= -->
-            <section class="creator-section" id="creatorsSection" aria-label="Partner and Creator Management">
-
-                <div class="creator-section-header">
-                    <h2 class="creator-section-title">Partner &amp; Creator Directory</h2>
+            <!-- SECTION 3: SUBSCRIPTION ANALYTICS & TRANSACTIONS -->
+            <section class="subscription-section" id="subscriptionsSection" aria-label="Subscription Plan Analytics">
+                <div class="section-header-flex">
+                    <div>
+                        <h2 class="section-heading">Subscription Analytics &amp; AutoPay</h2>
+                        <p class="section-sub">Real-time plan distribution and Razorpay subscription payment log.</p>
+                    </div>
+                    <a href="pricing.html" target="_blank" rel="noopener" class="action-icon-btn blue">View Public Plans Page ↗</a>
                 </div>
 
-                <!-- 4 Status Banners across top (Matching Reference Image) -->
+                <div class="plan-breakdown-grid">
+                    <div class="plan-stat-tile blue-soft">
+                        <div class="plan-stat-label">Basic Plan (₹9/mo)</div>
+                        <div class="plan-stat-value" id="subPlanBasicCount">0</div>
+                        <div class="plan-stat-note">Active chat subscribers</div>
+                    </div>
+                    <div class="plan-stat-tile blue-soft">
+                        <div class="plan-stat-label">Pro Plan (₹29/mo)</div>
+                        <div class="plan-stat-value" id="subPlanProCount">0</div>
+                        <div class="plan-stat-note">Active chat + voice subscribers</div>
+                    </div>
+                    <div class="plan-stat-tile green-soft">
+                        <div class="plan-stat-label">Premium Plan (₹99/mo)</div>
+                        <div class="plan-stat-value" id="subPlanPremiumCount">0</div>
+                        <div class="plan-stat-note">Active full-access subscribers</div>
+                    </div>
+                    <div class="plan-stat-tile amber-soft">
+                        <div class="plan-stat-label">Cancelled / Failed</div>
+                        <div class="plan-stat-value"><span id="subCancelledCount">0</span> / <span id="subFailedCount">0</span></div>
+                        <div class="plan-stat-note">AutoPay cancellations &amp; failures</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive-wrapper">
+                    <table class="creator-data-table" aria-label="Subscription transactions">
+                        <thead>
+                            <tr>
+                                <th>Subscriber</th>
+                                <th>Plan</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                                <th>Payment ID</th>
+                                <th style="text-align: right;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subTransactionsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--dash-text-secondary); padding: 28px;">
+                                    No subscription transactions recorded yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECTION 4: PARTNER & CREATOR DIRECTORY -->
+            <section class="creator-section" id="creatorsSection" aria-label="Partner and Creator Management">
+                <div class="creator-section-header">
+                    <h2 class="creator-section-title">Creator Directory</h2>
+                </div>
+
                 <div class="status-pill-cards-row">
-                    <!-- Banner 1: Active Creators -->
-                    <div class="mini-banner-card pink">
-                        <span class="mini-banner-title">Listed Partners</span>
+                    <div class="mini-banner-card blue">
+                        <span class="mini-banner-title">Listed Creators</span>
                         <div class="mini-banner-val-row">
                             <span class="mini-banner-val" id="bannerTotalCreators">0</span>
-                            <span class="mini-banner-tag" style="background: #FCE7F3; color: #DB2777;">Active</span>
+                            <span class="mini-banner-tag" style="background: #DBEAFE; color: #1D4ED8;">Active</span>
                         </div>
                     </div>
 
-                    <!-- Banner 2: Verified Profiles -->
-                    <div class="mini-banner-card coral">
+                    <div class="mini-banner-card indigo">
                         <span class="mini-banner-title">Verified Profiles</span>
                         <div class="mini-banner-val-row">
                             <span class="mini-banner-val" id="bannerVerifiedProfiles">0</span>
-                            <span class="mini-banner-tag" style="background: #FFE4E6; color: #E11D48;">100% Safe</span>
+                            <span class="mini-banner-tag" style="background: #E0E7FF; color: #3730A3;">100% Safe</span>
                         </div>
                     </div>
 
-                    <!-- Banner 3: Chat Unlocks -->
                     <div class="mini-banner-card amber">
-                        <span class="mini-banner-title">Private Chat Sessions</span>
+                        <span class="mini-banner-title">Active Paid Members</span>
                         <div class="mini-banner-val-row">
-                            <span class="mini-banner-val" id="bannerChatSessions">0</span>
+                            <span class="mini-banner-val" id="bannerActiveMembers">0</span>
                             <span class="mini-banner-tag" style="background: #FEF3C7; color: #B45309;">Unlocked</span>
                         </div>
                     </div>
 
-                    <!-- Banner 4: Paid Bookings -->
                     <div class="mini-banner-card emerald">
-                        <span class="mini-banner-title">Verified Bookings</span>
+                        <span class="mini-banner-title">Settled Payments</span>
                         <div class="mini-banner-val-row">
-                            <span class="mini-banner-val" id="bannerDeliveredOrders">0</span>
-                            <span class="mini-banner-tag" style="background: #D1FAE5; color: #047857;">Completed</span>
+                            <span class="mini-banner-val" id="bannerSettledPayments">0</span>
+                            <span class="mini-banner-tag" style="background: #DCFCE7; color: #15803D;">Razorpay</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Action Toolbar: Search + Add Creator CTA -->
                 <div class="list-action-toolbar">
                     <div class="toolbar-left">
                         <div class="table-search-box">
@@ -342,36 +363,30 @@
                             <input
                                 type="search"
                                 id="adminSearchInput"
-                                placeholder="Search partners by name or category..."
+                                placeholder="Search creators by name or category..."
                                 aria-label="Search creators"
                             >
                         </div>
-                        <span class="list-count-badge" id="creatorCount">0 partners</span>
+                        <span class="list-count-badge" id="creatorCount">0 creators</span>
                     </div>
 
                     <div class="toolbar-right">
-                        <button
-                            type="button"
-                            class="add-creator-cta-btn"
-                            id="addCreatorButton"
-                        >
+                        <button type="button" class="add-creator-cta-btn" id="addCreatorButton">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
-                            <span>Add Partner</span>
+                            <span>Add Creator</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Modern Data Table -->
                 <div class="table-responsive-wrapper">
                     <table class="creator-data-table">
                         <thead>
                             <tr>
-                                <th>Partner Name</th>
-                                <th>Category</th>
-                                <th>Session Fee</th>
+                                <th>Creator Name</th>
+                                <th>Category &amp; Interests</th>
                                 <th>Bio &amp; Highlights</th>
                                 <th>Status</th>
                                 <th style="text-align: right;">Actions</th>
@@ -379,215 +394,110 @@
                         </thead>
                         <tbody id="creatorListTableBody">
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--dash-text-tertiary); padding: 40px;">
-                                    Loading partners...
+                                <td colspan="5" style="text-align: center; color: var(--dash-text-tertiary); padding: 40px;">
+                                    Loading creators...
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
             </section>
 
         </main>
-
     </div>
 
-    <!-- =========================================================
-         ADD CREATOR MODAL (PRESERVED FUNCTIONALITY)
-    ========================================================= -->
+    <!-- ADD CREATOR MODAL -->
     <div id="creatorModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
         <div class="modal-dialog">
             <div class="modal-dialog-header">
-                <h2 id="addModalTitle">Add New Partner</h2>
-                <button
-                    id="closeModalButton"
-                    class="close-x-btn"
-                    type="button"
-                    aria-label="Close dialog"
-                >
-                    &times;
-                </button>
+                <h2 id="addModalTitle">Add New Creator</h2>
+                <button id="closeModalButton" class="close-x-btn" type="button" aria-label="Close dialog">&times;</button>
             </div>
 
             <form id="creatorForm">
                 <div class="form-field-group">
-                    <label for="creatorName">Partner Name</label>
-                    <input
-                        type="text"
-                        id="creatorName"
-                        placeholder="e.g. Tanvi Thakur"
-                        required
-                    >
+                    <label for="creatorName">Creator Name</label>
+                    <input type="text" id="creatorName" placeholder="e.g. Tanvi Thakur" required>
                 </div>
 
                 <div class="form-field-group">
                     <label for="creatorCategory">Category</label>
-                    <input
-                        type="text"
-                        id="creatorCategory"
-                        placeholder="e.g. Fashion &amp; Lifestyle"
-                    >
+                    <input type="text" id="creatorCategory" placeholder="e.g. Fashion &amp; Lifestyle">
                 </div>
 
                 <div class="form-field-group">
                     <label for="creatorBio">Bio</label>
-                    <textarea
-                        id="creatorBio"
-                        placeholder="Short partner introduction"
-                        rows="3"
-                    ></textarea>
-                </div>
-
-                <div class="form-field-group">
-                    <label for="creatorPrice">Collaboration Price (₹)</label>
-                    <input
-                        type="number"
-                        id="creatorPrice"
-                        placeholder="e.g. 49"
-                        min="1"
-                        required
-                    >
+                    <textarea id="creatorBio" placeholder="Short creator introduction" rows="3"></textarea>
                 </div>
 
                 <div class="form-field-group">
                     <label for="creatorAge">Creator Age</label>
-                    <input
-                        type="number"
-                        id="creatorAge"
-                        placeholder="e.g. 24"
-                        min="18"
-                        max="100"
-                    >
+                    <input type="number" id="creatorAge" placeholder="e.g. 24" min="18" max="100">
                 </div>
 
                 <div class="form-field-group">
                     <label for="creatorLocation">Creator Location</label>
-                    <input
-                        type="text"
-                        id="creatorLocation"
-                        placeholder="e.g. Mumbai, India"
-                    >
+                    <input type="text" id="creatorLocation" placeholder="e.g. Mumbai, India">
                 </div>
 
                 <div class="form-field-group">
-                    <label for="creatorTags">Date Interests / Tags (comma-separated)</label>
-                    <input
-                        type="text"
-                        id="creatorTags"
-                        placeholder="e.g. Coffee &amp; Conversation, Fine Dining, Casual Walk"
-                    >
+                    <label for="creatorTags">Interests / Tags (comma-separated)</label>
+                    <input type="text" id="creatorTags" placeholder="e.g. Coffee &amp; Conversation, Fine Dining, Casual Walk">
                 </div>
 
                 <div class="form-field-group">
                     <label for="creatorImage">Profile Photo</label>
-                    <input
-                        type="file"
-                        id="creatorImage"
-                        accept="image/*"
-                    >
+                    <input type="file" id="creatorImage" accept="image/*">
                 </div>
 
-                <button
-                    type="submit"
-                    class="modal-submit-btn"
-                >
-                    Save Partner
-                </button>
+                <button type="submit" class="modal-submit-btn">Save Creator</button>
             </form>
         </div>
     </div>
 
-    <!-- =========================================================
-         EDIT CREATOR MODAL (SOLVES IMAGE LOSS BUG ON EDIT)
-    ========================================================= -->
+    <!-- EDIT CREATOR MODAL -->
     <div id="editCreatorModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
         <div class="modal-dialog">
             <div class="modal-dialog-header">
-                <h2 id="editModalTitle">Edit Partner Profile</h2>
-                <button
-                    id="closeEditModalButton"
-                    class="close-x-btn"
-                    type="button"
-                    aria-label="Close dialog"
-                >
-                    &times;
-                </button>
+                <h2 id="editModalTitle">Edit Creator Profile</h2>
+                <button id="closeEditModalButton" class="close-x-btn" type="button" aria-label="Close dialog">&times;</button>
             </div>
 
             <form id="editCreatorForm">
                 <input type="hidden" id="editCreatorId">
-                <!-- Stores existing image URL so it is NEVER lost if user does not upload a new file -->
                 <input type="hidden" id="editExistingProfileImage">
+                <input type="hidden" id="editCreatorPrice" value="49">
 
                 <div class="form-field-group">
-                    <label for="editCreatorName">Partner Name</label>
-                    <input
-                        type="text"
-                        id="editCreatorName"
-                        required
-                    >
+                    <label for="editCreatorName">Creator Name</label>
+                    <input type="text" id="editCreatorName" required>
                 </div>
 
                 <div class="form-field-group">
                     <label for="editCreatorCategory">Category</label>
-                    <input
-                        type="text"
-                        id="editCreatorCategory"
-                    >
+                    <input type="text" id="editCreatorCategory">
                 </div>
 
                 <div class="form-field-group">
                     <label for="editCreatorBio">Bio</label>
-                    <textarea
-                        id="editCreatorBio"
-                        rows="3"
-                    ></textarea>
-                </div>
-
-                <div class="form-field-group">
-                    <label for="editCreatorPrice">Collaboration Price (₹)</label>
-                    <input
-                        type="number"
-                        id="editCreatorPrice"
-                        min="1"
-                        required
-                    >
+                    <textarea id="editCreatorBio" rows="3"></textarea>
                 </div>
 
                 <div class="form-field-group">
                     <label for="editCreatorAge">Creator Age</label>
-                    <input
-                        type="number"
-                        id="editCreatorAge"
-                        placeholder="e.g. 24"
-                        min="18"
-                        max="100"
-                    >
+                    <input type="number" id="editCreatorAge" placeholder="e.g. 24" min="18" max="100">
                 </div>
 
                 <div class="form-field-group">
                     <label for="editCreatorLocation">Creator Location</label>
-                    <input
-                        type="text"
-                        id="editCreatorLocation"
-                        placeholder="e.g. Mumbai, India"
-                    >
+                    <input type="text" id="editCreatorLocation" placeholder="e.g. Mumbai, India">
                 </div>
 
                 <div class="form-field-group">
-                    <label for="editCreatorTags">Date Interests / Tags (comma-separated)</label>
-                    <input
-                        type="text"
-                        id="editCreatorTags"
-                        placeholder="e.g. Coffee &amp; Conversation, Fine Dining, Casual Walk"
-                    >
-                    <span style="font-size: 11px; color: var(--dash-text-secondary); margin-top: 3px; display: block;">
-                        Shown as tags for date bookings (e.g. Coffee &amp; Conversation, Fine Dining, Art &amp; Museums)
-                    </span>
+                    <label for="editCreatorTags">Interests / Tags (comma-separated)</label>
+                    <input type="text" id="editCreatorTags" placeholder="e.g. Coffee &amp; Conversation, Fine Dining, Casual Walk">
                 </div>
 
-                <!-- Current Photo Preview & Non-destructive Replacement -->
                 <div class="form-field-group">
                     <label>Profile Photo</label>
                     <div class="current-photo-preview-box">
@@ -598,103 +508,95 @@
                                 <span id="editPhotoBadge" class="status-badge verified" style="font-size: 10px; padding: 2px 7px;">Kept Safe</span>
                             </div>
                             <span style="font-size: 11.5px; color: var(--dash-text-secondary); display: block;" id="editPhotoStatusSub">You do not need to re-upload. Your existing photo will be kept.</span>
-                            <button type="button" id="revertPhotoBtn" style="display: none; margin-top: 6px; background: #FFF; border: 1px solid var(--dash-border); border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; color: var(--dash-pink); font-weight: 600;">Revert to current photo</button>
+                            <button type="button" id="revertPhotoBtn" style="display: none; margin-top: 6px; background: #FFF; border: 1px solid var(--dash-border); border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; color: var(--dash-blue); font-weight: 600;">Revert to current photo</button>
                         </div>
                     </div>
                     <label for="editProfileImage" style="font-size: 11.5px; color: var(--dash-text-secondary); margin-top: 4px;">Choose new photo (optional):</label>
-                    <input
-                        type="file"
-                        id="editProfileImage"
-                        accept="image/*"
-                    >
+                    <input type="file" id="editProfileImage" accept="image/*">
                 </div>
 
-                <button
-                    type="submit"
-                    class="modal-submit-btn"
-                >
-                    Update Partner
-                </button>
+                <button type="submit" class="modal-submit-btn">Update Creator</button>
             </form>
         </div>
     </div>
 
-    <!-- =========================================================
-         MANAGE AVAILABLE DATES MODAL (ADMIN CALENDAR TOGGLE TOOL)
-    ========================================================= -->
+    <!-- MANAGE AVAILABLE DATES MODAL -->
     <div id="datesModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="datesModalTitle">
         <div class="modal-dialog" style="max-width: 480px;">
             <div class="modal-dialog-header">
                 <div>
                     <h2 id="datesModalTitle" style="font-size: 17px; font-weight: 700; color: var(--dash-text-primary);">Manage Available Dates</h2>
                     <p id="datesModalSubtitle" style="font-size: 12px; color: var(--dash-text-secondary); margin-top: 2px;">
-                        Select the dates when this creator is available for bookings.
+                        Select active schedule dates for this creator profile.
                     </p>
                 </div>
-                <button
-                    id="closeDatesModalButton"
-                    class="close-x-btn"
-                    type="button"
-                    aria-label="Close dialog"
-                >
-                    &times;
-                </button>
+                <button id="closeDatesModalButton" class="close-x-btn" type="button" aria-label="Close dialog">&times;</button>
             </div>
 
-            <div class="dates-modal-body" style="padding: 18px 22px;">
-                <!-- Creator mini preview banner -->
-                <div id="datesCreatorPreview" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #FFF5F8; border: 1px solid #FCE7F3; border-radius: 12px; margin-bottom: 16px;">
-                    <img id="datesCreatorAvatar" src="" alt="" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #FFF;">
+            <div class="dates-modal-body">
+                <div id="datesCreatorPreview" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 12px; margin-bottom: 16px;">
+                    <img id="datesCreatorAvatar" src="" alt="" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; object-position: 50% 20%; border: 2px solid #FFF;">
                     <div>
-                        <strong id="datesCreatorName" style="display: block; font-size: 13.5px; color: #1E1B22;">Partner</strong>
-                        <span id="datesCreatorMeta" style="font-size: 11.5px; color: #DB2777; font-weight: 600;">0 dates currently enabled</span>
+                        <strong id="datesCreatorName" style="display: block; font-size: 13.5px; color: #0F172A;">Creator</strong>
+                        <span id="datesCreatorMeta" style="font-size: 11.5px; color: #1D4ED8; font-weight: 600;">0 dates currently enabled</span>
                     </div>
                 </div>
 
-                <!-- Calendar Navigation & Quick Actions -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button type="button" id="prevMonthBtn" class="action-icon-btn" style="padding: 4px 8px; font-size: 14px;" title="Previous Month">‹</button>
-                        <span id="calendarMonthTitle" style="font-size: 13.5px; font-weight: 700; color: #1E1B22;">November 2026</span>
-                        <button type="button" id="nextMonthBtn" class="action-icon-btn" style="padding: 4px 8px; font-size: 14px;" title="Next Month">›</button>
+                        <button type="button" id="prevMonthBtn" class="action-icon-btn" style="padding: 4px 10px; font-size: 14px;" title="Previous Month">‹</button>
+                        <span id="calendarMonthTitle" style="font-size: 13.5px; font-weight: 700; color: #0F172A;">November 2026</span>
+                        <button type="button" id="nextMonthBtn" class="action-icon-btn" style="padding: 4px 10px; font-size: 14px;" title="Next Month">›</button>
                     </div>
                     <div style="display: flex; gap: 6px;">
-                        <button type="button" id="quickNext7Btn" style="font-size: 11px; padding: 4px 8px; background: #FFF; border: 1px solid #FCE7F3; border-radius: 6px; cursor: pointer; color: #DB2777; font-weight: 600;">+ Next 7 Days</button>
-                        <button type="button" id="quickClearBtn" style="font-size: 11px; padding: 4px 8px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; color: #64748B;">Clear</button>
+                        <button type="button" id="quickNext7Btn" style="font-size: 11px; padding: 5px 9px; background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 7px; cursor: pointer; color: #1D4ED8; font-weight: 700;">+ Next 7 Days</button>
+                        <button type="button" id="quickClearBtn" style="font-size: 11px; padding: 5px 9px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 7px; cursor: pointer; color: #64748B;">Clear</button>
                     </div>
                 </div>
 
-                <!-- Calendar Grid -->
-                <div class="calendar-grid-wrap" style="background: #FFF; border: 1px solid #FCE7F3; border-radius: 14px; padding: 12px;">
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 700; color: #817783; margin-bottom: 8px;">
+                <div class="calendar-grid-wrap" style="background: #FFF; border: 1px solid #DBEAFE; border-radius: 14px; padding: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 700; color: #64748B; margin-bottom: 8px;">
                         <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
                     </div>
-                    <div id="calendarDaysGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;">
-                        <!-- Days rendered dynamically -->
-                    </div>
+                    <div id="calendarDaysGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;"></div>
                 </div>
 
-                <div style="margin-top: 12px; font-size: 11.5px; color: #817783; display: flex; align-items: center; justify-content: space-between;">
+                <div style="margin-top: 12px; font-size: 11.5px; color: #64748B; display: flex; align-items: center; justify-content: space-between;">
                     <span style="display: inline-flex; align-items: center; gap: 6px;">
-                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EC4899;"></span>
-                        Soft Pink = Available for booking
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #2563EB;"></span>
+                        Blue = Available date
                     </span>
-                    <strong id="selectedDatesSummaryText" style="color: #DB2777;">0 dates selected</strong>
+                    <strong id="selectedDatesSummaryText" style="color: #1D4ED8;">0 dates selected</strong>
                 </div>
 
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button type="button" id="cancelDatesBtn" class="modal-submit-btn" style="background: #F1F5F9; color: #475569; flex: 1;">Cancel</button>
+                <div style="margin-top: 18px; display: flex; gap: 10px;">
+                    <button type="button" id="cancelDatesBtn" class="modal-submit-btn" style="background: #F1F5F9; color: #475569; box-shadow: none; flex: 1;">Cancel</button>
                     <button type="button" id="saveDatesBtn" class="modal-submit-btn" style="flex: 2;">Save Available Dates</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- INLINE CONFIRM DELETE MODAL -->
+    <div id="deleteConfirmModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+        <div class="modal-dialog" style="max-width: 400px;">
+            <div class="modal-dialog-header">
+                <h2 id="deleteConfirmTitle">Remove Creator?</h2>
+                <button id="closeDeleteConfirmBtn" class="close-x-btn" type="button" aria-label="Close">&times;</button>
+            </div>
+            <p id="deleteConfirmBody" style="font-size: 14px; color: var(--dash-text-secondary); margin-bottom: 20px;">
+                This creator will be removed from the public Takora directory.
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="abortDeleteBtn" class="modal-submit-btn" style="background: #F1F5F9; color: #0F172A; box-shadow: none; flex: 1;">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="modal-submit-btn danger" style="flex: 1;">Remove</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Chart Tooltip -->
-    <div id="chartTooltip" style="position: absolute; display: none; background: #1E1B22; color: #FFF; padding: 6px 12px; border-radius: 8px; font-size: 11px; pointer-events: none; z-index: 100;"></div>
+    <div id="chartTooltip" style="position: absolute; display: none; background: #0F172A; color: #FFF; padding: 6px 12px; border-radius: 8px; font-size: 11px; pointer-events: none; z-index: 100;"></div>
 
-    <!-- Admin Logic -->
     <script src="admin_creator_app.js"></script>
-
 </body>
 </html>

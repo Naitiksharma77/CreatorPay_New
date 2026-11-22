@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#FFF7FA">
+    <meta name="theme-color" content="#F8FAFC">
     <title>Private Chat | Takora</title>
 
     <!-- Google tag (gtag.js) -->
@@ -18,16 +18,15 @@
 
     <style>
         :root {
-            --myp-bg: #FFF7FA;
-            --myp-card-bg: #FFFFFF;
-            --myp-pink: #EC4899;
-            --myp-pink-dark: #DB2777;
-            --myp-pink-light: #FDF2F7;
-            --myp-border: #FCE7F3;
-            --myp-border-subtle: #F6DCE8;
-            --myp-text: #25202A;
-            --myp-text-muted: #817783;
-            --myp-shadow: 0 4px 20px rgba(236, 72, 153, 0.08);
+            --tk-bg: #F8FAFC;
+            --tk-card-bg: #FFFFFF;
+            --tk-blue: #2563EB;
+            --tk-blue-dark: #1D4ED8;
+            --tk-blue-soft: #EFF6FF;
+            --tk-border: #E2E8F0;
+            --tk-border-blue: #DBEAFE;
+            --tk-text: #0F172A;
+            --tk-text-muted: #64748B;
         }
 
         * {
@@ -38,9 +37,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--myp-bg);
-            color: var(--myp-text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tk-bg);
+            color: var(--tk-text);
             min-height: 100vh;
             min-height: 100dvh;
             display: flex;
@@ -52,7 +51,6 @@
             font: inherit;
         }
 
-        /* Full App Shell */
         .chat-app-shell {
             max-width: 640px;
             width: 100%;
@@ -61,9 +59,9 @@
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
-            background: var(--myp-card-bg);
-            border-left: 1px solid var(--myp-border);
-            border-right: 1px solid var(--myp-border);
+            background: var(--tk-card-bg);
+            border-left: 1px solid var(--tk-border);
+            border-right: 1px solid var(--tk-border);
             position: relative;
         }
 
@@ -74,9 +72,6 @@
             }
         }
 
-        /* =========================================================
-           TOP NAVIGATION HEADER (iOS WhatsApp Style)
-        ========================================================= */
         .chat-header {
             position: sticky;
             top: 0;
@@ -89,7 +84,7 @@
             background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--myp-border);
+            border-bottom: 1px solid var(--tk-border);
             gap: 10px;
         }
 
@@ -106,7 +101,7 @@
             align-items: center;
             gap: 2px;
             padding: 6px 6px 6px 0;
-            color: var(--myp-pink);
+            color: var(--tk-blue);
             text-decoration: none;
             font-size: 15px;
             font-weight: 600;
@@ -114,7 +109,6 @@
             border: none;
             cursor: pointer;
             flex-shrink: 0;
-            transition: opacity 0.15s ease;
         }
 
         .ios-back-btn:hover {
@@ -137,14 +131,15 @@
             flex-shrink: 0;
             border-radius: 50%;
             overflow: hidden;
-            background: var(--myp-pink-light);
-            border: 2px solid var(--myp-border);
+            background: var(--tk-blue-soft);
+            border: 2px solid var(--tk-border-blue);
         }
 
         .chat-avatar-wrap img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: 50% 20%;
             display: block;
         }
 
@@ -163,7 +158,7 @@
         .chat-name {
             font-size: 15.5px;
             font-weight: 750;
-            color: var(--myp-text);
+            color: var(--tk-text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -179,7 +174,7 @@
 
         .chat-substatus {
             font-size: 11.5px;
-            color: var(--myp-text-muted);
+            color: var(--tk-text-muted);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -196,47 +191,43 @@
             flex-shrink: 0;
         }
 
-        .private-chat-pill {
+        .private-chat-tag {
             display: inline-flex;
             align-items: center;
             gap: 4px;
             padding: 4px 9px;
-            border-radius: 20px;
-            background: var(--myp-pink-light);
-            border: 1px solid var(--myp-border);
-            color: var(--myp-pink-dark);
+            border-radius: 8px;
+            background: var(--tk-blue-soft);
+            border: 1px solid var(--tk-border-blue);
+            color: var(--tk-blue-dark);
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.3px;
             text-transform: uppercase;
         }
 
-        /* =========================================================
-           CHAT VIEWPORT & MESSAGES FEED
-        ========================================================= */
         .chat-viewport {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            background: radial-gradient(circle at top right, rgba(252, 231, 243, 0.45) 0%, transparent 60%), #FFF7FA;
+            background: radial-gradient(circle at top right, rgba(219, 234, 254, 0.45) 0%, transparent 60%), #F8FAFC;
             padding: 16px 14px;
             position: relative;
         }
 
-        /* Loading / Verifying State */
         .chat-loading-state {
             margin: auto;
             text-align: center;
             padding: 30px 16px;
-            color: var(--myp-text-muted);
+            color: var(--tk-text-muted);
         }
 
         .chat-spinner {
             width: 32px;
             height: 32px;
-            border: 3px solid var(--myp-border);
-            border-top-color: var(--myp-pink);
+            border: 3px solid var(--tk-border);
+            border-top-color: var(--tk-blue);
             border-radius: 50%;
             margin: 0 auto 14px;
             animation: spin 0.8s linear infinite;
@@ -247,42 +238,41 @@
             font-weight: 600;
         }
 
-        /* Unauthorized / Access Locked State */
         .chat-locked-card {
             margin: auto;
             max-width: 380px;
             width: 100%;
             background: #FFFFFF;
-            border: 1px solid var(--myp-border);
-            border-radius: 24px;
-            padding: 32px 22px;
+            border: 1px solid var(--tk-border);
+            border-radius: 22px;
+            padding: 30px 22px;
             text-align: center;
-            box-shadow: 0 12px 36px rgba(236, 72, 153, 0.08);
-            animation: fadeIn 0.3s ease-out;
+            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
+            animation: fadeIn 0.25s ease-out;
         }
 
         .locked-icon-wrap {
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
-            background: var(--myp-pink-light);
-            color: var(--myp-pink);
+            background: var(--tk-blue-soft);
+            color: var(--tk-blue);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
-            border: 2px solid var(--myp-border);
+            margin: 0 auto 14px;
+            border: 1px solid var(--tk-border-blue);
         }
 
         .locked-badge {
             display: inline-block;
             padding: 4px 10px;
-            border-radius: 20px;
-            background: #FEE2E2;
-            color: #991B1B;
+            border-radius: 8px;
+            background: #EFF6FF;
+            color: #1D4ED8;
             font-size: 11px;
             font-weight: 750;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             text-transform: uppercase;
             margin-bottom: 10px;
         }
@@ -290,15 +280,15 @@
         .locked-title {
             font-size: 19px;
             font-weight: 800;
-            color: var(--myp-text);
+            color: var(--tk-text);
             margin-bottom: 8px;
         }
 
         .locked-desc {
             font-size: 13.5px;
-            color: var(--myp-text-muted);
+            color: var(--tk-text-muted);
             line-height: 1.5;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
 
         .locked-action-btn {
@@ -307,53 +297,54 @@
             justify-content: center;
             gap: 8px;
             width: 100%;
-            padding: 13px 20px;
+            padding: 13px 18px;
             border-radius: 14px;
-            background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+            border: none;
+            background: var(--tk-blue);
             color: #FFFFFF;
             font-size: 14.5px;
             font-weight: 750;
             text-decoration: none;
-            box-shadow: 0 4px 16px rgba(236, 72, 153, 0.32);
-            transition: transform 0.15s ease, filter 0.15s ease;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28);
+            transition: background 0.15s ease, transform 0.15s ease;
         }
 
         .locked-action-btn:hover {
-            filter: brightness(1.06);
+            background: var(--tk-blue-dark);
         }
 
         .locked-action-btn:active {
-            transform: scale(0.98);
+            transform: scale(0.985);
         }
 
-        /* Empty State */
         .chat-empty-state {
             margin: auto;
             max-width: 340px;
             width: 100%;
             text-align: center;
             padding: 24px 16px;
-            color: var(--myp-text-muted);
-            animation: fadeIn 0.3s ease-out;
+            color: var(--tk-text-muted);
+            animation: fadeIn 0.25s ease-out;
         }
 
-        .empty-heart-icon {
-            width: 58px;
-            height: 58px;
+        .empty-chat-circle {
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            background: var(--myp-pink-light);
-            color: var(--myp-pink);
+            background: var(--tk-blue-soft);
+            color: var(--tk-blue);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 14px;
-            border: 2px solid var(--myp-border);
+            border: 1px solid var(--tk-border-blue);
         }
 
         .chat-empty-state h3 {
             font-size: 17px;
             font-weight: 800;
-            color: var(--myp-text);
+            color: var(--tk-text);
             margin-bottom: 6px;
         }
 
@@ -366,30 +357,28 @@
         .quick-replies-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 7px;
+            gap: 8px;
             justify-content: center;
         }
 
         .quick-chip {
-            padding: 6px 13px;
-            border-radius: 18px;
+            padding: 7px 13px;
+            border-radius: 12px;
             background: #FFFFFF;
-            border: 1px solid var(--myp-border);
-            font-size: 12px;
+            border: 1px solid var(--tk-border);
+            font-size: 12.5px;
             font-weight: 600;
-            color: var(--myp-text);
+            color: var(--tk-text);
             cursor: pointer;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
             transition: all 0.15s ease;
         }
 
         .quick-chip:hover {
-            border-color: var(--myp-pink);
-            color: var(--myp-pink);
-            background: var(--myp-pink-light);
+            border-color: var(--tk-blue);
+            color: var(--tk-blue);
+            background: var(--tk-blue-soft);
         }
 
-        /* Messages Stream */
         .messages-list {
             display: flex;
             flex-direction: column;
@@ -401,27 +390,26 @@
         .chat-system-date {
             align-self: center;
             padding: 4px 12px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid var(--myp-border);
-            color: var(--myp-text-muted);
+            border-radius: 10px;
+            background: #FFFFFF;
+            border: 1px solid var(--tk-border);
+            color: var(--tk-text-muted);
             font-size: 11px;
             font-weight: 600;
             margin: 6px 0 12px;
         }
 
-        /* User Message Bubble */
         .chat-bubble {
             max-width: 80%;
             align-self: flex-end;
             margin-left: 20%;
             padding: 10px 14px 6px 14px;
             border-radius: 18px 18px 4px 18px;
-            background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
             color: #FFFFFF;
-            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.22);
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
             word-break: break-word;
-            animation: bubbleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: bubbleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .bubble-text {
@@ -440,7 +428,7 @@
 
         .bubble-time {
             font-size: 10.5px;
-            color: rgba(255, 255, 255, 0.82);
+            color: rgba(255, 255, 255, 0.85);
             font-weight: 500;
         }
 
@@ -449,9 +437,6 @@
             color: rgba(255, 255, 255, 0.95);
         }
 
-        /* =========================================================
-           MESSAGE COMPOSER BAR (iOS Fixed Bottom)
-        ========================================================= */
         .chat-composer-bar {
             position: sticky;
             bottom: 0;
@@ -464,12 +449,11 @@
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--myp-border);
+            border-top: 1px solid var(--tk-border);
         }
 
         .chat-input-wrap {
             flex: 1;
-            position: relative;
             display: flex;
             align-items: center;
         }
@@ -478,9 +462,9 @@
             width: 100%;
             padding: 12px 16px;
             border-radius: 22px;
-            border: 1px solid var(--myp-border-subtle);
-            background: var(--myp-bg);
-            color: var(--myp-text);
+            border: 1px solid var(--tk-border);
+            background: var(--tk-bg);
+            color: var(--tk-text);
             font-size: 14.5px;
             outline: none;
             transition: all 0.15s ease;
@@ -488,15 +472,15 @@
 
         .chat-input:focus {
             background: #FFFFFF;
-            border-color: var(--myp-pink);
-            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.12);
+            border-color: var(--tk-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
         .chat-send-btn {
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+            background: var(--tk-blue);
             color: #FFFFFF;
             border: none;
             cursor: pointer;
@@ -504,12 +488,12 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            box-shadow: 0 3px 12px rgba(236, 72, 153, 0.35);
-            transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: background 0.15s ease, transform 0.15s ease;
         }
 
         .chat-send-btn:hover:not(:disabled) {
-            filter: brightness(1.08);
+            background: var(--tk-blue-dark);
         }
 
         .chat-send-btn:active:not(:disabled) {
@@ -522,7 +506,6 @@
             box-shadow: none;
         }
 
-        /* Animations */
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -543,10 +526,6 @@
 <body>
 
     <div class="chat-app-shell">
-
-        <!-- =========================================================
-             iOS CHAT HEADER
-        ========================================================= -->
         <header class="chat-header">
             <div class="chat-header-left">
                 <a href="creator_home.html#chats" id="backBtn" class="ios-back-btn" aria-label="Back">
@@ -556,75 +535,57 @@
                     <span>Back</span>
                 </a>
 
-                <div id="targetProfileLink" class="chat-target-profile">
+                <div class="chat-target-profile">
                     <div class="chat-avatar-wrap">
-                        <img id="creatorAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Partner photo">
+                        <img id="creatorAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" alt="Creator photo">
                     </div>
 
                     <div class="chat-meta">
                         <div class="chat-meta-name-row">
                             <span id="creatorName" class="chat-name">Connecting...</span>
-                            <span class="verified-badge" title="Verified Member">
+                            <span class="verified-badge" title="Verified Profile">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <circle cx="12" cy="12" r="10" fill="#EC4899"></circle>
+                                    <circle cx="12" cy="12" r="10" fill="#2563EB"></circle>
                                     <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
                                 </svg>
                             </span>
                         </div>
                         <span id="chatSubstatus" class="chat-substatus">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <span>Verified Connection</span>
+                            <span>Verifying membership...</span>
                         </span>
                     </div>
                 </div>
             </div>
 
             <div class="chat-header-right">
-                <span class="private-chat-pill">1:1 Chat</span>
+                <span class="private-chat-tag">1:1 Chat</span>
             </div>
         </header>
 
-
-        <!-- =========================================================
-             MESSAGES VIEWPORT
-        ========================================================= -->
         <main id="chatViewport" class="chat-viewport" aria-label="Messages list" aria-live="polite">
             <div id="loadingState" class="chat-loading-state">
                 <div class="chat-spinner"></div>
-                <p>Verifying payment access...</p>
+                <p>Checking your membership access...</p>
             </div>
 
             <div id="lockedState" class="chat-locked-card" style="display: none;">
                 <div class="locked-icon-wrap" aria-hidden="true">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                 </div>
-                <span class="locked-badge">Access Locked</span>
-                <h2 id="lockedTitle" class="locked-title">Payment Required</h2>
-                <p id="lockedDesc" class="locked-desc">This private chat is exclusively unlocked after a verified connection payment for this partner.</p>
-                <a href="creator_home.html" id="lockedActionBtn" class="locked-action-btn">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span>View Profile to Connect</span>
-                </a>
+                <span id="lockedBadge" class="locked-badge">Membership Required</span>
+                <h2 id="lockedTitle" class="locked-title">Monthly Membership Required</h2>
+                <p id="lockedDesc" class="locked-desc">1-on-1 chat across Takora is unlocked with Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo).</p>
+                <div id="lockedActionWrap">
+                    <a href="pricing.html?plan=basic" class="locked-action-btn">View Monthly Plans (from ₹9/mo)</a>
+                </div>
             </div>
 
-            <div id="messagesList" class="messages-list" style="display: none;">
-                <!-- Populated dynamically -->
-            </div>
+            <div id="messagesList" class="messages-list" style="display: none;"></div>
         </main>
 
-
-        <!-- =========================================================
-             COMPOSER BAR (ONE-SIDED MESSAGING)
-        ========================================================= -->
         <form id="chatForm" class="chat-composer-bar" style="display: none;">
             <div class="chat-input-wrap">
                 <input
@@ -644,25 +605,19 @@
                 </svg>
             </button>
         </form>
-
     </div>
 
-    <!-- =========================================================
-         CHAT LOGIC & PAYMENT ACCESS CONTROL
-    ========================================================= -->
+    <script src="takora_auth.js"></script>
     <script>
-        // State
         const urlParams = new URLSearchParams(window.location.search);
         const creatorId = urlParams.get("id");
-        let paymentId = urlParams.get("payment_id");
-        let token = urlParams.get("token");
 
-        // Elements
         const loadingState = document.getElementById("loadingState");
         const lockedState = document.getElementById("lockedState");
+        const lockedBadge = document.getElementById("lockedBadge");
         const lockedTitle = document.getElementById("lockedTitle");
         const lockedDesc = document.getElementById("lockedDesc");
-        const lockedActionBtn = document.getElementById("lockedActionBtn");
+        const lockedActionWrap = document.getElementById("lockedActionWrap");
         const messagesList = document.getElementById("messagesList");
         const chatViewport = document.getElementById("chatViewport");
         const chatForm = document.getElementById("chatForm");
@@ -676,7 +631,6 @@
         let activeCreator = null;
         let isSending = false;
 
-        // Escape HTML
         function escapeHTML(str) {
             if (!str) return "";
             return String(str)
@@ -687,7 +641,6 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Format Timestamp
         function formatTime(isoString) {
             try {
                 const date = isoString ? new Date(isoString) : new Date();
@@ -697,89 +650,103 @@
             }
         }
 
-        // Retrieve local verified session if URL parameters omitted
-        function resolveCredentials() {
-            if (creatorId && (!token || !paymentId)) {
-                try {
-                    const stored = localStorage.getItem(`fc_chat_session_${creatorId}`);
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed && parsed.token && parsed.paymentId) {
-                            token = parsed.token;
-                            paymentId = parsed.paymentId;
-                        }
-                    }
-                } catch (_) {}
-            }
-        }
-
-        // Initialize Chat Verification
-        async function initChat() {
-            if (!creatorId) {
-                showLockedState("No Profile Selected", "Please select a partner from Discover or Home first.", "creator_home.html");
-                return;
-            }
-
-            resolveCredentials();
-
-            if (!token || !paymentId) {
-                showLockedState("Payment Verification Required", "A verified connection payment is required to unlock private chat.", `friend_profile.html?id=${encodeURIComponent(creatorId)}`);
-                return;
-            }
-
-            try {
-                // Verify credentials server-side
-                const response = await fetch("/api/chat/verify-access", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        creatorId,
-                        paymentId,
-                        token
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || !data.success || !data.authorized) {
-                    showLockedState("Access Denied", data.message || "Payment verification failed or does not match this partner.", `friend_profile.html?id=${encodeURIComponent(creatorId)}`);
-                    return;
-                }
-
-                // Authorized!
-                activeCreator = data.creator;
-                setupVerifiedUI(data.creator);
-                await loadMessages();
-            } catch (err) {
-                console.error("Verification network error:", err);
-                showLockedState("Verification Error", "Unable to confirm payment access. Please check your connection and try again.", `friend_profile.html?id=${encodeURIComponent(creatorId)}`);
-            }
-        }
-
-        // Render Locked State
-        function showLockedState(title, message, redirectUrl) {
+        function showLockedState({ badge, title, message, buttonHtml, backUrl }) {
             loadingState.style.display = "none";
             messagesList.style.display = "none";
             chatForm.style.display = "none";
 
+            lockedBadge.textContent = badge || "Access Locked";
             lockedTitle.textContent = title;
             lockedDesc.textContent = message;
-            lockedActionBtn.href = redirectUrl;
+            lockedActionWrap.innerHTML = buttonHtml;
             lockedState.style.display = "block";
 
             creatorName.textContent = "Private Chat";
-            chatSubstatus.innerHTML = `<span>Verification required</span>`;
-            backBtn.href = redirectUrl;
+            chatSubstatus.innerHTML = `<span>Membership verification required</span>`;
+            if (backUrl) backBtn.href = backUrl;
         }
 
-        // Setup UI for Verified Session
-        function setupVerifiedUI(creator) {
+        async function initChat() {
+            if (!creatorId) {
+                showLockedState({
+                    badge: "No Profile Selected",
+                    title: "Select a Creator First",
+                    message: "Please choose a creator profile from Takora Home or Explore to start chatting.",
+                    buttonHtml: `<a href="creator_home.html" class="locked-action-btn">Browse Creators</a>`,
+                    backUrl: "creator_home.html"
+                });
+                return;
+            }
+
+            if (window.TakoraAuth) {
+                await window.TakoraAuth.refreshSession();
+            }
+
+            const profileUrl = `friend_profile.html?id=${encodeURIComponent(creatorId)}`;
+
+            try {
+                const apiFetcher = window.TakoraAuth
+                    ? window.TakoraAuth.apiFetch
+                    : async (url, opt) => {
+                        const r = await fetch(url, { ...opt, credentials: "include" });
+                        return { res: r, data: await r.json().catch(() => ({})) };
+                    };
+
+                const { res, data } = await apiFetcher("/api/chat/verify-access", {
+                    method: "POST",
+                    body: JSON.stringify({ creatorId })
+                });
+
+                if (res.status === 401) {
+                    showLockedState({
+                        badge: "Free Sign In Required",
+                        title: "Sign In to Open Private Chat",
+                        message: "Create a free account or sign in to continue with your monthly Takora membership.",
+                        buttonHtml: `<button type="button" id="chatSignInBtn" class="locked-action-btn">Sign In / Register Free</button>`,
+                        backUrl: profileUrl
+                    });
+                    const btn = document.getElementById("chatSignInBtn");
+                    if (btn && window.TakoraAuth) {
+                        btn.onclick = () => window.TakoraAuth.openAuthModal("login", () => initChat());
+                    }
+                    return;
+                }
+
+                if (res.status === 403 || !res.ok || !data.success || !data.authorized) {
+                    showLockedState({
+                        badge: "Membership Required",
+                        title: "Monthly Membership Needed",
+                        message: data.message || "Chat access requires an active Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo) plan.",
+                        buttonHtml: `<a href="pricing.html?plan=basic" class="locked-action-btn">View Monthly Plans (from ₹9/mo)</a>`,
+                        backUrl: profileUrl
+                    });
+                    return;
+                }
+
+                activeCreator = data.creator;
+                setupVerifiedUI(data.creator, data.entitlements);
+                await loadMessages();
+            } catch (err) {
+                console.error("Chat verification network error:", err);
+                showLockedState({
+                    badge: "Connection Issue",
+                    title: "Unable to Verify Access",
+                    message: "Please check your connection and try again.",
+                    buttonHtml: `<button type="button" id="chatRetryBtn" class="locked-action-btn">Retry</button>`,
+                    backUrl: profileUrl
+                });
+                const retryBtn = document.getElementById("chatRetryBtn");
+                if (retryBtn) retryBtn.onclick = () => initChat();
+            }
+        }
+
+        function setupVerifiedUI(creator, entitlements) {
             loadingState.style.display = "none";
             lockedState.style.display = "none";
             messagesList.style.display = "flex";
             chatForm.style.display = "flex";
 
-            const name = creator.name || "Partner";
+            const name = creator.name || "Creator";
             const avatar = (creator.profile_image && typeof creator.profile_image === "string" && creator.profile_image.startsWith("http"))
                 ? creator.profile_image
                 : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
@@ -787,40 +754,53 @@
             creatorName.textContent = name;
             creatorAvatar.src = avatar;
             creatorAvatar.alt = name;
+
+            const planLabel = entitlements && entitlements.planName ? `${entitlements.planName} Plan` : "Membership Active";
             const metaInfo = [
                 creator.creator_age || creator.age ? `${creator.creator_age || creator.age} yrs` : "",
                 creator.creator_location || creator.location || ""
             ].filter(Boolean).join(" · ");
 
             chatSubstatus.innerHTML = `
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span>Active Connection · Private${metaInfo ? ` · ${escapeHTML(metaInfo)}` : ""}</span>
+                <span>${escapeHTML(planLabel)}${metaInfo ? ` · ${escapeHTML(metaInfo)}` : ""}</span>
             `;
 
-            document.title = `Chat with ${name} | Meet You Partner`;
+            document.title = `Chat with ${name} | Takora`;
             backBtn.href = `friend_profile.html?id=${encodeURIComponent(creator.id || creatorId)}`;
-
             chatInput.placeholder = `Write a message to ${name}...`;
             chatInput.focus();
+
+            try {
+                const raw = localStorage.getItem("fc_connections");
+                const list = raw ? JSON.parse(raw) : [];
+                const safeList = Array.isArray(list) ? list : [];
+                const cid = String(creator.id || creatorId);
+                const updated = [
+                    { id: cid, name, profile_image: avatar },
+                    ...safeList.filter((item) => item && String(item.id) !== cid)
+                ].slice(0, 30);
+                localStorage.setItem("fc_connections", JSON.stringify(updated));
+            } catch (_) {}
         }
 
-        // Load Persisted Messages
         async function loadMessages() {
             try {
-                const response = await fetch("/api/chat/messages", {
+                const apiFetcher = window.TakoraAuth
+                    ? window.TakoraAuth.apiFetch
+                    : async (url, opt) => {
+                        const r = await fetch(url, { ...opt, credentials: "include" });
+                        return { res: r, data: await r.json().catch(() => ({})) };
+                    };
+
+                const { res, data } = await apiFetcher("/api/chat/messages", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        creatorId,
-                        paymentId,
-                        token
-                    })
+                    body: JSON.stringify({ creatorId })
                 });
 
-                const data = await response.json();
-                if (response.ok && data.success && Array.isArray(data.messages)) {
+                if (res.ok && data.success && Array.isArray(data.messages)) {
                     renderMessages(data.messages);
                 } else {
                     renderMessages([]);
@@ -831,38 +811,35 @@
             }
         }
 
-        // Render Messages in Viewport
         function renderMessages(messages) {
             messagesList.innerHTML = "";
 
             if (!messages || messages.length === 0) {
-                const partnerName = (activeCreator && activeCreator.name) || "your partner";
+                const partnerName = (activeCreator && activeCreator.name) || "your creator";
                 messagesList.innerHTML = `
                     <div class="chat-empty-state">
-                        <div class="empty-heart-icon" aria-hidden="true">
+                        <div class="empty-chat-circle" aria-hidden="true">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                         </div>
                         <h3>Say Hello to ${escapeHTML(partnerName)}</h3>
-                        <p>Your payment is verified and your one-time connection is active. Break the ice with a friendly message.</p>
+                        <p>Your membership is active! Start a friendly 1-on-1 conversation.</p>
                         <div class="quick-replies-row">
-                            <button type="button" class="quick-chip" onclick="applyQuickText('Hi there! Excited to connect with you 😊')">Hi there! 👋</button>
-                            <button type="button" class="quick-chip" onclick="applyQuickText('Loved your profile! How has your day been?')">Loved your profile ✨</button>
-                            <button type="button" class="quick-chip" onclick="applyQuickText('Hello! Would love to chat about your interests.')">Let\\'s chat 💬</button>
+                            <button type="button" class="quick-chip" onclick="applyQuickText('Hi there! Excited to connect with you.')">Hi there!</button>
+                            <button type="button" class="quick-chip" onclick="applyQuickText('Loved your profile! How has your day been?')">How is your day?</button>
+                            <button type="button" class="quick-chip" onclick="applyQuickText('Hello! Would love to chat about your interests.')">Let\\'s chat</button>
                         </div>
                     </div>
                 `;
                 return;
             }
 
-            // System Date Stamp
             const dateBadge = document.createElement("div");
             dateBadge.className = "chat-system-date";
-            dateBadge.textContent = "Connection Confirmed";
+            dateBadge.textContent = "Membership Conversation";
             messagesList.appendChild(dateBadge);
 
-            // Chronological Messages
             messages.forEach((msg) => {
                 appendBubble(msg.text, msg.timestamp, false);
             });
@@ -870,9 +847,7 @@
             scrollToBottom();
         }
 
-        // Append Single Chat Bubble
         function appendBubble(text, timestamp, animate = true) {
-            // Remove empty state if present
             const empty = messagesList.querySelector(".chat-empty-state");
             if (empty) empty.remove();
 
@@ -886,7 +861,7 @@
                 <div class="bubble-text">${escapeHTML(text)}</div>
                 <div class="bubble-footer">
                     <span class="bubble-time">${formatTime(timestamp)}</span>
-                    <span class="bubble-ticks" aria-label="Sent and delivered">
+                    <span class="bubble-ticks" aria-label="Sent">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -911,7 +886,6 @@
             sendBtn.disabled = false;
         };
 
-        // Input & Form Events
         chatInput.addEventListener("input", () => {
             sendBtn.disabled = chatInput.value.trim().length === 0 || isSending;
         });
@@ -925,12 +899,9 @@
             sendBtn.disabled = true;
             chatInput.value = "";
 
-            // Optimistic append
-            const tempTimestamp = new Date().toISOString();
-            appendBubble(messageText, tempTimestamp, true);
+            appendBubble(messageText, new Date().toISOString(), true);
 
             try {
-                try {
                 if (window.MYP_TRACK) {
                     window.MYP_TRACK.trackEvent("message_sent", {
                         creatorId,
@@ -938,20 +909,24 @@
                     });
                 }
             } catch (_) {}
-            const response = await fetch("/api/chat/send", {
+
+            try {
+                const apiFetcher = window.TakoraAuth
+                    ? window.TakoraAuth.apiFetch
+                    : async (url, opt) => {
+                        const r = await fetch(url, { ...opt, credentials: "include" });
+                        return { res: r, data: await r.json().catch(() => ({})) };
+                    };
+
+                const { res, data } = await apiFetcher("/api/chat/send", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        creatorId,
-                        paymentId,
-                        token,
-                        messageText
-                    })
+                    body: JSON.stringify({ creatorId, messageText })
                 });
 
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    console.warn("Message sending error:", data.message);
+                if (!res.ok || !data.success) {
+                    if (window.TakoraAuth) {
+                        window.TakoraAuth.showToast(data.message || "Unable to send message", true);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to send message:", err);
@@ -962,7 +937,6 @@
             }
         });
 
-        // Start initialization
         initChat();
     </script>
 

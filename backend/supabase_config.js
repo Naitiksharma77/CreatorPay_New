@@ -72,12 +72,25 @@ const seedCreators = [
 ];
 
 function createMockClient() {
-  const inMemoryCreators = [...seedCreators];
+  const tables = {
+    creators: [...seedCreators],
+    users: [],
+    subscriptions: [],
+    subscription_payments: [],
+    webhook_events: [],
+    interaction_sessions: [],
+    bookings: [],
+    payments: [],
+    messages: []
+  };
   const inMemoryImages = new Map();
 
   class MockQueryBuilder {
     constructor(table) {
       this.table = table;
+      if (!tables[table]) {
+        tables[table] = [];
+      }
       this.filters = [];
       this.orderField = null;
       this.orderAscending = true;
@@ -85,9 +98,10 @@ function createMockClient() {
       this.isSingle = false;
       this.operation = "select";
       this.payload = null;
+      this.upsertOptions = null;
     }
 
-    select(cols) {
+    select() {
       return this;
     }
 
@@ -112,9 +126,21 @@ function createMockClient() {
       return this;
     }
 
+    maybeSingle() {
+      this.isSingle = true;
+      return this;
+    }
+
     insert(rows) {
       this.operation = "insert";
       this.payload = Array.isArray(rows) ? rows : [rows];
+      return this;
+    }
+
+    upsert(rows, options = {}) {
+      this.operation = "upsert";
+      this.payload = Array.isArray(rows) ? rows : [rows];
+      this.upsertOptions = options;
       return this;
     }
 
@@ -130,19 +156,17 @@ function createMockClient() {
     }
 
     execute() {
-      if (this.table !== "creators") {
-        return { data: [], error: null };
-      }
+      const store = tables[this.table] || [];
 
       if (this.operation === "insert") {
         const inserted = [];
         for (const row of this.payload) {
           const item = {
-            id: `creator_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-            created_at: new Date().toISOString(),
+            id: row.id || `${this.table}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            created_at: row.created_at || new Date().toISOString(),
             ...row
           };
-          inMemoryCreators.unshift(item);
+          store.unshift(item);
           inserted.push(item);
         }
         return {
@@ -151,32 +175,55 @@ function createMockClient() {
         };
       }
 
-      if (this.operation === "update") {
-        let updatedItem = null;
-        for (let i = 0; i < inMemoryCreators.length; i++) {
-          const item = inMemoryCreators[i];
-          const matches = this.filters.every(
-            (f) => String(item[f.field]) === f.value
-          );
-          if (matches) {
-            inMemoryCreators[i] = { ...item, ...this.payload };
-            updatedItem = inMemoryCreators[i];
-            break;
+      if (this.operation === "upsert") {
+        const conflictKey = (this.upsertOptions && this.upsertOptions.onConflict) || "id";
+        const upserted = [];
+        for (const row of this.payload) {
+          const idx = row[conflictKey] !== undefined
+            ? store.findIndex((existing) => String(existing[conflictKey]) === String(row[conflictKey]))
+            : -1;
+          if (idx !== -1) {
+            store[idx] = { ...store[idx], ...row };
+            upserted.push(store[idx]);
+          } else {
+            const item = {
+              id: row.id || `${this.table}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+              created_at: row.created_at || new Date().toISOString(),
+              ...row
+            };
+            store.unshift(item);
+            upserted.push(item);
           }
         }
         return {
-          data: this.isSingle ? updatedItem : (updatedItem ? [updatedItem] : []),
-          error: updatedItem ? null : { message: "Item not found" }
+          data: this.isSingle ? upserted[0] || null : upserted,
+          error: null
+        };
+      }
+
+      if (this.operation === "update") {
+        const updatedItems = [];
+        for (let i = 0; i < store.length; i++) {
+          const item = store[i];
+          const matches = this.filters.every((f) => String(item[f.field]) === f.value);
+          if (matches) {
+            store[i] = { ...item, ...this.payload };
+            updatedItems.push(store[i]);
+          }
+        }
+        return {
+          data: this.isSingle ? (updatedItems[0] || null) : updatedItems,
+          error: updatedItems.length > 0 ? null : { message: "Item not found" }
         };
       }
 
       if (this.operation === "delete") {
         let deletedItem = null;
-        const index = inMemoryCreators.findIndex((item) =>
+        const index = store.findIndex((item) =>
           this.filters.every((f) => String(item[f.field]) === f.value)
         );
         if (index !== -1) {
-          deletedItem = inMemoryCreators.splice(index, 1)[0];
+          deletedItem = store.splice(index, 1)[0];
         }
         return {
           data: this.isSingle ? deletedItem : (deletedItem ? [deletedItem] : []),
@@ -184,13 +231,10 @@ function createMockClient() {
         };
       }
 
-      // Default: select
-      let results = [...inMemoryCreators];
+      let results = [...store];
 
       for (const filter of this.filters) {
-        results = results.filter(
-          (item) => String(item[filter.field]) === filter.value
-        );
+        results = results.filter((item) => String(item[filter.field]) === filter.value);
       }
 
       if (this.orderField) {
@@ -222,8 +266,7 @@ function createMockClient() {
 
     then(resolve, reject) {
       try {
-        const res = this.execute();
-        resolve(res);
+        resolve(this.execute());
       } catch (err) {
         reject(err);
       }
@@ -233,15 +276,14 @@ function createMockClient() {
   return {
     from: (table) => new MockQueryBuilder(table),
     storage: {
-      from: (bucket) => ({
+      from: () => ({
         upload: async (fileName, buffer, options = {}) => {
           try {
             const mime = options.contentType || "image/jpeg";
             const base64 = Buffer.isBuffer(buffer)
               ? buffer.toString("base64")
               : Buffer.from(buffer).toString("base64");
-            const dataUrl = `data:${mime};base64,${base64}`;
-            inMemoryImages.set(fileName, dataUrl);
+            inMemoryImages.set(fileName, `data:${mime};base64,${base64}`);
             return { data: { path: fileName }, error: null };
           } catch (err) {
             return { data: null, error: err };
@@ -257,6 +299,7 @@ function createMockClient() {
 }
 
 let supabaseClient;
+let isSupabaseLive = false;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey =
   process.env.SUPABASE_SECRET_KEY ||
@@ -266,13 +309,16 @@ const supabaseKey =
 if (supabaseUrl && supabaseUrl.startsWith("http") && supabaseKey) {
   try {
     supabaseClient = createClient(supabaseUrl, supabaseKey);
+    isSupabaseLive = true;
   } catch (err) {
-    console.warn("[FriendConnect] Supabase init failed, using fallback:", err.message);
+    console.warn("[Takora] Supabase init failed, using fallback:", err.message);
     supabaseClient = createMockClient();
   }
 } else {
-  console.log("[FriendConnect] Running with fallback database client.");
+  console.log("[Takora] Running with fallback database client.");
   supabaseClient = createMockClient();
 }
+
+supabaseClient.isSupabaseLive = isSupabaseLive;
 
 module.exports = supabaseClient;

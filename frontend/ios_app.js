@@ -1,9 +1,8 @@
-const API_URL = "https://creatorpay-backend.onrender.com";
+const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
 
 // State
 let allCreators = [];
 let currentTab = "home";
-let activeFilter = "all";
 let searchQuery = "";
 
 // DOM Elements
@@ -16,13 +15,8 @@ const discoverPeopleList = document.getElementById("discoverPeopleList");
 const homePeopleCount = document.getElementById("homePeopleCount");
 const discoverSearchInput = document.getElementById("discoverSearchInput");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
-const filterChipsContainer = document.getElementById("filterChips");
 const chatsContent = document.getElementById("chatsContent");
 const profileSheetModal = document.getElementById("profileSheetModal");
-
-// ===============================
-// SAFE HTML HELPER
-// ===============================
 
 function escapeHTML(value) {
     return String(value ?? "")
@@ -32,11 +26,6 @@ function escapeHTML(value) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
-
-
-// ===============================
-// STORAGE: FAVORITES & CONNECTIONS
-// ===============================
 
 function getFavorites() {
     try {
@@ -64,7 +53,7 @@ function getConnections() {
     }
 }
 
-function toggleCardFav(event, creatorId) {
+window.toggleCardFav = function (event, creatorId) {
     if (event) {
         event.stopPropagation();
     }
@@ -82,174 +71,24 @@ function toggleCardFav(event, creatorId) {
 
     saveFavorites(currentFavs);
 
-    // Update heart icons across cards
     const buttons = document.querySelectorAll(`[data-fav-id="${creatorId}"]`);
     buttons.forEach((btn) => {
         const svg = btn.querySelector("svg");
         if (svg) {
             if (isNowFav) {
                 btn.classList.add("is-fav");
-                svg.setAttribute("fill", "#EC4899");
-                svg.setAttribute("stroke", "#EC4899");
-                btn.classList.add("heart-pulse");
-                setTimeout(() => btn.classList.remove("heart-pulse"), 450);
+                svg.setAttribute("fill", "#2563EB");
+                svg.setAttribute("stroke", "#2563EB");
             } else {
                 btn.classList.remove("is-fav");
                 svg.setAttribute("fill", "none");
-                svg.setAttribute("stroke", "#817783");
+                svg.setAttribute("stroke", "#0F172A");
             }
         }
     });
 
     updateSheetStats();
-}
-
-
-// ===============================
-// CATEGORY ICONS
-// ===============================
-
-function getCategoryIcon(cat) {
-    const text = String(cat || "").toLowerCase();
-
-    // Design / Creative / Art
-    if (text.includes("design") || text.includes("art") || text.includes("creative") || text.includes("ui") || text.includes("ux")) {
-        return `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
-                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
-                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
-                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7h2c3 0 5.6-2.5 5.6-5.6C22 6.5 17.5 2 12 2z"></path>
-            </svg>
-        `;
-    }
-
-    // Technology / Engineering / Code
-    if (text.includes("tech") || text.includes("ai") || text.includes("code") || text.includes("enginier") || text.includes("engineer")) {
-        return `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="16 18 22 12 16 6"></polyline>
-                <polyline points="8 6 2 12 8 18"></polyline>
-            </svg>
-        `;
-    }
-
-    // Fashion / Lifestyle / Travel
-    if (text.includes("fashion") || text.includes("lifestyle") || text.includes("travel")) {
-        return `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-        `;
-    }
-
-    // Doctor / Medical / Science
-    if (text.includes("doctor") || text.includes("medical") || text.includes("health")) {
-        return `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-            </svg>
-        `;
-    }
-
-    // Student / Education / Teacher
-    if (text.includes("student") || text.includes("teacher") || text.includes("commerce")) {
-        return `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-            </svg>
-        `;
-    }
-
-    // Content / Creator
-    if (text.includes("content") || text.includes("instagram") || text.includes("creator")) {
-        return `
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-            </svg>
-        `;
-    }
-
-    // Default: Lifestyle / Sparkle
-    return `
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path>
-        </svg>
-    `;
-}
-
-
-// ===============================
-// ONLINE STATUS CONFIG & HELPER
-// ===============================
-
-const ONLINE_CREATOR_IDS = new Set([
-    "3faaf9a9-c333-4d78-b481-7cb2417aa2da", // Gurleen Singh
-    "9ed33502-c94a-4bff-ad72-c205dad86a83", // Sonalika
-    "18d38626-af2b-4ec6-93d5-a9e30f51d26d", // Sandhya Sharma
-    "a9183d22-3b4b-4f16-b244-cfff0f4e7264", // Chanchal
-    "4502fa25-d332-4b53-bc2f-7b126a058a6e", // Deeksha Rajput
-    "a7cc3e27-c2cf-4952-8bbf-c0317910fb3c", // Aayushi Sharma
-    "6264f38a-6536-4d13-94cd-e87669660a85", // Sanjay Rai
-    "1eb155f8-ad20-44b5-b8e3-6bef79cd288c", // Priyanshi Sharma
-    "88f1199b-948a-464a-bd42-b3116d84f33d"  // Kum Kum Somvanshi
-]);
-
-const ONLINE_CREATOR_NAMES = new Set([
-    "gurleensingh",
-    "sonalika",
-    "sandhyasharma",
-    "chanchal",
-    "deeksharajput",
-    "aayushisharma",
-    "sanjayrai",
-    "priyanshisharma",
-    "kumkumsomvanshi"
-]);
-
-function isCreatorOnline(creator) {
-    if (!creator) return false;
-    if (typeof creator.is_online === "boolean") return creator.is_online;
-    if (typeof creator.online === "boolean") return creator.online;
-
-    if (creator.id && ONLINE_CREATOR_IDS.has(String(creator.id).trim())) {
-        return true;
-    }
-
-    if (creator.name) {
-        const normalized = String(creator.name).toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (ONLINE_CREATOR_NAMES.has(normalized)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-// ===============================
-// PROFILE CARD COMPONENT RENDERER (ROSÉIA REFERENCE DESIGN)
-// ===============================
-
-function formatNextOpenDate(dates) {
-    if (Array.isArray(dates) && dates.length > 0) {
-        // Sort and pick earliest upcoming or first date
-        const sorted = [...dates].sort();
-        const dateStr = sorted[0];
-        try {
-            const d = new Date(dateStr + "T00:00:00");
-            if (!isNaN(d.getTime())) {
-                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-            }
-        } catch (_) {}
-    }
-    return "Oct 30, 2026";
-}
+};
 
 function getDisplayAge(creator) {
     const raw = creator.creator_age || creator.age;
@@ -275,33 +114,30 @@ function createProfileCardHTML(creator, index) {
 
     const name = (creator.name && creator.name.trim()) || "Member";
     const bio = (creator.bio && creator.bio.trim()) || "Excited to meet lovely people, share meaningful stories and start great conversations.";
-    const rawPrice = Number(creator.price);
-    const price = (Number.isFinite(rawPrice) && rawPrice > 0) ? rawPrice.toLocaleString("en-IN") : "49";
     const profileLink = `friend_profile.html?id=${encodeURIComponent(creator.id)}`;
-    const animDelay = Math.min(index * 35, 250);
+    const animDelay = Math.min(index * 30, 220);
 
-    // Dynamic tags (Interests)
     let tagsText = "Coffee & Conversation  ·  Fine Dining";
     if (Array.isArray(creator.tags) && creator.tags.length > 0) {
-        tagsText = creator.tags.slice(0, 2).map(t => String(t).trim()).join("  ·  ");
+        tagsText = creator.tags.slice(0, 2).map((t) => String(t).trim()).join("  ·  ");
     } else if (typeof creator.tags === "string" && creator.tags.trim()) {
-        tagsText = creator.tags.split(",").slice(0, 2).map(t => t.trim()).join("  ·  ");
+        tagsText = creator.tags.split(",").slice(0, 2).map((t) => t.trim()).join("  ·  ");
     }
 
     return `
         <article class="roseia-card social-card" style="animation-delay: ${animDelay}ms;" onclick="window.location.href='${profileLink}'" role="button" tabindex="0" onkeydown="if(event.key==='Enter') window.location.href='${profileLink}'">
             <div class="card-image-wrap">
                 <img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" class="card-image" style="object-position: 50% 20%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80';">
-                
+
                 <button
                     type="button"
-                    class="card-fav-btn ${isFav ? 'is-fav' : ''}"
+                    class="card-fav-btn ${isFav ? "is-fav" : ""}"
                     data-fav-id="${escapeHTML(creator.id)}"
                     onclick="toggleCardFav(event, '${escapeHTML(creator.id)}')"
                     aria-label="Save ${escapeHTML(name)}"
-                    title="Save person"
+                    title="Save profile"
                 >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="${isFav ? '#E11D48' : 'none'}" stroke="${isFav ? '#E11D48' : '#1F2937'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="${isFav ? "#2563EB" : "none"}" stroke="${isFav ? "#2563EB" : "#0F172A"}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -310,7 +146,6 @@ function createProfileCardHTML(creator, index) {
                     <div class="card-overlay-left">
                         <div class="card-overlay-name">${escapeHTML(name)}</div>
                     </div>
-                    <div class="card-overlay-price">₹${price}</div>
                 </div>
             </div>
 
@@ -335,9 +170,8 @@ function createProfileCardHTML(creator, index) {
     `;
 }
 
-// Global hook to open interaction modal directly or fallback to friend_profile
-window.openConnectForCreator = function(creatorId) {
-    const creator = allCreators.find(c => String(c.id) === String(creatorId));
+window.openConnectForCreator = function (creatorId) {
+    const creator = allCreators.find((c) => String(c.id) === String(creatorId));
     if (creator && window.openInteractionModal) {
         window.openInteractionModal(creator, "chat");
     } else {
@@ -348,22 +182,17 @@ window.openConnectForCreator = function(creatorId) {
 window.openBookingForCreator = window.openConnectForCreator;
 window.openSayHiForCreator = window.openConnectForCreator;
 
-
-// ===============================
-// SEARCH & FILTERS STATE & LOGIC
-// ===============================
-
+// Filters state (no per-creator price filters)
 let filterCity = "all";
 let filterDate = "";
 let filterSort = "popularity";
-let filterMaxPrice = 500;
 let filterInterest = "all";
 
 function populateCityOptions() {
     const citySelect = document.getElementById("filterCitySelect");
     if (!citySelect) return;
     const cities = new Set();
-    allCreators.forEach(c => {
+    allCreators.forEach((c) => {
         const loc = (c.creator_location || c.location || "").trim();
         if (loc && !loc.toLowerCase().includes("available locally")) {
             const cityName = loc.split(",")[0].trim();
@@ -373,7 +202,7 @@ function populateCityOptions() {
 
     const currentVal = citySelect.value;
     let html = `<option value="all">All Cities</option>`;
-    Array.from(cities).sort().forEach(city => {
+    Array.from(cities).sort().forEach((city) => {
         html += `<option value="${escapeHTML(city)}">${escapeHTML(city)}</option>`;
     });
     citySelect.innerHTML = html;
@@ -382,9 +211,15 @@ function populateCityOptions() {
     }
 }
 
-// ===============================
-// RENDER FEEDS
-// ===============================
+function sortCreatorsByNewestFirst(list) {
+    if (!Array.isArray(list)) return [];
+    return [...list].sort((a, b) => {
+        const timeA = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB - timeA;
+    });
+}
+const sortFeaturedCreators = sortCreatorsByNewestFirst;
 
 function renderHomeFeed() {
     if (!homePeopleList) return;
@@ -413,10 +248,9 @@ function renderDiscoverFeed() {
 
     let filtered = [...allCreators];
 
-    // 1. Text Search Query
     if (searchQuery.trim().length > 0) {
         const query = searchQuery.toLowerCase().trim();
-        filtered = filtered.filter(c => {
+        filtered = filtered.filter((c) => {
             const name = String(c.name || "").toLowerCase();
             const bio = String(c.bio || "").toLowerCase();
             const loc = String(c.creator_location || c.location || "").toLowerCase();
@@ -425,18 +259,16 @@ function renderDiscoverFeed() {
         });
     }
 
-    // 2. City Filter
     if (filterCity !== "all") {
         const cityLower = filterCity.toLowerCase();
-        filtered = filtered.filter(c => {
+        filtered = filtered.filter((c) => {
             const loc = String(c.creator_location || c.location || "").toLowerCase();
             return loc.includes(cityLower);
         });
     }
 
-    // 3. Available Date Filter
     if (filterDate) {
-        filtered = filtered.filter(c => {
+        filtered = filtered.filter((c) => {
             if (Array.isArray(c.available_dates) && c.available_dates.length > 0) {
                 return c.available_dates.includes(filterDate);
             }
@@ -444,46 +276,33 @@ function renderDiscoverFeed() {
         });
     }
 
-    // 4. Maximum Price Slider
-    if (filterMaxPrice && filterMaxPrice < 1000) {
-        filtered = filtered.filter(c => {
-            const price = Number(c.price) || 0;
-            return price <= filterMaxPrice;
-        });
-    }
-
-    // 5. Interest Filter
     if (filterInterest !== "all") {
         const interestLower = filterInterest.toLowerCase();
-        filtered = filtered.filter(c => {
+        filtered = filtered.filter((c) => {
             const tags = Array.isArray(c.tags) ? c.tags.join(" ").toLowerCase() : String(c.tags || "").toLowerCase();
             const bio = String(c.bio || "").toLowerCase();
             return tags.includes(interestLower) || bio.includes(interestLower);
         });
     }
 
-    // 6. Sort
-    if (filterSort === "price_low") {
-        filtered.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-    } else if (filterSort === "price_high") {
-        filtered.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    if (filterSort === "name_asc") {
+        filtered.sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
     } else if (filterSort === "age_young") {
         filtered.sort((a, b) => (Number(getDisplayAge(a)) || 25) - (Number(getDisplayAge(b)) || 25));
     } else {
         filtered = sortFeaturedCreators(filtered);
     }
 
-    // Update Result Count text
     const countEl = document.getElementById("discoverResultCount");
     if (countEl) {
-        countEl.textContent = `Showing ${filtered.length} creator profile${filtered.length === 1 ? '' : 's'}`;
+        countEl.textContent = `Showing ${filtered.length} creator profile${filtered.length === 1 ? "" : "s"}`;
     }
 
     if (filtered.length === 0) {
         discoverPeopleList.innerHTML = `
             <div class="empty-chats-state" style="grid-column: 1 / -1; padding: 48px 20px;">
                 <h3 class="empty-title">No creators found</h3>
-                <p class="empty-desc">Try adjusting your city, date, or budget filter to see more profiles.</p>
+                <p class="empty-desc">Try adjusting your search query or interest filter to see more profiles.</p>
                 <button class="empty-action-btn" onclick="resetFilters()">Reset All Filters</button>
             </div>
         `;
@@ -498,19 +317,53 @@ function renderDiscoverFeed() {
 function renderChatsFeed() {
     if (!chatsContent) return;
 
+    const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, entitlements: { chat: false } };
     const connections = getConnections();
+
+    if (!auth.authenticated) {
+        chatsContent.innerHTML = `
+            <div class="empty-chats-state">
+                <div class="empty-chat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="empty-title">Sign in to see your connections</h3>
+                <p class="empty-desc">Create a free account or sign in to access your chats with creators.</p>
+                <button type="button" class="empty-action-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In Free</button>
+            </div>
+        `;
+        return;
+    }
+
+    if (!auth.entitlements || !auth.entitlements.chat) {
+        chatsContent.innerHTML = `
+            <div class="empty-chats-state">
+                <div class="empty-chat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <h3 class="empty-title">Unlock 1-on-1 Chat &amp; Calls</h3>
+                <p class="empty-desc">Activate a monthly membership starting at ₹9/month to chat, call, and connect across all creators.</p>
+                <a href="pricing.html" class="empty-action-btn">View Membership Plans</a>
+            </div>
+        `;
+        return;
+    }
 
     if (connections.length === 0) {
         chatsContent.innerHTML = `
             <div class="empty-chats-state">
                 <div class="empty-chat-icon">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                 </div>
-                <h3 class="empty-title">Your conversations will appear here.</h3>
-                <p class="empty-desc">Say hi to someone special to start your first beautiful conversation.</p>
-                <button class="empty-action-btn" onclick="switchTab('discover')">Discover People</button>
+                <h3 class="empty-title">Your membership is active</h3>
+                <p class="empty-desc">Say hi to any creator from Explore to start your first private conversation.</p>
+                <button type="button" class="empty-action-btn" onclick="switchTab('explore')">Explore Creators</button>
             </div>
         `;
         return;
@@ -520,29 +373,18 @@ function renderChatsFeed() {
         <div class="chats-list">
             ${connections
                 .map((conn) => {
-                    let targetLink = `friend_profile.html?id=${encodeURIComponent(conn.id)}`;
-                    let chatSubtitle = "Connection confirmed · Tap to chat";
-                    try {
-                        const rawSession = localStorage.getItem(`fc_chat_session_${conn.id}`);
-                        if (rawSession) {
-                            const sess = JSON.parse(rawSession);
-                            if (sess && sess.token && sess.paymentId) {
-                                targetLink = `chat.html?id=${encodeURIComponent(conn.id)}&payment_id=${encodeURIComponent(sess.paymentId)}&token=${encodeURIComponent(sess.token)}`;
-                                chatSubtitle = "Private Chat Unlocked · Tap to message";
-                            }
-                        }
-                    } catch (_) {}
+                    const targetLink = `chat.html?id=${encodeURIComponent(conn.id)}`;
                     return `
                         <div class="chat-row" onclick="window.location.href='${targetLink}'">
                             <div class="chat-avatar-wrap">
-                                <img src="${escapeHTML(conn.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80')}" alt="${escapeHTML(conn.name)}">
+                                <img src="${escapeHTML(conn.profile_image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80")}" alt="${escapeHTML(conn.name)}">
                             </div>
                             <div class="chat-info">
                                 <div class="chat-header-line">
                                     <span class="chat-name">${escapeHTML(conn.name)}</span>
-                                    <span class="chat-time">Connected</span>
+                                    <span class="chat-time">Membership Active</span>
                                 </div>
-                                <div class="chat-preview">${chatSubtitle}</div>
+                                <div class="chat-preview">Tap to continue your private conversation</div>
                             </div>
                         </div>
                     `;
@@ -552,12 +394,11 @@ function renderChatsFeed() {
     `;
 }
 
-function resetFilters() {
+window.resetFilters = function () {
     searchQuery = "";
     filterCity = "all";
     filterDate = "";
     filterSort = "popularity";
-    filterMaxPrice = 500;
     filterInterest = "all";
 
     const searchInput = document.getElementById("discoverSearchInput");
@@ -573,36 +414,11 @@ function resetFilters() {
     const sortSelect = document.getElementById("filterSortSelect");
     if (sortSelect) sortSelect.value = "popularity";
 
-    const slider = document.getElementById("priceRangeSlider");
-    if (slider) slider.value = 500;
-    const readout = document.getElementById("priceSliderReadout");
-    if (readout) readout.textContent = "Up to ₹500";
-
     document.querySelectorAll(".interest-tag-btn").forEach((btn) => btn.classList.remove("active"));
-
     renderDiscoverFeed();
-}
+};
 
-
-function sortCreatorsByNewestFirst(list) {
-    if (!Array.isArray(list)) return [];
-    return [...list].sort((a, b) => {
-        const timeA = a && a.created_at ? new Date(a.created_at).getTime() : 0;
-        const timeB = b && b.created_at ? new Date(b.created_at).getTime() : 0;
-        if (timeB !== timeA) {
-            return timeB - timeA; // Newest created_at timestamp first
-        }
-        return 0;
-    });
-}
-const sortFeaturedCreators = sortCreatorsByNewestFirst;
-
-// ===============================
-// TAB SWITCHING (EXPLORE, SEARCH, FAVORITES, BOOKINGS)
-// ===============================
-
-function switchTab(tabName) {
-    // Map aliases
+window.switchTab = function (tabName) {
     let normalizedTab = tabName;
     if (tabName === "home") normalizedTab = "explore";
     if (tabName === "discover") normalizedTab = "search";
@@ -615,50 +431,46 @@ function switchTab(tabName) {
 
     currentTab = normalizedTab;
 
-    // Update views
     if (homeView) homeView.classList.toggle("active", normalizedTab === "explore" || normalizedTab === "favorites");
     if (discoverView) discoverView.classList.toggle("active", normalizedTab === "search");
     if (chatsView) chatsView.classList.toggle("active", normalizedTab === "bookings");
 
-    // Update bottom navigation buttons
     document.querySelectorAll(".tab-btn").forEach((btn) => {
         const bTab = btn.dataset.tab;
-        const matches = (bTab === normalizedTab) ||
+        const matches =
+            (bTab === normalizedTab) ||
             (bTab === "home" && normalizedTab === "explore") ||
             (bTab === "discover" && normalizedTab === "search") ||
             (bTab === "chats" && normalizedTab === "bookings");
         btn.classList.toggle("active", matches);
     });
 
-    // Update desktop navigation links in header
     document.querySelectorAll(".desktop-nav-link").forEach((link) => {
         const lTab = link.dataset.tab;
-        const matches = (lTab === normalizedTab) ||
+        const matches =
+            (lTab === normalizedTab) ||
             (lTab === "home" && normalizedTab === "explore") ||
             (lTab === "discover" && normalizedTab === "search") ||
             (lTab === "chats" && normalizedTab === "bookings");
         link.classList.toggle("active", matches);
     });
 
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    // Render corresponding view
     if (normalizedTab === "explore") renderHomeFeed();
     if (normalizedTab === "search") renderDiscoverFeed();
     if (normalizedTab === "bookings") renderChatsFeed();
     if (normalizedTab === "favorites") renderFavoritesFeed();
 
-    // Update window hash
     if (window.location.hash !== `#${normalizedTab}`) {
         window.history.replaceState(null, "", `#${normalizedTab}`);
     }
-}
+};
 
 function renderFavoritesFeed() {
     if (!homePeopleList) return;
     const favIds = getFavorites();
-    const favCreators = allCreators.filter(c => favIds.includes(String(c.id)));
+    const favCreators = allCreators.filter((c) => favIds.includes(String(c.id)));
 
     if (homePeopleCount) {
         homePeopleCount.textContent = `${favCreators.length} saved`;
@@ -666,10 +478,10 @@ function renderFavoritesFeed() {
 
     if (favCreators.length === 0) {
         homePeopleList.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 20px; border: 1px solid #F3E8EE;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D93B78" stroke-width="1.8" style="margin: 0 auto 14px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                <h3 style="font-size: 18px; font-weight: 700; color: #1F2937; margin-bottom: 6px;">No saved favorites yet</h3>
-                <p style="color: #6B7280; font-size: 14px; margin-bottom: 18px;">Click the heart icon on any card to save lovely people here.</p>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.8" style="margin: 0 auto 14px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">No saved favorites yet</h3>
+                <p style="color: #64748B; font-size: 14px; margin-bottom: 18px;">Tap the heart icon on any creator card to save favorites here.</p>
                 <button type="button" onclick="switchTab('explore')" class="btn-book-date" style="display: inline-flex; width: auto; padding: 10px 22px;">Explore Profiles</button>
             </div>
         `;
@@ -679,12 +491,7 @@ function renderFavoritesFeed() {
     homePeopleList.innerHTML = favCreators.map(createProfileCardHTML).join("");
 }
 
-
-// ===============================
-// PROFILE SHEET MODAL
-// ===============================
-
-function toggleProfileSheet() {
+window.toggleProfileSheet = function () {
     if (!profileSheetModal) return;
     const isActive = profileSheetModal.classList.contains("active");
 
@@ -694,11 +501,14 @@ function toggleProfileSheet() {
         document.body.style.overflow = "";
     } else {
         updateSheetStats();
+        if (window.TakoraAuth) {
+            window.TakoraAuth.syncHeaderAndSheetUI();
+        }
         profileSheetModal.classList.add("active");
         profileSheetModal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
     }
-}
+};
 
 function updateSheetStats() {
     const connectionsCount = document.getElementById("sheetConnectionsCount");
@@ -712,13 +522,7 @@ function updateSheetStats() {
     }
 }
 
-
-// ===============================
-// LOAD DATA FROM SERVER (IMMEDIATE + LIVE)
-// ===============================
-
 async function loadCreators() {
-    // 1. Immediately display cached profiles if available so screen opens instantly
     try {
         const cached = localStorage.getItem("fc_cached_creators");
         if (cached) {
@@ -732,12 +536,10 @@ async function loadCreators() {
         }
     } catch (_) {}
 
-    // 2. Fetch fresh live profiles (prefer same-origin /api/creators, fallback to Render backend)
     try {
         let freshList = [];
         let fetched = false;
 
-        // Try same-origin first
         try {
             const localController = new AbortController();
             const localTimeout = setTimeout(() => localController.abort(), 3500);
@@ -752,12 +554,11 @@ async function loadCreators() {
             }
         } catch (_) {}
 
-        // Fallback to Render backend if needed
         if (!fetched) {
             try {
                 const renderController = new AbortController();
                 const renderTimeout = setTimeout(() => renderController.abort(), 4500);
-                const response = await fetch(`${API_URL}/api/creators`, { signal: renderController.signal });
+                const response = await fetch(`${RENDER_BACKEND_URL}/api/creators`, { signal: renderController.signal });
                 clearTimeout(renderTimeout);
                 if (response.ok) {
                     const result = await response.json();
@@ -779,30 +580,21 @@ async function loadCreators() {
             renderHomeFeed();
             renderDiscoverFeed();
             renderChatsFeed();
-        } else if (allCreators.length === 0) {
-            if (homePeopleList) {
-                homePeopleList.innerHTML = `
-                    <div class="empty-chats-state">
-                        <h3 class="empty-title">Loading profiles...</h3>
-                        <p class="empty-desc">Render backend is connecting. Tap to refresh.</p>
-                        <button class="empty-action-btn" onclick="loadCreators()">Refresh Profiles</button>
-                    </div>
-                `;
-            }
+        } else if (allCreators.length === 0 && homePeopleList) {
+            homePeopleList.innerHTML = `
+                <div class="empty-chats-state">
+                    <h3 class="empty-title">Loading profiles...</h3>
+                    <p class="empty-desc">Connecting to Takora creators. Tap below to retry.</p>
+                    <button class="empty-action-btn" onclick="loadCreators()">Refresh Profiles</button>
+                </div>
+            `;
         }
-
     } catch (err) {
         console.warn("Issue loading creators:", err);
     }
 }
 
-
-// ===============================
-// EVENT LISTENERS & INITIALIZATION
-// ===============================
-
 document.addEventListener("DOMContentLoaded", () => {
-    // Header elevation on scroll
     let ticking = false;
     window.addEventListener("scroll", () => {
         if (!ticking) {
@@ -817,7 +609,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, { passive: true });
 
-    // Bottom tab bar buttons
     document.querySelectorAll(".tab-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
             const targetTab = btn.dataset.tab;
@@ -825,7 +616,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Search input in Search & Filters
     if (discoverSearchInput) {
         discoverSearchInput.addEventListener("input", (e) => {
             searchQuery = e.target.value;
@@ -845,7 +635,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // City Dropdown Filter
     const citySelect = document.getElementById("filterCitySelect");
     if (citySelect) {
         citySelect.addEventListener("change", (e) => {
@@ -854,7 +643,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Available Date Filter
     const dateInput = document.getElementById("filterDateInput");
     if (dateInput) {
         dateInput.addEventListener("change", (e) => {
@@ -863,7 +651,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Sort By Dropdown Filter
     const sortSelect = document.getElementById("filterSortSelect");
     if (sortSelect) {
         sortSelect.addEventListener("change", (e) => {
@@ -872,20 +659,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Maximum Date Price Slider
-    const priceSlider = document.getElementById("priceRangeSlider");
-    const priceReadout = document.getElementById("priceSliderReadout");
-    if (priceSlider) {
-        priceSlider.addEventListener("input", (e) => {
-            filterMaxPrice = Number(e.target.value);
-            if (priceReadout) {
-                priceReadout.textContent = `Up to ₹${filterMaxPrice}`;
-            }
-            renderDiscoverFeed();
-        });
-    }
-
-    // Interests Tag Buttons (toggle filter)
     document.querySelectorAll(".interest-tag-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
             const interest = btn.dataset.interest;
@@ -893,7 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 btn.classList.remove("active");
                 filterInterest = "all";
             } else {
-                document.querySelectorAll(".interest-tag-btn").forEach(b => b.classList.remove("active"));
+                document.querySelectorAll(".interest-tag-btn").forEach((b) => b.classList.remove("active"));
                 btn.classList.add("active");
                 filterInterest = interest || "all";
             }
@@ -901,7 +674,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Determine initial tab from URL hash
+    window.addEventListener("takora:auth-changed", () => {
+        if (currentTab === "bookings") {
+            renderChatsFeed();
+        }
+    });
+
     const hash = window.location.hash.replace("#", "").toLowerCase();
     if (hash === "discover" || hash === "search") {
         switchTab("search");
@@ -913,6 +691,5 @@ document.addEventListener("DOMContentLoaded", () => {
         switchTab("explore");
     }
 
-    // Immediately load creators as soon as website opens
     loadCreators();
 });

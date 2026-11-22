@@ -4,18 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#FFF7FA">
-    <title>Profile | Takora — Curated In-Person Dating</title>
+    <meta name="theme-color" content="#F8FAFC">
+    <title>Profile | Takora — Private Creator Connections</title>
 
-    <!-- Google Fonts for Editorial Roséia Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="friend_profile_styles.css">
     <link rel="stylesheet" href="interaction_modal.css">
 
-    <!-- Razorpay Checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <!-- Google tag (gtag.js) -->
@@ -40,16 +38,14 @@
         </main>
     </div>
 
-    <!-- Fullscreen Lightbox Modal for Hero Image -->
     <div id="heroLightboxModal" class="hero-lightbox-modal" style="display: none;" onclick="toggleHeroFullscreen()" role="dialog" aria-modal="true" aria-label="Fullscreen Image View">
         <button type="button" class="lightbox-close-btn" onclick="toggleHeroFullscreen()" aria-label="Close Fullscreen">&times;</button>
         <img id="lightboxImage" src="" alt="Creator Fullscreen" class="lightbox-img">
     </div>
 
-    <!-- Container for Interaction Modal (Chat, Voice Call, Video Call) -->
     <div id="roseiaInteractionModalContainer"></div>
 
-    <!-- Roséia Interaction Modal & Profile Logic -->
+    <script src="takora_auth.js"></script>
     <script src="interaction_modal.js"></script>
     <script src="friend_profile_app.js"></script>
 

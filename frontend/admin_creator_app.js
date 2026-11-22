@@ -1,21 +1,15 @@
 /**
- * Meet You Partner — Executive Pink Admin Dashboard
- * High-performance, clean, mobile-friendly analytics & partner management.
+ * Takora — Executive Blue Admin & Subscription Analytics Dashboard
  */
 
-// ===============================
-// STATE & CONFIG
-// ===============================
 const API_URL = "https://creatorpay-backend.onrender.com";
 let allCreators = [];
+let allTransactions = [];
 let currentFilterText = "";
 let currentPeriod = "7d";
 let analyticsData = null;
 let isRefreshing = false;
-
-// ===============================
-// DOM ELEMENTS
-// ===============================
+let pendingDeleteId = null;
 
 // Modals
 const creatorModal = document.getElementById("creatorModal");
@@ -26,6 +20,12 @@ const creatorForm = document.getElementById("creatorForm");
 const editCreatorModal = document.getElementById("editCreatorModal");
 const closeEditModalButton = document.getElementById("closeEditModalButton");
 const editCreatorForm = document.getElementById("editCreatorForm");
+
+const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+const closeDeleteConfirmBtn = document.getElementById("closeDeleteConfirmBtn");
+const abortDeleteBtn = document.getElementById("abortDeleteBtn");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const deleteConfirmBody = document.getElementById("deleteConfirmBody");
 
 // Photo Elements in Edit Modal
 const editExistingProfileImage = document.getElementById("editExistingProfileImage");
@@ -43,19 +43,19 @@ const adminSearchInput = document.getElementById("adminSearchInput");
 const globalSearchInput = document.getElementById("globalSearchInput");
 
 // Topbar & Refresh
-const currentDatePill = document.getElementById("currentDatePill");
 const datePillText = document.getElementById("datePillText");
 const manualRefreshBtn = document.getElementById("manualRefreshBtn");
 const periodButtons = document.querySelectorAll(".period-btn");
 
-// Stat Cards (Top Overview 2x2)
+// Top KPIs
+const statMrr = document.getElementById("statMrr");
+const statActiveSubsTrend = document.getElementById("statActiveSubsTrend");
 const statRevenue = document.getElementById("statRevenue");
 const statRevenueTrend = document.getElementById("statRevenueTrend");
-const statOrders = document.getElementById("statOrders");
-const statOrdersTrend = document.getElementById("statOrdersTrend");
-const statVisitors = document.getElementById("statVisitors");
+const statActiveSubs = document.getElementById("statActiveSubs");
+const statSubscribersTotal = document.getElementById("statSubscribersTotal");
+const statRegisteredUsers = document.getElementById("statRegisteredUsers");
 const statVisitorsTrend = document.getElementById("statVisitorsTrend");
-const statNetRevenue = document.getElementById("statNetRevenue");
 
 // Charts
 const revenueBarChartContainer = document.getElementById("revenueBarChartContainer");
@@ -64,21 +64,23 @@ const donutSvgWrap = document.getElementById("donutSvgWrap");
 const donutLegend = document.getElementById("donutLegend");
 const chartTooltip = document.getElementById("chartTooltip");
 
-// Middle Status Cards
-const statOrdersCount = document.getElementById("statOrdersCount");
-const statOrdersAwaiting = document.getElementById("statOrdersAwaiting");
+// Middle Status Cards & Plan Breakdown
+const statPaymentSuccessRate = document.getElementById("statPaymentSuccessRate");
+const statFailedSummary = document.getElementById("statFailedSummary");
 const statCustomersCount = document.getElementById("statCustomersCount");
-const statCustomersLive = document.getElementById("statCustomersLive");
+
+const subPlanBasicCount = document.getElementById("subPlanBasicCount");
+const subPlanProCount = document.getElementById("subPlanProCount");
+const subPlanPremiumCount = document.getElementById("subPlanPremiumCount");
+const subCancelledCount = document.getElementById("subCancelledCount");
+const subFailedCount = document.getElementById("subFailedCount");
+const subTransactionsTableBody = document.getElementById("subTransactionsTableBody");
 
 // Status Banners
 const bannerTotalCreators = document.getElementById("bannerTotalCreators");
 const bannerVerifiedProfiles = document.getElementById("bannerVerifiedProfiles");
-const bannerChatSessions = document.getElementById("bannerChatSessions");
-const bannerDeliveredOrders = document.getElementById("bannerDeliveredOrders");
-
-// ===============================
-// UTILITIES
-// ===============================
+const bannerActiveMembers = document.getElementById("bannerActiveMembers");
+const bannerSettledPayments = document.getElementById("bannerSettledPayments");
 
 function escapeHTML(str) {
     if (str === null || str === undefined) return "";
@@ -94,17 +96,30 @@ function formatINR(val) {
     return "₹" + Number(val || 0).toLocaleString("en-IN");
 }
 
+function formatDateTime(iso) {
+    if (!iso) return "—";
+    try {
+        return new Date(iso).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        });
+    } catch (_) {
+        return "—";
+    }
+}
+
 function showToast(message, isError = false) {
     let toast = document.getElementById("adminActionToast");
     if (!toast) {
         toast = document.createElement("div");
         toast.id = "adminActionToast";
-        toast.style.cssText = "position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.18); transition: opacity 0.25s ease, transform 0.25s ease; display: flex; align-items: center; gap: 8px;";
+        toast.style.cssText = "position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; box-shadow: 0 10px 25px rgba(15,23,42,0.18); transition: opacity 0.25s ease, transform 0.25s ease; display: flex; align-items: center; gap: 8px;";
         document.body.appendChild(toast);
     }
-    toast.style.background = isError ? "#EF4444" : "#10B981";
+    toast.style.background = isError ? "#DC2626" : "#16A34A";
     toast.style.color = "#FFFFFF";
-    toast.innerHTML = (isError ? "⚠️ " : "✓ ") + escapeHTML(message);
+    toast.textContent = (isError ? "! " : "✓ ") + message;
     toast.style.opacity = "1";
     toast.style.transform = "translateY(0)";
 
@@ -112,16 +127,17 @@ function showToast(message, isError = false) {
     toast._timeout = setTimeout(() => {
         toast.style.opacity = "0";
         toast.style.transform = "translateY(10px)";
-    }, 3200);
+    }, 3400);
 }
 
-// Update Topbar Date
 function updateTopbarDate() {
     if (!datePillText) return;
     try {
-        const now = new Date();
-        const options = { weekday: "short", month: "short", day: "numeric" };
-        datePillText.textContent = now.toLocaleDateString("en-US", options);
+        datePillText.textContent = new Date().toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric"
+        });
     } catch (_) {
         datePillText.textContent = "Today";
     }
@@ -131,43 +147,27 @@ function updateTopbarDate() {
 // MODAL CONTROLS & PHOTO HANDLING
 // ===============================
 
-// Add Modal
 if (addCreatorButton && creatorModal) {
-    addCreatorButton.addEventListener("click", () => {
-        creatorModal.classList.add("active");
-    });
+    addCreatorButton.addEventListener("click", () => creatorModal.classList.add("active"));
 }
-
 if (closeModalButton && creatorModal) {
-    closeModalButton.addEventListener("click", () => {
-        creatorModal.classList.remove("active");
-    });
+    closeModalButton.addEventListener("click", () => creatorModal.classList.remove("active"));
 }
-
 if (creatorModal) {
     creatorModal.addEventListener("click", (event) => {
-        if (event.target === creatorModal) {
-            creatorModal.classList.remove("active");
-        }
+        if (event.target === creatorModal) creatorModal.classList.remove("active");
     });
 }
 
-// Edit Modal
 if (closeEditModalButton && editCreatorModal) {
-    closeEditModalButton.addEventListener("click", () => {
-        editCreatorModal.classList.remove("active");
-    });
+    closeEditModalButton.addEventListener("click", () => editCreatorModal.classList.remove("active"));
 }
-
 if (editCreatorModal) {
     editCreatorModal.addEventListener("click", (event) => {
-        if (event.target === editCreatorModal) {
-            editCreatorModal.classList.remove("active");
-        }
+        if (event.target === editCreatorModal) editCreatorModal.classList.remove("active");
     });
 }
 
-// Open Edit Modal with rock-solid image preservation
 window.openEditModal = function (id) {
     const creator = allCreators.find((c) => String(c.id) === String(id));
     if (!creator) return;
@@ -176,82 +176,51 @@ window.openEditModal = function (id) {
     document.getElementById("editCreatorName").value = creator.name || "";
     document.getElementById("editCreatorCategory").value = creator.category || "";
     document.getElementById("editCreatorBio").value = creator.bio || "";
-    document.getElementById("editCreatorPrice").value = creator.price || "";
+    document.getElementById("editCreatorPrice").value = creator.price || 49;
+
     const editAgeEl = document.getElementById("editCreatorAge");
     if (editAgeEl) editAgeEl.value = creator.creator_age || creator.age || "";
     const editLocEl = document.getElementById("editCreatorLocation");
     if (editLocEl) editLocEl.value = creator.creator_location || creator.location || "";
     const editTagsEl = document.getElementById("editCreatorTags");
     if (editTagsEl) {
-        editTagsEl.value = (creator.tags && Array.isArray(creator.tags))
+        editTagsEl.value = Array.isArray(creator.tags)
             ? creator.tags.join(", ")
             : (creator.tags || "");
     }
 
-    // Save existing photo URL so it is NEVER lost
     const existingPhoto = creator.profile_image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
-    if (editExistingProfileImage) {
-        editExistingProfileImage.value = creator.profile_image || "";
-    }
+    if (editExistingProfileImage) editExistingProfileImage.value = creator.profile_image || "";
+    if (editImagePreview) editImagePreview.src = existingPhoto;
+    if (editProfileImage) editProfileImage.value = "";
 
-    // Set preview to current photo
-    if (editImagePreview) {
-        editImagePreview.src = existingPhoto;
-    }
-
-    // Reset file input
-    if (editProfileImage) {
-        editProfileImage.value = "";
-    }
-
-    // Reset status badges & texts
-    if (editPhotoStatusTitle) {
-        editPhotoStatusTitle.textContent = "Current Photo Preserved";
-    }
+    if (editPhotoStatusTitle) editPhotoStatusTitle.textContent = "Current Photo Preserved";
     if (editPhotoBadge) {
         editPhotoBadge.textContent = "Kept Safe";
         editPhotoBadge.className = "status-badge verified";
     }
-    if (editPhotoStatusSub) {
-        editPhotoStatusSub.textContent = "You do not need to re-upload. Your existing photo will be kept.";
-    }
-    if (revertPhotoBtn) {
-        revertPhotoBtn.style.display = "none";
-    }
+    if (editPhotoStatusSub) editPhotoStatusSub.textContent = "You do not need to re-upload. Your existing photo will be kept.";
+    if (revertPhotoBtn) revertPhotoBtn.style.display = "none";
 
-    if (editCreatorModal) {
-        editCreatorModal.classList.add("active");
-    }
+    if (editCreatorModal) editCreatorModal.classList.add("active");
 };
 
-// Handle selecting a new photo in the Edit Modal
 if (editProfileImage) {
     editProfileImage.addEventListener("change", function () {
         if (this.files && this.files[0]) {
             const file = this.files[0];
-            const objectUrl = URL.createObjectURL(file);
-
-            if (editImagePreview) {
-                editImagePreview.src = objectUrl;
-            }
-            if (editPhotoStatusTitle) {
-                editPhotoStatusTitle.textContent = "New Photo Selected";
-            }
+            if (editImagePreview) editImagePreview.src = URL.createObjectURL(file);
+            if (editPhotoStatusTitle) editPhotoStatusTitle.textContent = "New Photo Selected";
             if (editPhotoBadge) {
                 editPhotoBadge.textContent = "Pending Upload";
                 editPhotoBadge.className = "status-badge";
             }
-            if (editPhotoStatusSub) {
-                editPhotoStatusSub.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
-            }
-            if (revertPhotoBtn) {
-                revertPhotoBtn.style.display = "inline-block";
-            }
+            if (editPhotoStatusSub) editPhotoStatusSub.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+            if (revertPhotoBtn) revertPhotoBtn.style.display = "inline-block";
         }
     });
 }
 
-// Revert back to the existing photo
 if (revertPhotoBtn) {
     revertPhotoBtn.addEventListener("click", function () {
         const creatorId = document.getElementById("editCreatorId").value;
@@ -265,50 +234,45 @@ if (revertPhotoBtn) {
             editPhotoBadge.textContent = "Kept Safe";
             editPhotoBadge.className = "status-badge verified";
         }
-        if (editPhotoStatusSub) {
-            editPhotoStatusSub.textContent = "You do not need to re-upload. Your existing photo will be kept.";
-        }
+        if (editPhotoStatusSub) editPhotoStatusSub.textContent = "You do not need to re-upload. Your existing photo will be kept.";
         revertPhotoBtn.style.display = "none";
     });
 }
 
 // ===============================
-// EDIT CREATOR FORM SUBMIT (PHOTO NEVER LOST)
+// EDIT CREATOR SUBMIT
 // ===============================
 if (editCreatorForm) {
     editCreatorForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const submitBtn = editCreatorForm.querySelector("button[type='submit']");
-        const originalBtnText = submitBtn ? submitBtn.textContent : "Update Partner";
+        const originalBtnText = submitBtn ? submitBtn.textContent : "Update Creator";
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.textContent = "Updating Partner...";
+            submitBtn.textContent = "Updating Creator...";
         }
 
         const id = document.getElementById("editCreatorId").value;
         const name = document.getElementById("editCreatorName").value.trim();
         const category = document.getElementById("editCreatorCategory").value.trim();
         const bio = document.getElementById("editCreatorBio").value.trim();
-        const price = document.getElementById("editCreatorPrice").value;
+        const priceEl = document.getElementById("editCreatorPrice");
+        const price = Number(priceEl && priceEl.value ? priceEl.value : 49) || 49;
         const ageEl = document.getElementById("editCreatorAge");
         const locEl = document.getElementById("editCreatorLocation");
         const tagsEl = document.getElementById("editCreatorTags");
         const creator_age = ageEl ? ageEl.value.trim() : "";
         const creator_location = locEl ? locEl.value.trim() : "";
         const tags_raw = tagsEl ? tagsEl.value.trim() : "";
-        const tagsList = tags_raw ? tags_raw.split(",").map(t => t.trim()).filter(Boolean) : [];
+        const tagsList = tags_raw ? tags_raw.split(",").map((t) => t.trim()).filter(Boolean) : [];
 
-        // Safe existing image fallback
         const creator = allCreators.find((c) => String(c.id) === String(id));
         const existingImage = (editExistingProfileImage && editExistingProfileImage.value) || (creator && creator.profile_image) || "";
 
         try {
-            console.log(`[Admin Edit] Initiating save for creator ID: "${id}", Name: "${name}", Price: ${price}, Age: "${creator_age}", Loc: "${creator_location}", Tags:`, tagsList);
-
             let finalProfileImage = existingImage;
 
-            // Only upload if the user deliberately chose a new file
             if (editProfileImage && editProfileImage.files.length > 0) {
                 if (submitBtn) submitBtn.textContent = "Uploading new photo...";
                 const imageFormData = new FormData();
@@ -316,7 +280,7 @@ if (editCreatorForm) {
 
                 let imgUploaded = false;
                 try {
-                    let imageResponse = await fetch("/api/upload-creator-image", {
+                    const imageResponse = await fetch("/api/upload-creator-image", {
                         method: "POST",
                         body: imageFormData
                     });
@@ -330,7 +294,7 @@ if (editCreatorForm) {
                 } catch (_) {}
 
                 if (!imgUploaded) {
-                    let remoteImgRes = await fetch(`${API_URL}/api/upload-creator-image`, {
+                    const remoteImgRes = await fetch(`${API_URL}/api/upload-creator-image`, {
                         method: "POST",
                         body: imageFormData
                     });
@@ -342,104 +306,77 @@ if (editCreatorForm) {
                 }
             }
 
-            if (submitBtn) submitBtn.textContent = "Saving partner...";
+            if (submitBtn) submitBtn.textContent = "Saving creator...";
 
             const updatedCreatorData = {
                 id,
                 name,
                 category,
                 bio,
-                price: Number(price),
+                price,
                 creator_age,
                 creator_location,
                 tags: tagsList
             };
 
-            // Explicitly pass profile_image to preserve it completely
             if (finalProfileImage) {
                 updatedCreatorData.profile_image = finalProfileImage;
             }
 
             let result = null;
-
-            // 1. First attempt same-origin route
             try {
                 const response = await fetch(`/api/creators/${id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(updatedCreatorData)
                 });
-                console.log(`[Admin Edit] Relative PUT /api/creators/${id} status: ${response.status}`);
                 if (response.ok) {
                     result = await response.json();
                 } else {
                     const errData = await response.json().catch(() => ({}));
-                    console.warn("[Admin Edit] Relative PUT returned non-ok:", response.status, errData);
                     if (response.status === 400 || response.status === 404) {
                         throw new Error(errData.message || `Server returned ${response.status}`);
                     }
                 }
             } catch (localErr) {
-                console.warn("[Admin Edit] Relative update error:", localErr.message);
-                if (localErr.message && localErr.message.includes("Price")) {
-                    throw localErr;
-                }
+                console.warn("[Admin Edit] Relative update warning:", localErr.message);
             }
 
-            // 2. Fallback to API_URL if relative route did not yield successful result
             if (!result || !result.success) {
-                console.log(`[Admin Edit] Attempting fallback to ${API_URL}/api/creators/${id}`);
                 const remoteResponse = await fetch(`${API_URL}/api/creators/${id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(updatedCreatorData)
                 });
-                console.log(`[Admin Edit] Remote PUT status: ${remoteResponse.status}`);
                 const remoteData = await remoteResponse.json();
                 if (!remoteResponse.ok || !remoteData.success) {
-                    throw new Error(remoteData.message || `Update failed with status ${remoteResponse.status}`);
+                    throw new Error(remoteData.message || `Update failed (${remoteResponse.status})`);
                 }
                 result = remoteData;
             }
 
-            if (!result || !result.success) {
-                throw new Error((result && result.message) || "Unable to update creator");
-            }
-
-            console.log("[Admin Edit] Success response verified from database:", result.creator);
-
-            // Immediately update local array
             const idx = allCreators.findIndex((c) => String(c.id) === String(id));
             if (idx !== -1) {
                 allCreators[idx] = {
                     ...allCreators[idx],
                     ...updatedCreatorData,
                     ...(result.creator || {}),
-                    price: result.creator && result.creator.price !== undefined ? Number(result.creator.price) : Number(price),
                     profile_image: finalProfileImage || allCreators[idx].profile_image
                 };
             }
 
-            // Immediately persist updated list to localStorage cache so refresh or background load never reverts
             try {
                 localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
             } catch (_) {}
 
             editCreatorModal.classList.remove("active");
             filterAndDisplayCreators();
-            try {
-                renderCategoryDonut(allCreators);
-            } catch (_) {}
-
-            showToast(`Partner "${name}" updated successfully (₹${price})!`);
-
-            // Background reload from DB to ensure complete alignment
+            renderCategoryDonut(allCreators);
+            showToast(`Creator "${name}" updated successfully.`);
             loadCreators();
-
         } catch (error) {
             console.error("[Admin Edit] Update creator error:", error);
             showToast(error.message || "Unable to update creator.", true);
-            alert("Save failed: " + (error.message || "Unable to update creator."));
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -450,14 +387,14 @@ if (editCreatorForm) {
 }
 
 // ===============================
-// ADD CREATOR FORM SUBMIT
+// ADD CREATOR SUBMIT
 // ===============================
 if (creatorForm) {
     creatorForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const submitBtn = creatorForm.querySelector("button[type='submit']");
-        const originalText = submitBtn ? submitBtn.textContent : "Save Partner";
+        const originalText = submitBtn ? submitBtn.textContent : "Save Creator";
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.textContent = "Saving...";
@@ -466,14 +403,13 @@ if (creatorForm) {
         const name = document.getElementById("creatorName").value.trim();
         const category = document.getElementById("creatorCategory").value.trim();
         const bio = document.getElementById("creatorBio").value.trim();
-        const price = document.getElementById("creatorPrice").value;
         const ageEl = document.getElementById("creatorAge");
         const locEl = document.getElementById("creatorLocation");
         const tagsEl = document.getElementById("creatorTags");
         const creator_age = ageEl ? ageEl.value.trim() : "";
         const creator_location = locEl ? locEl.value.trim() : "";
         const tags_raw = tagsEl ? tagsEl.value.trim() : "";
-        const tagsList = tags_raw ? tags_raw.split(",").map(t => t.trim()).filter(Boolean) : [];
+        const tagsList = tags_raw ? tags_raw.split(",").map((t) => t.trim()).filter(Boolean) : [];
         const imageInput = document.getElementById("creatorImage");
 
         try {
@@ -488,7 +424,6 @@ if (creatorForm) {
                     method: "POST",
                     body: imageFormData
                 });
-
                 if (!imgRes.ok) {
                     imgRes = await fetch(`${API_URL}/api/upload-creator-image`, {
                         method: "POST",
@@ -506,7 +441,7 @@ if (creatorForm) {
                 name,
                 category,
                 bio,
-                price: Number(price),
+                price: 49,
                 creator_age,
                 creator_location,
                 tags: tagsList,
@@ -518,7 +453,6 @@ if (creatorForm) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-
             if (!res.ok) {
                 res = await fetch(`${API_URL}/api/creators`, {
                     method: "POST",
@@ -538,20 +472,16 @@ if (creatorForm) {
                     localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
                 } catch (_) {}
                 filterAndDisplayCreators();
-                try {
-                    renderCategoryDonut(allCreators);
-                } catch (_) {}
+                renderCategoryDonut(allCreators);
             }
 
             creatorForm.reset();
             creatorModal.classList.remove("active");
-            showToast(`Partner "${name}" added successfully!`);
+            showToast(`Creator "${name}" added successfully.`);
             loadCreators();
-
         } catch (err) {
             console.error("Add creator error:", err);
-            showToast(err.message || "Failed to add partner", true);
-            alert(err.message || "Failed to add partner");
+            showToast(err.message || "Failed to add creator.", true);
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -562,52 +492,76 @@ if (creatorForm) {
 }
 
 // ===============================
-// DELETE CREATOR
+// INLINE DELETE CREATOR CONFIRMATION
 // ===============================
-window.deleteCreator = async function (id) {
+function closeDeleteModal() {
+    pendingDeleteId = null;
+    if (deleteConfirmModal) deleteConfirmModal.classList.remove("active");
+}
+
+if (closeDeleteConfirmBtn) closeDeleteConfirmBtn.onclick = closeDeleteModal;
+if (abortDeleteBtn) abortDeleteBtn.onclick = closeDeleteModal;
+if (deleteConfirmModal) {
+    deleteConfirmModal.addEventListener("click", (e) => {
+        if (e.target === deleteConfirmModal) closeDeleteModal();
+    });
+}
+
+window.deleteCreator = function (id) {
     const creator = allCreators.find((c) => String(c.id) === String(id));
-    const creatorName = creator ? creator.name : "this partner";
-
-    if (!confirm(`Are you sure you want to remove "${creatorName}"?`)) {
-        return;
+    const creatorName = creator ? creator.name : "this creator";
+    pendingDeleteId = id;
+    if (deleteConfirmBody) {
+        deleteConfirmBody.textContent = `Remove "${creatorName}" from the Takora creator directory?`;
     }
-
-    try {
-        let res = await fetch(`/api/creators/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-            res = await fetch(`${API_URL}/api/creators/${id}`, { method: "DELETE" });
-        }
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-            throw new Error(data.message || "Unable to delete partner");
-        }
-
-        allCreators = allCreators.filter((c) => String(c.id) !== String(id));
-        try {
-            localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
-        } catch (_) {}
-        filterAndDisplayCreators();
-        try {
-            renderCategoryDonut(allCreators);
-        } catch (_) {}
-        showToast(`Partner "${creatorName}" removed.`);
-
-    } catch (err) {
-        console.error("Delete error:", err);
-        showToast(err.message || "Unable to remove partner.", true);
-        alert(err.message || "Unable to remove partner.");
+    if (deleteConfirmModal) {
+        deleteConfirmModal.classList.add("active");
     }
 };
 
-// ===============================
-// LOAD & RENDER CREATORS (RESILIENT CACHE + FALLBACK)
-// ===============================
+if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener("click", async () => {
+        if (!pendingDeleteId) return;
+        const targetId = pendingDeleteId;
+        const creator = allCreators.find((c) => String(c.id) === String(targetId));
+        const creatorName = creator ? creator.name : "Creator";
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.textContent = "Removing...";
 
-const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
+        try {
+            let res = await fetch(`/api/creators/${targetId}`, { method: "DELETE" });
+            if (!res.ok) {
+                res = await fetch(`${API_URL}/api/creators/${targetId}`, { method: "DELETE" });
+            }
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Unable to remove creator");
+            }
+
+            allCreators = allCreators.filter((c) => String(c.id) !== String(targetId));
+            try {
+                localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
+            } catch (_) {}
+            filterAndDisplayCreators();
+            renderCategoryDonut(allCreators);
+            closeDeleteModal();
+            showToast(`Creator "${creatorName}" removed.`);
+        } catch (err) {
+            console.error("Delete error:", err);
+            showToast(err.message || "Unable to remove creator.", true);
+        } finally {
+            confirmDeleteBtn.disabled = false;
+            confirmDeleteBtn.textContent = "Remove";
+        }
+    });
+}
+
+// ===============================
+// LOAD & RENDER CREATORS
+// ===============================
 
 async function loadCreators() {
-    // 1. Immediately hydrate from cache so table renders in 0ms without waiting
     try {
         const cached = localStorage.getItem("fc_cached_creators");
         if (cached) {
@@ -615,17 +569,15 @@ async function loadCreators() {
             if (Array.isArray(parsed) && parsed.length > 0) {
                 allCreators = parsed;
                 filterAndDisplayCreators();
-                try { renderCategoryDonut(allCreators); } catch (_) {}
+                renderCategoryDonut(allCreators);
             }
         }
     } catch (_) {}
 
-    // 2. Fetch fresh live data from database
     try {
         let fetched = [];
         let success = false;
 
-        // Try same-origin /api/creators first
         try {
             const localController = new AbortController();
             const localTimeout = setTimeout(() => localController.abort(), 4000);
@@ -640,12 +592,11 @@ async function loadCreators() {
             }
         } catch (_) {}
 
-        // Fallback to Render production backend if same-origin is slow or paused
         if (!success) {
             try {
                 const remoteController = new AbortController();
                 const remoteTimeout = setTimeout(() => remoteController.abort(), 5000);
-                const res = await fetch(`${RENDER_BACKEND_URL}/api/creators`, { signal: remoteController.signal });
+                const res = await fetch(`${API_URL}/api/creators`, { signal: remoteController.signal });
                 clearTimeout(remoteTimeout);
                 if (res.ok) {
                     const data = await res.json();
@@ -663,25 +614,18 @@ async function loadCreators() {
                 localStorage.setItem("fc_cached_creators", JSON.stringify(fetched));
             } catch (_) {}
             filterAndDisplayCreators();
-            try { renderCategoryDonut(allCreators); } catch (_) {}
-        } else if (allCreators.length === 0) {
-            if (creatorListTableBody) {
-                creatorListTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; color: var(--dash-text-tertiary); padding: 40px;">
-                            <div style="font-size: 14px; font-weight: 700; color: var(--dash-text-primary); margin-bottom: 6px;">
-                                Database Connection Paused
-                            </div>
-                            <div style="font-size: 12px; color: var(--dash-text-secondary); margin-bottom: 12px;">
-                                Could not load partner records. Click below to reconnect.
-                            </div>
-                            <button type="button" class="action-icon-btn" onclick="loadCreators()" style="display: inline-block; cursor: pointer; padding: 6px 16px;">
-                                ↻ Try Again
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }
+            renderCategoryDonut(allCreators);
+        } else if (allCreators.length === 0 && creatorListTableBody) {
+            creatorListTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--dash-text-tertiary); padding: 40px;">
+                        <div style="font-size: 14px; font-weight: 700; color: var(--dash-text-primary); margin-bottom: 6px;">
+                            No creator records loaded
+                        </div>
+                        <button type="button" class="action-icon-btn" onclick="loadCreators()">Retry</button>
+                    </td>
+                </tr>
+            `;
         }
     } catch (err) {
         console.warn("Issue loading creators:", err);
@@ -702,29 +646,20 @@ function filterAndDisplayCreators() {
         });
     }
 
-    // Update count labels
-    if (creatorCount) {
-        creatorCount.textContent = `${filtered.length} partner${filtered.length === 1 ? "" : "s"}`;
-    }
-    if (bannerTotalCreators) {
-        bannerTotalCreators.textContent = allCreators.length;
-    }
-    if (bannerVerifiedProfiles) {
-        bannerVerifiedProfiles.textContent = allCreators.length;
-    }
-    if (statCustomersCount) {
-        statCustomersCount.textContent = allCreators.length;
-    }
+    if (creatorCount) creatorCount.textContent = `${filtered.length} creator${filtered.length === 1 ? "" : "s"}`;
+    if (bannerTotalCreators) bannerTotalCreators.textContent = allCreators.length;
+    if (bannerVerifiedProfiles) bannerVerifiedProfiles.textContent = allCreators.length;
+    if (statCustomersCount) statCustomersCount.textContent = allCreators.length;
 
     if (filtered.length === 0) {
         creatorListTableBody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; color: var(--dash-text-tertiary); padding: 50px 20px;">
+                <td colspan="5" style="text-align: center; color: var(--dash-text-tertiary); padding: 44px 20px;">
                     <div style="font-size: 15px; font-weight: 700; color: var(--dash-text-primary); margin-bottom: 4px;">
-                        ${currentFilterText ? "No matching partners found" : "No partners listed yet"}
+                        ${currentFilterText ? "No matching creators found" : "No creators listed yet"}
                     </div>
                     <div style="font-size: 12.5px; color: var(--dash-text-secondary);">
-                        ${currentFilterText ? "Try searching with a different term." : "Click '+ Add Partner' to list your first profile."}
+                        ${currentFilterText ? "Try searching with a different term." : "Click '+ Add Creator' to list your first profile."}
                     </div>
                 </td>
             </tr>
@@ -738,16 +673,19 @@ function filterAndDisplayCreators() {
                 ? creator.profile_image
                 : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
 
-            const name = creator.name || "Unnamed Partner";
+            const name = creator.name || "Unnamed Creator";
             const category = creator.category || "General";
             const bio = creator.bio || "No introduction provided.";
-            const price = creator.price || 49;
             const ageVal = creator.creator_age || creator.age;
             const locVal = creator.creator_location || creator.location;
             const metaParts = [];
             if (ageVal) metaParts.push(`${ageVal} yrs`);
             if (locVal) metaParts.push(locVal);
-            const subText = metaParts.length > 0 ? metaParts.join(" • ") : `ID: #${String(creator.id).substring(0, 8)}`;
+            const subText = metaParts.length > 0 ? metaParts.join(" · ") : `ID: #${String(creator.id).substring(0, 8)}`;
+
+            const tagsList = Array.isArray(creator.tags)
+                ? creator.tags
+                : (typeof creator.tags === "string" ? creator.tags.split(",") : []);
 
             return `
                 <tr data-id="${escapeHTML(creator.id)}">
@@ -767,62 +705,30 @@ function filterAndDisplayCreators() {
                     </td>
                     <td>
                         <span class="category-tag-pill">${escapeHTML(category)}</span>
-                        ${(function() {
-                            const tagsList = Array.isArray(creator.tags) ? creator.tags : (typeof creator.tags === "string" ? creator.tags.split(",") : []);
-                            if (tagsList.length === 0) return "";
-                            return `
-                                <div style="display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px;">
-                                    ${tagsList.slice(0, 3).map(t => `<span style="background: #FFF5F8; color: #DB2777; border: 1px solid #FCE7F3; border-radius: 10px; font-size: 10px; padding: 1px 6px; font-weight: 600;">${escapeHTML(t.trim())}</span>`).join("")}
-                                </div>
-                            `;
-                        })()}
+                        ${tagsList.length > 0 ? `
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;">
+                                ${tagsList.slice(0, 3).map((t) => `<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #DBEAFE; border-radius: 6px; font-size: 10.5px; padding: 1px 6px; font-weight: 600;">${escapeHTML(String(t).trim())}</span>`).join("")}
+                            </div>
+                        ` : ""}
                     </td>
-                    <td>
-                        <span class="price-tag">₹${escapeHTML(price)}</span>
-                    </td>
-                    <td style="max-width: 260px; color: var(--dash-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(bio)}">
+                    <td style="max-width: 280px; color: var(--dash-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(bio)}">
                         ${escapeHTML(bio)}
                     </td>
                     <td>
                         <span class="status-badge verified">● Active</span>
                     </td>
                     <td>
-                        <div class="table-action-btns" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end;">
-                            <button
-                                type="button"
-                                class="action-icon-btn"
-                                onclick="openEditModal('${escapeHTML(creator.id)}')"
-                                title="Edit Profile Details"
-                                style="background: #FFF; border: 1px solid var(--dash-border); color: #1E1B22; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                <span>Edit Profile Details</span>
+                        <div class="table-action-btns">
+                            <button type="button" class="action-icon-btn" onclick="openEditModal('${escapeHTML(creator.id)}')" title="Edit Profile">
+                                Edit
                             </button>
-                            <button
-                                type="button"
-                                class="action-icon-btn"
-                                onclick="openDatesModal('${escapeHTML(creator.id)}')"
-                                title="Manage Available Dates"
-                                style="background: #FFF5F8; border: 1px solid #FCE7F3; color: #DB2777; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                <span>Manage Available Dates (${Array.isArray(creator.available_dates) ? creator.available_dates.length : 0})</span>
+                            <button type="button" class="action-icon-btn blue" onclick="openDatesModal('${escapeHTML(creator.id)}')" title="Manage Available Dates">
+                                Dates (${Array.isArray(creator.available_dates) ? creator.available_dates.length : 0})
                             </button>
-                            <a
-                                href="friend_profile.html?id=${encodeURIComponent(creator.id)}"
-                                class="action-icon-btn"
-                                target="_blank"
-                                rel="noopener"
-                                title="View public profile"
-                            >
+                            <a href="friend_profile.html?id=${encodeURIComponent(creator.id)}" class="action-icon-btn" target="_blank" rel="noopener" title="View public profile">
                                 View
                             </a>
-                            <button
-                                type="button"
-                                class="action-icon-btn delete"
-                                onclick="deleteCreator('${escapeHTML(creator.id)}')"
-                                title="Remove partner"
-                            >
+                            <button type="button" class="action-icon-btn delete" onclick="deleteCreator('${escapeHTML(creator.id)}')" title="Remove creator">
                                 Delete
                             </button>
                         </div>
@@ -834,7 +740,7 @@ function filterAndDisplayCreators() {
 }
 
 // ===============================
-// MANAGE AVAILABLE DATES (ADMIN CALENDAR TOOL)
+// MANAGE AVAILABLE DATES (BLUE CALENDAR MODAL)
 // ===============================
 
 let datesActiveCreatorId = null;
@@ -850,8 +756,8 @@ const nextMonthBtn = document.getElementById("nextMonthBtn");
 const quickNext7Btn = document.getElementById("quickNext7Btn");
 const quickClearBtn = document.getElementById("quickClearBtn");
 
-window.openDatesModal = function(id) {
-    const creator = allCreators.find(c => String(c.id) === String(id));
+window.openDatesModal = function (id) {
+    const creator = allCreators.find((c) => String(c.id) === String(id));
     if (!creator) return;
     datesActiveCreatorId = id;
 
@@ -862,15 +768,13 @@ window.openDatesModal = function(id) {
             : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
     }
     const nameEl = document.getElementById("datesCreatorName");
-    if (nameEl) nameEl.textContent = creator.name || "Partner";
+    if (nameEl) nameEl.textContent = creator.name || "Creator";
 
     activeAvailableDatesSet = new Set(Array.isArray(creator.available_dates) ? creator.available_dates : []);
     currentCalendarDate = new Date();
     renderAdminCalendar();
 
-    if (datesModal) {
-        datesModal.classList.add("active");
-    }
+    if (datesModal) datesModal.classList.add("active");
 };
 
 function renderAdminCalendar() {
@@ -879,9 +783,7 @@ function renderAdminCalendar() {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const titleEl = document.getElementById("calendarMonthTitle");
-    if (titleEl) {
-        titleEl.textContent = `${monthNames[month]} ${year}`;
-    }
+    if (titleEl) titleEl.textContent = `${monthNames[month]} ${year}`;
 
     const daysGrid = document.getElementById("calendarDaysGrid");
     if (!daysGrid) return;
@@ -903,9 +805,9 @@ function renderAdminCalendar() {
         const isSelected = activeAvailableDatesSet.has(dateKey);
         const isPast = dateKey < todayStr;
 
-        const bg = isSelected ? "var(--dash-pink, #EC4899)" : (isPast ? "#F8FAFC" : "#FFF");
-        const color = isSelected ? "#FFFFFF" : (isPast ? "#94A3B8" : "#1E1B22");
-        const border = isSelected ? "1px solid #DB2777" : (isPast ? "1px solid #F1F5F9" : "1px solid #FCE7F3");
+        const bg = isSelected ? "#2563EB" : (isPast ? "#F8FAFC" : "#FFFFFF");
+        const color = isSelected ? "#FFFFFF" : (isPast ? "#94A3B8" : "#0F172A");
+        const border = isSelected ? "1px solid #1D4ED8" : (isPast ? "1px solid #F1F5F9" : "1px solid #DBEAFE");
         const fontWeight = isSelected ? "700" : "500";
 
         html += `
@@ -913,10 +815,10 @@ function renderAdminCalendar() {
                 type="button"
                 data-date="${dateKey}"
                 onclick="toggleAdminDate('${dateKey}')"
-                style="height: 38px; border-radius: 8px; border: ${border}; background: ${bg}; color: ${color}; font-weight: ${fontWeight}; font-size: 12.5px; cursor: pointer; transition: all 0.15s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;"
+                style="height: 38px; border-radius: 8px; border: ${border}; background: ${bg}; color: ${color}; font-weight: ${fontWeight}; font-size: 12.5px; cursor: pointer; transition: all 0.15s ease; display: flex; flex-direction: column; align-items: center; justify-content: center;"
             >
                 <span>${day}</span>
-                ${isSelected ? '<span style="width: 4px; height: 4px; border-radius: 50%; background: #FFF; margin-top: 2px;"></span>' : ''}
+                ${isSelected ? '<span style="width: 4px; height: 4px; border-radius: 50%; background: #FFFFFF; margin-top: 2px;"></span>' : ""}
             </button>
         `;
     }
@@ -930,7 +832,7 @@ function renderAdminCalendar() {
     if (metaEl) metaEl.textContent = `${count} date${count === 1 ? "" : "s"} enabled in database`;
 }
 
-window.toggleAdminDate = function(dateKey) {
+window.toggleAdminDate = function (dateKey) {
     if (activeAvailableDatesSet.has(dateKey)) {
         activeAvailableDatesSet.delete(dateKey);
     } else {
@@ -971,12 +873,8 @@ if (quickClearBtn) {
         renderAdminCalendar();
     };
 }
-if (closeDatesModalButton && datesModal) {
-    closeDatesModalButton.onclick = () => datesModal.classList.remove("active");
-}
-if (cancelDatesBtn && datesModal) {
-    cancelDatesBtn.onclick = () => datesModal.classList.remove("active");
-}
+if (closeDatesModalButton && datesModal) closeDatesModalButton.onclick = () => datesModal.classList.remove("active");
+if (cancelDatesBtn && datesModal) cancelDatesBtn.onclick = () => datesModal.classList.remove("active");
 if (datesModal) {
     datesModal.onclick = (e) => {
         if (e.target === datesModal) datesModal.classList.remove("active");
@@ -1001,20 +899,18 @@ if (saveDatesBtn) {
                 throw new Error(data.message || "Failed to update dates");
             }
 
-            const creator = allCreators.find(c => String(c.id) === String(datesActiveCreatorId));
-            if (creator) {
-                creator.available_dates = datesArray;
-            }
+            const creator = allCreators.find((c) => String(c.id) === String(datesActiveCreatorId));
+            if (creator) creator.available_dates = datesArray;
             try {
                 localStorage.setItem("fc_cached_creators", JSON.stringify(allCreators));
             } catch (_) {}
 
             datesModal.classList.remove("active");
             filterAndDisplayCreators();
-            showToast(`Available dates saved for "${creator ? creator.name : 'Partner'}" (${datesArray.length} dates active)!`);
+            showToast(`Available dates saved (${datesArray.length} dates).`);
         } catch (err) {
             console.error("Save dates error:", err);
-            alert("Error saving dates: " + err.message);
+            showToast("Error saving dates: " + err.message, true);
         } finally {
             saveDatesBtn.disabled = false;
             saveDatesBtn.textContent = originalText;
@@ -1022,7 +918,9 @@ if (saveDatesBtn) {
     };
 }
 
-// Search Inputs Handlers
+// ===============================
+// SEARCH FILTERING (CREATORS + TRANSACTIONS)
+// ===============================
 if (adminSearchInput) {
     adminSearchInput.addEventListener("input", (e) => {
         currentFilterText = e.target.value.trim();
@@ -1035,11 +933,12 @@ if (globalSearchInput) {
         currentFilterText = e.target.value.trim();
         if (adminSearchInput) adminSearchInput.value = currentFilterText;
         filterAndDisplayCreators();
+        renderSubscriptionTransactions(allTransactions);
     });
 }
 
 // ===============================
-// CATEGORY DONUT CHART (CLEAN PINK THEME)
+// CATEGORY DONUT CHART (BLUE THEME)
 // ===============================
 
 function renderCategoryDonut(creators) {
@@ -1048,15 +947,14 @@ function renderCategoryDonut(creators) {
     if (!creators || creators.length === 0) {
         donutSvgWrap.innerHTML = `
             <svg viewBox="0 0 140 140" width="100%" height="100%">
-                <circle cx="70" cy="70" r="50" fill="none" stroke="#FCE7F3" stroke-width="16"/>
-                <text x="70" y="74" text-anchor="middle" font-size="12" fill="#9CA3AF" font-weight="600">No data</text>
+                <circle cx="70" cy="70" r="50" fill="none" stroke="#E2E8F0" stroke-width="16"/>
+                <text x="70" y="74" text-anchor="middle" font-size="12" fill="#94A3B8" font-weight="600">No data</text>
             </svg>
         `;
-        donutLegend.innerHTML = `<span style="font-size: 12px; color: var(--dash-text-tertiary);">No partner categories yet.</span>`;
+        donutLegend.innerHTML = `<span style="font-size: 12px; color: var(--dash-text-tertiary);">No creator categories yet.</span>`;
         return;
     }
 
-    // Count categories
     const counts = {};
     creators.forEach((c) => {
         const cat = (c.category && c.category.trim()) || "Lifestyle";
@@ -1065,23 +963,13 @@ function renderCategoryDonut(creators) {
 
     const total = creators.length;
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-    // Top categories + Other
     const topCategories = sorted.slice(0, 4);
     if (sorted.length > 4) {
         const otherCount = sorted.slice(4).reduce((sum, item) => sum + item[1], 0);
         topCategories.push(["Other", otherCount]);
     }
 
-    // Palette: Luxurious pinks and complementary accents
-    const palette = [
-        "#EC4899", // Primary Pink
-        "#F472B6", // Soft Pink
-        "#FB7185", // Rose Coral
-        "#C084FC", // Purple Lilac
-        "#FBBF24"  // Warm Gold
-    ];
-
+    const palette = ["#2563EB", "#1D4ED8", "#3B82F6", "#0284C7", "#60A5FA"];
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
     let accumulatedOffset = 0;
@@ -1125,12 +1013,10 @@ function renderCategoryDonut(creators) {
 
     donutSvgWrap.innerHTML = `
         <svg viewBox="0 0 140 140" width="100%" height="100%">
-            <!-- Soft Pink Base Track -->
-            <circle cx="70" cy="70" r="${radius}" fill="none" stroke="#FDF2F7" stroke-width="16"/>
+            <circle cx="70" cy="70" r="${radius}" fill="none" stroke="#EFF6FF" stroke-width="16"/>
             ${circlesSvg}
-            <!-- Center Hole Stats -->
-            <text x="70" y="66" text-anchor="middle" font-size="19" font-weight="800" fill="#1E1B22">${total}</text>
-            <text x="70" y="82" text-anchor="middle" font-size="10.5" font-weight="600" fill="#9CA3AF" text-transform="uppercase" letter-spacing="0.5">Partners</text>
+            <text x="70" y="66" text-anchor="middle" font-size="19" font-weight="800" fill="#0F172A">${total}</text>
+            <text x="70" y="82" text-anchor="middle" font-size="10.5" font-weight="600" fill="#64748B">Creators</text>
         </svg>
     `;
 
@@ -1138,7 +1024,7 @@ function renderCategoryDonut(creators) {
 }
 
 // ===============================
-// REVENUE & ACTIVITY BAR CHART (PINK GRADIENT)
+// REVENUE BAR CHART (BLUE GRADIENT)
 // ===============================
 
 function renderRevenueBarChart(timeline) {
@@ -1147,24 +1033,22 @@ function renderRevenueBarChart(timeline) {
     if (!timeline || timeline.length === 0) {
         revenueBarChartContainer.innerHTML = `
             <div style="display: flex; height: 100%; min-height: 200px; align-items: center; justify-content: center; color: var(--dash-text-tertiary); font-size: 13px;">
-                No transaction volume recorded for this period.
+                No subscription transaction volume recorded for this period.
             </div>
         `;
         return;
     }
 
-    // Chart dimensions
     const width = 500;
     const height = 210;
     const padTop = 15;
     const padBottom = 28;
-    const padLeft = 32;
+    const padLeft = 36;
     const padRight = 14;
 
     const chartW = width - padLeft - padRight;
     const chartH = height - padTop - padBottom;
 
-    // Use revenue if present, else fallback to active views/activity to keep bars alive
     const values = timeline.map((t) => t.revenue || t.pageViews || t.activeUsers || 0);
     const maxVal = Math.max(...values, 50);
 
@@ -1175,14 +1059,13 @@ function renderRevenueBarChart(timeline) {
     let barsSvg = "";
     let labelsSvg = "";
 
-    // Gridlines (3 levels)
     const gridLinesSvg = [0.25, 0.5, 0.75, 1.0]
         .map((frac) => {
             const y = padTop + chartH - chartH * frac;
             const gridVal = Math.round(maxVal * frac);
             return `
-                <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="#FCE7F3" stroke-width="1" stroke-dasharray="3,3" />
-                <text x="${padLeft - 6}" y="${y + 3.5}" text-anchor="end" font-size="9" fill="#9CA3AF" font-weight="600">${gridVal >= 1000 ? (gridVal / 1000).toFixed(1) + "k" : gridVal}</text>
+                <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="3,3" />
+                <text x="${padLeft - 6}" y="${y + 3.5}" text-anchor="end" font-size="9" fill="#94A3B8" font-weight="600">${gridVal >= 1000 ? (gridVal / 1000).toFixed(1) + "k" : gridVal}</text>
             `;
         })
         .join("");
@@ -1194,31 +1077,27 @@ function renderRevenueBarChart(timeline) {
         const y = padTop + chartH - barH;
 
         const dateLabel = item.label || item.date || "";
-        // Clean short label (e.g. "Oct 16" or day)
         const shortLabel = dateLabel.includes(" ") ? dateLabel.split(" ")[1] || dateLabel : dateLabel.slice(-2);
 
         barsSvg += `
             <g class="chart-bar-group" data-label="${escapeHTML(dateLabel)}" data-val="${val}" data-revenue="${item.revenue || 0}">
-                <!-- Subtle hover backdrop highlight -->
                 <rect x="${x - gap / 3}" y="${padTop}" width="${barWidth + (gap * 2) / 3}" height="${chartH}" rx="8" fill="transparent" class="bar-hover-zone"/>
-                <!-- Actual Bar -->
                 <rect
                     x="${x}"
                     y="${y}"
                     width="${barWidth}"
                     height="${barH}"
                     rx="6"
-                    fill="url(#pinkBarGradient)"
+                    fill="url(#blueBarGradient)"
                     class="chart-bar"
                     style="transform-origin: bottom; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);"
                 />
             </g>
         `;
 
-        // Only draw labels if not overly crowded
         if (barCount <= 12 || idx % 2 === 0 || idx === barCount - 1) {
             labelsSvg += `
-                <text x="${x + barWidth / 2}" y="${height - 8}" text-anchor="middle" font-size="9.5" fill="#9CA3AF" font-weight="600">
+                <text x="${x + barWidth / 2}" y="${height - 8}" text-anchor="middle" font-size="9.5" fill="#94A3B8" font-weight="600">
                     ${escapeHTML(shortLabel)}
                 </text>
             `;
@@ -1228,69 +1107,98 @@ function renderRevenueBarChart(timeline) {
     revenueBarChartContainer.innerHTML = `
         <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="overflow: visible;">
             <defs>
-                <linearGradient id="pinkBarGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#EC4899"/>
-                    <stop offset="100%" stop-color="#DB2777"/>
+                <linearGradient id="blueBarGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#3B82F6"/>
+                    <stop offset="100%" stop-color="#1D4ED8"/>
                 </linearGradient>
             </defs>
-
-            <!-- Grid Lines -->
             ${gridLinesSvg}
-
-            <!-- Bottom Base Axis -->
-            <line x1="${padLeft}" y1="${padTop + chartH}" x2="${width - padRight}" y2="${padTop + chartH}" stroke="#F6DCE8" stroke-width="1.5" />
-
-            <!-- Bars -->
+            <line x1="${padLeft}" y1="${padTop + chartH}" x2="${width - padRight}" y2="${padTop + chartH}" stroke="#CBD5E1" stroke-width="1.5" />
             ${barsSvg}
-
-            <!-- X Labels -->
             ${labelsSvg}
         </svg>
     `;
 
-    // Tooltip interaction
     setupChartTooltips();
 }
 
 function setupChartTooltips() {
     if (!revenueBarChartContainer || !chartTooltip) return;
-
-    const barGroups = revenueBarChartContainer.querySelectorAll(".chart-bar-group");
-    barGroups.forEach((group) => {
-        group.addEventListener("mouseenter", (e) => {
+    revenueBarChartContainer.querySelectorAll(".chart-bar-group").forEach((group) => {
+        group.addEventListener("mouseenter", () => {
             const label = group.getAttribute("data-label");
             const rev = group.getAttribute("data-revenue");
             const val = group.getAttribute("data-val");
-
             const barRect = group.querySelector(".chart-bar");
-            if (barRect) {
-                barRect.style.filter = "brightness(1.15)";
-                barRect.style.transform = "scaleY(1.03)";
-            }
-
-            const displayText = Number(rev) > 0 ? `₹${Number(rev).toLocaleString("en-IN")}` : `${val} activities`;
+            if (barRect) barRect.style.filter = "brightness(1.15)";
+            const displayText = Number(rev) > 0 ? `₹${Number(rev).toLocaleString("en-IN")}` : `${val} activity`;
             chartTooltip.innerHTML = `<strong>${escapeHTML(label)}</strong><br>${displayText}`;
             chartTooltip.style.display = "block";
         });
-
         group.addEventListener("mousemove", (e) => {
             chartTooltip.style.left = `${e.pageX + 12}px`;
             chartTooltip.style.top = `${e.pageY - 34}px`;
         });
-
         group.addEventListener("mouseleave", () => {
             const barRect = group.querySelector(".chart-bar");
-            if (barRect) {
-                barRect.style.filter = "none";
-                barRect.style.transform = "none";
-            }
+            if (barRect) barRect.style.filter = "none";
             chartTooltip.style.display = "none";
         });
     });
 }
 
 // ===============================
-// COMPLETE ANALYTICS CONTROLLER
+// SUBSCRIPTION TRANSACTIONS TABLE
+// ===============================
+
+function renderSubscriptionTransactions(transactions) {
+    if (!subTransactionsTableBody) return;
+    let list = Array.isArray(transactions) ? transactions : [];
+    if (currentFilterText) {
+        const q = currentFilterText.toLowerCase();
+        list = list.filter((tx) => {
+            const email = String(tx.user_email || "").toLowerCase();
+            const plan = String(tx.plan_code || "").toLowerCase();
+            const payId = String(tx.razorpay_payment_id || "").toLowerCase();
+            return email.includes(q) || plan.includes(q) || payId.includes(q);
+        });
+    }
+
+    if (list.length === 0) {
+        subTransactionsTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--dash-text-secondary); padding: 28px;">
+                    ${currentFilterText ? "No matching subscription transactions found." : "No subscription transactions recorded yet."}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    subTransactionsTableBody.innerHTML = list
+        .map((tx) => {
+            const statusLower = String(tx.status || "pending").toLowerCase();
+            const pillClass = statusLower === "captured" || statusLower === "verified" || statusLower === "authorized"
+                ? "ok"
+                : (statusLower === "failed" ? "failed" : "pending");
+            const planLabel = String(tx.plan_code || "basic").toUpperCase();
+            return `
+                <tr>
+                    <td><strong>${escapeHTML(tx.user_email || "Member")}</strong></td>
+                    <td><span class="category-tag-pill">${escapeHTML(planLabel)}</span></td>
+                    <td><strong>${formatINR(tx.amount_inr || 0)}</strong></td>
+                    <td>${escapeHTML(tx.method || "autopay")}</td>
+                    <td><span class="tx-status-pill ${pillClass}">${escapeHTML(tx.status || "pending")}</span></td>
+                    <td style="font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; color: var(--dash-text-secondary);">${escapeHTML(tx.razorpay_payment_id || "—")}</td>
+                    <td style="text-align: right; color: var(--dash-text-secondary);">${formatDateTime(tx.paid_at)}</td>
+                </tr>
+            `;
+        })
+        .join("");
+}
+
+// ===============================
+// ANALYTICS CONTROLLER
 // ===============================
 
 async function loadAnalytics(period = currentPeriod, isManual = false) {
@@ -1313,6 +1221,7 @@ async function loadAnalytics(period = currentPeriod, isManual = false) {
             if (data && data.success) {
                 analyticsData = data;
                 updateOverviewDashboard(data, period);
+                if (isManual) showToast("Live metrics refreshed.");
             }
         }
     } catch (err) {
@@ -1329,95 +1238,77 @@ async function loadAnalytics(period = currentPeriod, isManual = false) {
 }
 
 function updateOverviewDashboard(data, period) {
+    const sub = data.subscriptions || {};
     const rev = data.revenue || {};
     const users = data.users || {};
-    const live = data.live || {};
 
     let periodLabel = "Last 7 Days";
     if (period === "today") periodLabel = "Today";
     else if (period === "30d") periodLabel = "This Month";
     else if (period === "lifetime") periodLabel = "Lifetime";
 
-    // 1. Total Revenue Card
-    if (statRevenue) {
-        const revenueAmount = (period === "lifetime" || period === "today")
-            ? (rev.periodRevenue || rev.lifetimeRevenue || 0)
-            : (rev.periodRevenue || rev.lifetimeRevenue || 0);
-        statRevenue.textContent = formatINR(revenueAmount);
+    // Top 2x2 KPIs
+    if (statMrr) statMrr.textContent = formatINR(sub.mrr || 0);
+    if (statActiveSubsTrend) statActiveSubsTrend.textContent = `${sub.activeSubscriptions || 0} active`;
+
+    const periodRevAmt = period === "lifetime"
+        ? (sub.totalSubscriptionRevenue ?? rev.lifetimeRevenue ?? 0)
+        : period === "today"
+            ? (sub.todaySubscriptionRevenue ?? rev.todayRevenue ?? 0)
+            : (sub.periodSubscriptionRevenue ?? rev.periodRevenue ?? 0);
+
+    if (statRevenue) statRevenue.textContent = formatINR(periodRevAmt);
+    if (statRevenueTrend) statRevenueTrend.textContent = `${sub.successfulSubscriptionPayments || 0} verified`;
+
+    if (statActiveSubs) statActiveSubs.textContent = Number(sub.activeSubscriptions || 0).toLocaleString();
+    if (statSubscribersTotal) statSubscribersTotal.textContent = `${sub.totalSubscribers || 0} total`;
+
+    if (statRegisteredUsers) statRegisteredUsers.textContent = Number(users.registeredUsers || 0).toLocaleString();
+    if (statVisitorsTrend) statVisitorsTrend.textContent = `${users.lifetimeUniqueVisitors || 0} visitors`;
+
+    // Middle Status
+    if (statPaymentSuccessRate) {
+        const rate = sub.paymentSuccessRate !== undefined ? sub.paymentSuccessRate : 100;
+        statPaymentSuccessRate.textContent = `${rate}%`;
     }
-    if (statRevenueTrend) {
-        statRevenueTrend.textContent = rev.totalSuccessfulPayments > 0 ? "↑ Verified" : "0 Verified";
+    if (statFailedSummary) {
+        statFailedSummary.textContent = `${sub.failedSubscriptionPayments || 0} failed · ${sub.cancelledSubscriptions || 0} cancelled`;
     }
 
-    // 2. Total Orders Card
-    if (statOrders) {
-        statOrders.textContent = (rev.totalOrders || 0).toLocaleString();
-    }
-    if (statOrdersTrend) {
-        statOrdersTrend.textContent = `${rev.paidOrders || 0} Paid`;
-    }
+    // Plan Breakdown Tiles
+    const counts = sub.planCounts || {};
+    if (subPlanBasicCount) subPlanBasicCount.textContent = Number(counts.basic || 0).toLocaleString();
+    if (subPlanProCount) subPlanProCount.textContent = Number(counts.pro || 0).toLocaleString();
+    if (subPlanPremiumCount) subPlanPremiumCount.textContent = Number(counts.premium || 0).toLocaleString();
+    if (subCancelledCount) subCancelledCount.textContent = Number(sub.cancelledSubscriptions || 0).toLocaleString();
+    if (subFailedCount) subFailedCount.textContent = Number(sub.failedSubscriptionPayments || 0).toLocaleString();
 
-    // 3. Total Visitors Card (Real live tracked visitors)
-    if (statVisitors) {
-        const visitorsCount = (period === "today")
-            ? (live.visitorsToday || 1)
-            : (users.lifetimeUniqueVisitors || users.periodActiveUsers || 1);
-        statVisitors.textContent = visitorsCount.toLocaleString();
-    }
-    if (statVisitorsTrend) {
-        statVisitorsTrend.textContent = live.activeUsers > 0 ? `● ${live.activeUsers} Live` : "Live";
-    }
+    // Directory Banners
+    if (bannerActiveMembers) bannerActiveMembers.textContent = Number(sub.activeSubscriptions || 0).toLocaleString();
+    if (bannerSettledPayments) bannerSettledPayments.textContent = Number(sub.successfulSubscriptionPayments || 0).toLocaleString();
 
-    // 4. Net Revenue Card
-    if (statNetRevenue) {
-        const netAmt = rev.netRevenue !== undefined ? rev.netRevenue : rev.lifetimeRevenue;
-        statNetRevenue.textContent = formatINR(netAmt || 0);
-    }
-
-    // 5. Middle Wavy Status Cards
-    if (statOrdersCount) {
-        statOrdersCount.textContent = (rev.totalOrders || 0).toLocaleString();
-    }
-    if (statOrdersAwaiting) {
-        const successRate = rev.paymentSuccessRate !== undefined ? rev.paymentSuccessRate : 100;
-        statOrdersAwaiting.textContent = `${successRate}%`;
-    }
-
-    // 6. Status Banners across list
-    if (bannerChatSessions) {
-        bannerChatSessions.textContent = (rev.paidOrders || rev.totalSuccessfulPayments || 1).toLocaleString();
-    }
-    if (bannerDeliveredOrders) {
-        bannerDeliveredOrders.textContent = (rev.paidOrders || rev.totalSuccessfulPayments || 0).toLocaleString();
-    }
-
-    // 7. Subtitle for Bar Chart
-    if (barChartSubtitle) {
-        barChartSubtitle.textContent = `Verified transaction volume (${periodLabel})`;
-    }
-
-    // 8. Render Bar Chart
+    // Chart
+    if (barChartSubtitle) barChartSubtitle.textContent = `Daily settled subscription volume (${periodLabel})`;
     if (data.timeline && Array.isArray(data.timeline)) {
         renderRevenueBarChart(data.timeline);
     }
+
+    // Transactions Table
+    allTransactions = Array.isArray(sub.subscriptionTransactions) ? sub.subscriptionTransactions : [];
+    renderSubscriptionTransactions(allTransactions);
 }
 
-// ===============================
-// PERIOD SELECTOR BUTTONS
-// ===============================
 if (periodButtons) {
     periodButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
             periodButtons.forEach((b) => b.classList.remove("active"));
             btn.classList.add("active");
-
             currentPeriod = btn.getAttribute("data-period") || "7d";
             loadAnalytics(currentPeriod, true);
         });
     });
 }
 
-// Manual Refresh Button
 if (manualRefreshBtn) {
     manualRefreshBtn.addEventListener("click", () => {
         loadCreators();
@@ -1425,24 +1316,18 @@ if (manualRefreshBtn) {
     });
 }
 
-// Navigation buttons
 const navDashboardBtn = document.getElementById("navDashboardBtn");
-const navCreatorsBtn = document.getElementById("navCreatorsBtn");
 if (navDashboardBtn) {
     navDashboardBtn.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     });
 }
 
-// ===============================
-// INITIALIZATION
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
     updateTopbarDate();
     loadCreators();
     loadAnalytics(currentPeriod);
 
-    // Auto-refresh analytics every 30 seconds
     setInterval(() => {
         loadAnalytics(currentPeriod, false);
     }, 30000);
