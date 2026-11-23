@@ -102,12 +102,7 @@ function getRazorpayConfigStatus() {
     configured: Boolean(keyId && keySecret),
     webhookConfigured: Boolean(webhookSecret),
     keyId,
-    missingEnvVars,
-    planIdsConfigured: {
-      basic: Boolean(process.env.RAZORPAY_PLAN_BASIC_ID),
-      pro: Boolean(process.env.RAZORPAY_PLAN_PRO_ID),
-      premium: Boolean(process.env.RAZORPAY_PLAN_PREMIUM_ID)
-    }
+    missingEnvVars
   };
 }
 
@@ -133,24 +128,21 @@ function getRazorpayInstance() {
 
 const resolvedPlanIdCache = {};
 
-async function resolveRazorpayPlanId(planCode) {
+function clearResolvedPlanCache(planCode) {
+  if (planCode) {
+    delete resolvedPlanIdCache[planCode];
+  } else {
+    Object.keys(resolvedPlanIdCache).forEach((k) => delete resolvedPlanIdCache[k]);
+  }
+}
+
+async function resolveRazorpayPlanId(planCode, { forceCreate = false } = {}) {
   const plan = SUBSCRIPTION_PLANS[planCode];
   if (!plan) {
     throw new Error(`Invalid subscription plan code: ${planCode}`);
   }
 
-  const envMap = {
-    basic: process.env.RAZORPAY_PLAN_BASIC_ID,
-    pro: process.env.RAZORPAY_PLAN_PRO_ID,
-    premium: process.env.RAZORPAY_PLAN_PREMIUM_ID
-  };
-
-  const envPlanId = String(envMap[planCode] || "").trim();
-  if (envPlanId) {
-    return envPlanId;
-  }
-
-  if (resolvedPlanIdCache[planCode]) {
+  if (!forceCreate && resolvedPlanIdCache[planCode]) {
     return resolvedPlanIdCache[planCode];
   }
 
@@ -159,30 +151,32 @@ async function resolveRazorpayPlanId(planCode) {
     throw new Error("Razorpay credentials are not configured.");
   }
 
-  // Try locating an existing monthly plan with matching amount and Takora tag/name
-  try {
-    const existingPlans = await rzp.plans.all({ count: 100 });
-    const items = Array.isArray(existingPlans && existingPlans.items) ? existingPlans.items : [];
-    const match = items.find((p) => {
-      const item = p && p.item ? p.item : {};
-      const notes = (p && p.notes) || {};
-      return (
-        p.period === "monthly" &&
-        Number(p.interval) === 1 &&
-        Number(item.amount) === plan.amountPaise &&
-        item.currency === "INR" &&
-        (notes.plan_code === planCode || String(item.name || "").toLowerCase().includes(`takora ${planCode}`))
-      );
-    });
-    if (match && match.id) {
-      resolvedPlanIdCache[planCode] = match.id;
-      return match.id;
+  // Locate an existing monthly Razorpay plan matching this package's exact amount and Takora tag
+  if (!forceCreate) {
+    try {
+      const existingPlans = await rzp.plans.all({ count: 100 });
+      const items = Array.isArray(existingPlans && existingPlans.items) ? existingPlans.items : [];
+      const match = items.find((p) => {
+        const item = p && p.item ? p.item : {};
+        const notes = (p && p.notes) || {};
+        return (
+          p.period === "monthly" &&
+          Number(p.interval) === 1 &&
+          Number(item.amount) === plan.amountPaise &&
+          item.currency === "INR" &&
+          (notes.plan_code === planCode || String(item.name || "").toLowerCase().includes(`takora ${planCode}`))
+        );
+      });
+      if (match && match.id) {
+        resolvedPlanIdCache[planCode] = match.id;
+        return match.id;
+      }
+    } catch (listErr) {
+      console.warn(`[Razorpay] Plan lookup warning for ${planCode}:`, listErr.message || listErr);
     }
-  } catch (listErr) {
-    console.warn(`[Razorpay] Plan lookup warning for ${planCode}:`, listErr.message || listErr);
   }
 
-  // Create real Razorpay monthly plan via SDK
+  // Auto-create monthly plan on Razorpay via Key ID & Key Secret
   const createdPlan = await rzp.plans.create({
     period: "monthly",
     interval: 1,
@@ -214,5 +208,6 @@ module.exports = {
   getRazorpayWebhookSecret,
   getRazorpayConfigStatus,
   getRazorpayInstance,
-  resolveRazorpayPlanId
+  resolveRazorpayPlanId,
+  clearResolvedPlanCache
 };

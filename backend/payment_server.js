@@ -15,7 +15,8 @@ const {
   getRazorpayWebhookSecret,
   getRazorpayConfigStatus,
   getRazorpayInstance,
-  resolveRazorpayPlanId
+  resolveRazorpayPlanId,
+  clearResolvedPlanCache
 } = require("./payment_config");
 const supabase = require("./supabase_config");
 
@@ -950,30 +951,41 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       }
     }
 
-    // 2. Resolve real Razorpay monthly Plan ID (env or auto-created via Razorpay Plans API)
-    const rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode);
+    // 2. Dynamically resolve or create Razorpay monthly Plan via API (using Key ID + Key Secret)
+    let rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode);
 
     // 3. Create real Razorpay Monthly Subscription with AutoPay mandate support
-    const subCreatePayload = {
-      plan_id: rzpPlanId,
-      customer_notify: 1,
-      total_count: 120,
-      notes: {
-        userId: String(user.id),
-        userEmail: isGuestPlaceholder ? "" : String(user.email),
-        planCode: targetPlan.code,
-        app: "takora",
-        upgradeFromSubscriptionId:
-          existingSub && existingEntitlements.hasActiveSubscription
-            ? String(existingSub.razorpay_subscription_id)
-            : ""
+    const buildSubPayload = (planIdValue) => {
+      const payload = {
+        plan_id: planIdValue,
+        customer_notify: 1,
+        total_count: 120,
+        notes: {
+          userId: String(user.id),
+          userEmail: isGuestPlaceholder ? "" : String(user.email),
+          planCode: targetPlan.code,
+          app: "takora",
+          upgradeFromSubscriptionId:
+            existingSub && existingEntitlements.hasActiveSubscription
+              ? String(existingSub.razorpay_subscription_id)
+              : ""
+        }
+      };
+      if (rzpCustomerId) {
+        payload.customer_id = rzpCustomerId;
       }
+      return payload;
     };
-    if (rzpCustomerId) {
-      subCreatePayload.customer_id = rzpCustomerId;
-    }
 
-    const rzpSub = await rzp.subscriptions.create(subCreatePayload);
+    let rzpSub;
+    try {
+      rzpSub = await rzp.subscriptions.create(buildSubPayload(rzpPlanId));
+    } catch (subErr) {
+      // If cached plan_id fails (e.g. stale/wrong key environment), clear cache and auto-create plan via Razorpay API
+      clearResolvedPlanCache(cleanPlanCode);
+      rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode, { forceCreate: true });
+      rzpSub = await rzp.subscriptions.create(buildSubPayload(rzpPlanId));
+    }
     if (!rzpSub || !rzpSub.id) {
       throw new Error("Razorpay did not return a valid subscription ID.");
     }
