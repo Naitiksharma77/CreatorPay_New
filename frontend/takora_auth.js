@@ -65,9 +65,19 @@
             credentials: "include"
         });
         let data = {};
-        try {
-            data = await res.json();
-        } catch (_) {}
+        const rawText = await res.text();
+        if (rawText) {
+            try {
+                data = JSON.parse(rawText);
+            } catch (_) {
+                if (!res.ok) {
+                    data = {
+                        success: false,
+                        message: `Server returned HTTP ${res.status} (${res.statusText || "Error"}).`
+                    };
+                }
+            }
+        }
         return { res, data };
     }
 

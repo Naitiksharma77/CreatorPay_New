@@ -14,10 +14,12 @@ const {
   getRazorpayKeySecret,
   getRazorpayWebhookSecret,
   getRazorpayConfigStatus,
-  getRazorpayInstance,
-  resolveRazorpayPlanId,
-  clearResolvedPlanCache
+  getRazorpayInstance
 } = require("./payment_config");
+const {
+  createRazorpayMonthlySubscription,
+  verifySubscriptionHmacSignature
+} = require("./subscription_engine");
 const supabase = require("./supabase_config");
 
 const app = express();
@@ -862,140 +864,102 @@ app.get("/api/subscriptions/me", async (req, res) => {
 });
 
 async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
-  let user = await getAuthenticatedUser(req);
-  let issuedToken = null;
-  if (!user) {
-    const instantSession = await createInstantMemberSession(req, res);
-    user = instantSession.user;
-    issuedToken = instantSession.token;
-  }
-
-  const { planCode } = req.body || {};
-  const cleanPlanCode = String(planCode || "").trim().toLowerCase();
-  const targetPlan = SUBSCRIPTION_PLANS[cleanPlanCode];
-
-  if (!targetPlan) {
-    return sendError(
-      res,
-      400,
-      "Please select a valid subscription plan: basic, pro, or premium."
-    );
-  }
-
-  const rzpStatus = getRazorpayConfigStatus();
-  const rzp = getRazorpayInstance();
-  if (!rzpStatus.configured || !rzp) {
-    return res.status(503).json({
-      success: false,
-      code: "RAZORPAY_NOT_CONFIGURED",
-      missingEnvVars: rzpStatus.missingEnvVars,
-      message: `Razorpay Subscriptions is not configured on this server yet. Set ${rzpStatus.missingEnvVars.join(
-        " and "
-      )} in environment variables to enable AutoPay checkouts.`
-    });
-  }
-
-  const existingSub = await getPrimaryUserSubscription(user.id);
-  const existingEntitlements = computeEntitlements(existingSub);
-
-  if (existingEntitlements.hasActiveSubscription && !existingEntitlements.cancelAtPeriodEnd) {
-    if (existingEntitlements.planCode === cleanPlanCode) {
-      return sendError(
-        res,
-        409,
-        `You already have an active ${targetPlan.name} subscription.`
-      );
-    }
-    const currentTier = PLAN_TIER_ORDER[existingEntitlements.planCode] || 0;
-    const requestedTier = PLAN_TIER_ORDER[cleanPlanCode] || 0;
-    if (isUpgrade && requestedTier <= currentTier) {
-      return sendError(
-        res,
-        400,
-        `Please select a plan higher than your current ${existingEntitlements.planName} plan to upgrade.`
-      );
-    }
-    if (!isUpgrade && requestedTier <= currentTier) {
-      return sendError(
-        res,
-        400,
-        `You already have ${existingEntitlements.planName} access. Cancel your current plan at cycle end if you wish to switch to a lower tier next month.`
-      );
-    }
-  }
-
   try {
-    const isGuestPlaceholder = String(user.email || "").endsWith("@member.takora.local");
-
-    // 1. Ensure Razorpay Customer exists when user has a real email
-    let rzpCustomerId = String(user.razorpay_customer_id || "").trim();
-    if (!rzpCustomerId && !isGuestPlaceholder && user.email) {
-      try {
-        const customerPayload = {
-          name: user.name || "Takora Member",
-          email: user.email,
-          fail_existing: 0,
-          notes: {
-            userId: String(user.id),
-            app: "takora"
-          }
-        };
-        if (user.phone) customerPayload.contact = user.phone;
-        const customer = await rzp.customers.create(customerPayload);
-        if (customer && customer.id) {
-          rzpCustomerId = customer.id;
-          await syncUserAccessFlag(user.id, existingEntitlements.hasActiveSubscription, rzpCustomerId);
-        }
-      } catch (custErr) {
-        console.warn("[Razorpay] Customer create warning:", custErr.message || custErr);
-      }
-    }
-
-    // 2. Dynamically resolve or create Razorpay monthly Plan via API (using Key ID + Key Secret)
-    let rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode);
-
-    // 3. Create real Razorpay Monthly Subscription with AutoPay mandate support
-    const buildSubPayload = (planIdValue) => {
-      const payload = {
-        plan_id: planIdValue,
-        customer_notify: 1,
-        total_count: 120,
-        notes: {
-          userId: String(user.id),
-          userEmail: isGuestPlaceholder ? "" : String(user.email),
-          planCode: targetPlan.code,
-          app: "takora",
-          upgradeFromSubscriptionId:
-            existingSub && existingEntitlements.hasActiveSubscription
-              ? String(existingSub.razorpay_subscription_id)
-              : ""
-        }
-      };
-      if (rzpCustomerId) {
-        payload.customer_id = rzpCustomerId;
-      }
-      return payload;
-    };
-
-    let rzpSub;
+    let user = null;
+    let issuedToken = null;
     try {
-      rzpSub = await rzp.subscriptions.create(buildSubPayload(rzpPlanId));
-    } catch (subErr) {
-      // If cached plan_id fails (e.g. stale/wrong key environment), clear cache and auto-create plan via Razorpay API
-      clearResolvedPlanCache(cleanPlanCode);
-      rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode, { forceCreate: true });
-      rzpSub = await rzp.subscriptions.create(buildSubPayload(rzpPlanId));
+      user = await getAuthenticatedUser(req);
+    } catch (_) {
+      user = null;
     }
-    if (!rzpSub || !rzpSub.id) {
-      throw new Error("Razorpay did not return a valid subscription ID.");
+    if (!user) {
+      const instantSession = await createInstantMemberSession(req, res);
+      user = instantSession.user;
+      issuedToken = instantSession.token;
+    }
+
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const cleanPlanCode = String(body.planCode || "").trim().toLowerCase();
+    const targetPlan = SUBSCRIPTION_PLANS[cleanPlanCode];
+
+    if (!targetPlan) {
+      return sendError(
+        res,
+        400,
+        "Please select a valid subscription plan: basic, pro, or premium."
+      );
+    }
+
+    const rzpStatus = getRazorpayConfigStatus();
+    if (!rzpStatus.configured) {
+      return res.status(503).json({
+        success: false,
+        code: "RAZORPAY_NOT_CONFIGURED",
+        missingEnvVars: rzpStatus.missingEnvVars,
+        message: `Razorpay Subscriptions is not configured on this server yet. Set ${rzpStatus.missingEnvVars.join(
+          " and "
+        )} in environment variables to enable AutoPay checkouts.`
+      });
+    }
+
+    let existingSub = null;
+    try {
+      existingSub = await getPrimaryUserSubscription(user.id);
+    } catch (_) {
+      existingSub = null;
+    }
+    const existingEntitlements = computeEntitlements(existingSub);
+
+    if (existingEntitlements.hasActiveSubscription && !existingEntitlements.cancelAtPeriodEnd) {
+      if (existingEntitlements.planCode === cleanPlanCode) {
+        return sendError(
+          res,
+          409,
+          `You already have an active ${targetPlan.name} subscription.`
+        );
+      }
+      const currentTier = PLAN_TIER_ORDER[existingEntitlements.planCode] || 0;
+      const requestedTier = PLAN_TIER_ORDER[cleanPlanCode] || 0;
+      if (isUpgrade && requestedTier <= currentTier) {
+        return sendError(
+          res,
+          400,
+          `Please select a plan higher than your current ${existingEntitlements.planName} plan to upgrade.`
+        );
+      }
+      if (!isUpgrade && requestedTier <= currentTier) {
+        return sendError(
+          res,
+          400,
+          `You already have ${existingEntitlements.planName} access. Cancel your current plan at cycle end if you wish to switch to a lower tier next month.`
+        );
+      }
+    }
+
+    const {
+      keyId,
+      plan,
+      rzpPlanId,
+      rzpCustomerId,
+      rzpSub
+    } = await createRazorpayMonthlySubscription({
+      planCode: cleanPlanCode,
+      user,
+      existingSub,
+      existingEntitlements
+    });
+
+    const isGuestPlaceholder = String(user.email || "").endsWith("@member.takora.local");
+    if (rzpCustomerId && !user.razorpay_customer_id) {
+      await syncUserAccessFlag(user.id, existingEntitlements.hasActiveSubscription, rzpCustomerId);
     }
 
     const savedSub = await saveSubscriptionRecord({
       user_id: String(user.id),
       user_email: isGuestPlaceholder ? "" : String(user.email),
-      plan_code: targetPlan.code,
-      plan_name: targetPlan.name,
-      amount_inr: targetPlan.priceInr,
+      plan_code: plan.code,
+      plan_name: plan.name,
+      amount_inr: plan.priceInr,
       razorpay_plan_id: rzpPlanId,
       razorpay_subscription_id: rzpSub.id,
       razorpay_customer_id: rzpCustomerId || rzpSub.customer_id || "",
@@ -1015,8 +979,8 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
 
     logAnalyticsEvent("checkout_initiated", {
       page: "pricing.html",
-      amount: targetPlan.priceInr,
-      creatorName: `${targetPlan.name} Plan`
+      amount: plan.priceInr,
+      creatorName: `${plan.name} Plan`
     });
 
     const prefill = isGuestPlaceholder
@@ -1029,9 +993,9 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
 
     return res.json({
       success: true,
-      keyId: rzpStatus.keyId,
+      keyId,
       sessionToken: issuedToken || undefined,
-      plan: targetPlan,
+      plan,
       subscription: {
         id: rzpSub.id,
         plan_id: rzpPlanId,
@@ -1041,11 +1005,14 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       prefill
     });
   } catch (err) {
-    const rzpMsg =
-      (err && err.error && (err.error.description || err.error.reason)) ||
+    const statusCode = Number(err && err.statusCode) || 502;
+    const msg =
       (err && err.message) ||
-      "Unable to initialize Razorpay Subscription.";
-    return sendError(res, 502, `Razorpay Subscription Error: ${rzpMsg}`, err);
+      "Unable to initialize Razorpay monthly subscription.";
+    return sendError(res, statusCode, msg, err, {
+      code: err && err.code ? err.code : undefined,
+      missingEnvVars: err && err.missingEnvVars ? err.missingEnvVars : undefined
+    });
   }
 }
 
@@ -1246,17 +1213,7 @@ app.post("/api/subscriptions/verify", async (req, res) => {
     }
 
     // Razorpay Subscription signature: HMAC-SHA256(razorpay_payment_id + "|" + razorpay_subscription_id, key_secret)
-    const generatedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(`${String(razorpay_payment_id).trim()}|${String(razorpay_subscription_id).trim()}`)
-      .digest("hex");
-
-    const sigA = Buffer.from(generatedSignature, "utf8");
-    const sigB = Buffer.from(String(razorpay_signature).trim(), "utf8");
-    const isValidSig =
-      sigA.length === sigB.length && crypto.timingSafeEqual(sigA, sigB);
-
-    if (!isValidSig) {
+    if (!verifySubscriptionHmacSignature(razorpay_payment_id, razorpay_subscription_id, razorpay_signature)) {
       return sendError(res, 400, "Razorpay subscription signature verification failed.");
     }
 
@@ -1420,13 +1377,7 @@ app.post("/api/subscriptions/callback", async (req, res) => {
       return res.redirect(303, "/pricing.html?checkout_error=gateway_not_configured");
     }
 
-    const generatedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(`${paymentId}|${subId}`)
-      .digest("hex");
-    const sigA = Buffer.from(generatedSignature, "utf8");
-    const sigB = Buffer.from(signature, "utf8");
-    if (sigA.length !== sigB.length || !crypto.timingSafeEqual(sigA, sigB)) {
+    if (!verifySubscriptionHmacSignature(paymentId, subId, signature)) {
       return res.redirect(303, "/pricing.html?checkout_error=invalid_signature");
     }
 
@@ -3045,6 +2996,17 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: "API route not found"
+  });
+});
+
+// Express JSON error handler so unhandled rejections or malformed JSON never return HTML 500
+app.use((err, req, res, _next) => {
+  const statusCode = Number(err && (err.statusCode || err.status)) || 500;
+  console.error("[Express Error]", err && (err.stack || err.message || err));
+  if (res.headersSent) return;
+  res.status(statusCode).json({
+    success: false,
+    message: (err && err.message) || "Unexpected server error."
   });
 });
 

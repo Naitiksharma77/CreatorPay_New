@@ -440,8 +440,32 @@
         checkoutBusyPlan = planCode;
         renderPlanCards();
 
+        const safeApiFetch = (url, opts) => {
+            if (window.TakoraAuth && typeof window.TakoraAuth.apiFetch === "function") {
+                return window.TakoraAuth.apiFetch(url, opts);
+            }
+            return fetch(url, {
+                ...opts,
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "Takora-Web",
+                    ...((opts && opts.headers) || {})
+                }
+            }).then(async (r) => {
+                const txt = await r.text();
+                let parsed = {};
+                try {
+                    parsed = txt ? JSON.parse(txt) : {};
+                } catch (_) {
+                    parsed = { success: false, message: `Server returned HTTP ${r.status}` };
+                }
+                return { res: r, data: parsed };
+            });
+        };
+
         try {
-            const { res, data } = await window.TakoraAuth.apiFetch(endpoint, {
+            const { res, data } = await safeApiFetch(endpoint, {
                 method: "POST",
                 body: JSON.stringify({ planCode })
             });
@@ -462,7 +486,9 @@
             }
 
             if (!res.ok || !data.success || !data.subscription || !data.subscription.id) {
-                throw new Error(data.message || "Unable to create Razorpay subscription.");
+                throw new Error(
+                    data.message || `Unable to create Razorpay subscription (HTTP ${res.status}).`
+                );
             }
 
             const subscriptionId = data.subscription.id;
