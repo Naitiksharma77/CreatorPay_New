@@ -60,6 +60,7 @@
     const memberStatusTitle = document.getElementById("memberStatusTitle");
     const memberStatusSub = document.getElementById("memberStatusSub");
     const memberStatusActions = document.getElementById("memberStatusActions");
+    const subscriptionManagementDetails = document.getElementById("subscriptionManagementDetails");
     const pricingAlertBox = document.getElementById("pricingAlertBox");
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -73,6 +74,10 @@
     let syncPollTimer = null;
     let syncPollAttempts = 0;
     let frameCheckTimer = null;
+    let cancelConfirmOpen = false;
+    let cancelInFlight = false;
+    let lastCancelMessage = "";
+    let lastCancelError = "";
 
     function escapeHTML(val) {
         return String(val ?? "")
@@ -258,6 +263,57 @@
         return false;
     }
 
+    async function submitInlineSubscriptionCancel() {
+        if (cancelInFlight) return;
+        cancelInFlight = true;
+        lastCancelError = "";
+        renderMemberStatus();
+
+        const safeApiFetch = (url, opts) => {
+            if (window.TakoraAuth && typeof window.TakoraAuth.apiFetch === "function") {
+                return window.TakoraAuth.apiFetch(url, opts);
+            }
+            return fallbackApiFetch(url, opts);
+        };
+
+        try {
+            const { res, data } = await safeApiFetch("/api/subscriptions/cancel", {
+                method: "POST",
+                body: JSON.stringify({})
+            });
+
+            if (!res.ok || !data || !data.success) {
+                throw new Error((data && data.message) || `Unable to cancel subscription (HTTP ${res.status}).`);
+            }
+
+            cancelConfirmOpen = false;
+            const paidThroughIso =
+                data.paidThrough ||
+                (data.subscription && data.subscription.current_end) ||
+                (data.entitlements && data.entitlements.currentEnd) ||
+                null;
+            lastCancelMessage = paidThroughIso
+                ? `Subscription cancelled. Future automatic AutoPay renewals are stopped, and your access remains active through ${formatDate(paidThroughIso)}.`
+                : (data.message || "Subscription cancelled. Future automatic AutoPay renewals are stopped.");
+
+            if (window.TakoraAuth) {
+                await window.TakoraAuth.refreshSession();
+                if (typeof window.TakoraAuth.showToast === "function") {
+                    window.TakoraAuth.showToast("Subscription cancelled. Access stays active until cycle end.");
+                }
+            }
+        } catch (err) {
+            lastCancelError = err.message || "Unable to cancel subscription on Razorpay. Please try again.";
+            if (window.TakoraAuth && typeof window.TakoraAuth.showToast === "function") {
+                window.TakoraAuth.showToast(lastCancelError, true);
+            }
+        } finally {
+            cancelInFlight = false;
+            renderMemberStatus();
+            renderPlanCards();
+        }
+    }
+
     function renderMemberStatus() {
         const auth = window.TakoraAuth
             ? window.TakoraAuth.getState()
@@ -265,10 +321,17 @@
 
         if (!auth.loaded) {
             memberStatusTitle.textContent = "Checking your membership status...";
+            if (subscriptionManagementDetails) {
+                subscriptionManagementDetails.style.display = "none";
+                subscriptionManagementDetails.innerHTML = "";
+            }
             return;
         }
 
         if (!auth.authenticated || !auth.user) {
+            cancelConfirmOpen = false;
+            lastCancelMessage = "";
+            lastCancelError = "";
             memberStatusBar.classList.remove("has-plan");
             memberStatusTitle.textContent = "Sign In or Create a Free Account";
             memberStatusSub.textContent = "Free account required so your monthly membership and Razorpay AutoPay stay linked to your profile.";
@@ -277,6 +340,10 @@
                 <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
                 <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             `;
+            if (subscriptionManagementDetails) {
+                subscriptionManagementDetails.style.display = "none";
+                subscriptionManagementDetails.innerHTML = "";
+            }
             return;
         }
 
@@ -284,16 +351,131 @@
         const contactDisplay = auth.user.email || auth.user.phone || "Active Member";
 
         if (sub && sub.hasActiveAccess) {
+            const isCancelledAtCycleEnd = Boolean(sub.cancelAtPeriodEnd || sub.status === "cancelled");
+            const paidThroughStr = formatDate(sub.currentEnd);
+            const nextBillStr = isCancelledAtCycleEnd
+                ? `Stopped · Paid through ${paidThroughStr}`
+                : formatDate(sub.nextBillingDate || sub.currentEnd);
+            const statusText = isCancelledAtCycleEnd
+                ? `Cancelled (Active until ${paidThroughStr})`
+                : "Active";
+            const autoPayText = isCancelledAtCycleEnd
+                ? "AutoPay Cancelled"
+                : "AutoPay Active · Renews Monthly";
+
             memberStatusBar.classList.add("has-plan");
-            memberStatusTitle.textContent = `${sub.planName} Plan Active · ₹${sub.priceInr}/month`;
-            memberStatusSub.textContent = sub.cancelAtPeriodEnd
-                ? `${contactDisplay}. AutoPay cancelled — access active until ${formatDate(sub.currentEnd)}.`
-                : `${contactDisplay}. Next Razorpay AutoPay renewal: ${formatDate(sub.currentEnd)}.`;
+            memberStatusTitle.textContent = isCancelledAtCycleEnd
+                ? `${sub.planName} Plan · Cancelled at Cycle End (₹${sub.priceInr}/month)`
+                : `${sub.planName} Plan Active · ₹${sub.priceInr}/month`;
+            memberStatusSub.textContent = isCancelledAtCycleEnd
+                ? `${contactDisplay}. AutoPay is cancelled — full membership access remains active through ${paidThroughStr}.`
+                : `${contactDisplay}. Monthly Razorpay AutoPay renews automatically until you cancel.`;
+
             memberStatusActions.innerHTML = `
-                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth.openAccountModal()">Manage AutoPay</button>
+                ${!isCancelledAtCycleEnd ? `<button type="button" id="pricingCancelSubBtn" class="bar-btn danger-outline" ${cancelInFlight ? "disabled" : ""}>Cancel Subscription</button>` : ""}
+                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth.openAccountModal()">Payment History</button>
                 <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             `;
+
+            if (subscriptionManagementDetails) {
+                subscriptionManagementDetails.style.display = "flex";
+                subscriptionManagementDetails.style.flexDirection = "column";
+                subscriptionManagementDetails.style.gap = "12px";
+
+                const confirmHtml = !isCancelledAtCycleEnd && cancelConfirmOpen
+                    ? `
+                        <div class="sub-cancel-confirm" id="pricingCancelConfirmBox">
+                            <div class="sub-cancel-confirm-text">
+                                Confirm cancellation of your <strong>${escapeHTML(sub.planName)} Plan (₹${escapeHTML(sub.priceInr)}/month)</strong>?
+                                Future automatic Razorpay AutoPay renewals will stop after your current paid billing period, and your access remains active until <strong>${escapeHTML(paidThroughStr)}</strong>.
+                            </div>
+                            <div class="sub-cancel-confirm-actions">
+                                <button type="button" id="pricingConfirmCancelBtn" class="bar-btn danger-solid" ${cancelInFlight ? "disabled" : ""}>
+                                    ${cancelInFlight ? "Cancelling on Razorpay..." : "Confirm Cancellation"}
+                                </button>
+                                <button type="button" id="pricingKeepSubBtn" class="bar-btn" ${cancelInFlight ? "disabled" : ""}>
+                                    Keep Subscription
+                                </button>
+                            </div>
+                        </div>
+                    `
+                    : "";
+
+                const noticeHtml = isCancelledAtCycleEnd
+                    ? `
+                        <div class="sub-cancel-notice" id="pricingCancelledBanner">
+                            ${escapeHTML(
+                                lastCancelMessage ||
+                                `Cancellation confirmed. Future automatic renewals have been stopped, and your ${sub.planName} Plan access stays active through ${paidThroughStr}. Access will automatically expire after ${paidThroughStr}.`
+                            )}
+                        </div>
+                    `
+                    : "";
+
+                const errorHtml = lastCancelError
+                    ? `<div class="sub-cancel-error" id="pricingCancelErrorBox">${escapeHTML(lastCancelError)}</div>`
+                    : "";
+
+                subscriptionManagementDetails.innerHTML = `
+                    <div class="sub-mgmt-grid" id="subscriptionMgmtGrid">
+                        <div class="sub-mgmt-item">
+                            <span class="sub-mgmt-label">Current Plan Name</span>
+                            <span class="sub-mgmt-value">${escapeHTML(sub.planName)} Plan</span>
+                        </div>
+                        <div class="sub-mgmt-item">
+                            <span class="sub-mgmt-label">Monthly Price</span>
+                            <span class="sub-mgmt-value">₹${escapeHTML(sub.priceInr)}/month</span>
+                        </div>
+                        <div class="sub-mgmt-item">
+                            <span class="sub-mgmt-label">Subscription Status</span>
+                            <span class="sub-mgmt-value ${isCancelledAtCycleEnd ? "cancelled-amber" : "active-green"}">${escapeHTML(statusText)}</span>
+                        </div>
+                        <div class="sub-mgmt-item">
+                            <span class="sub-mgmt-label">${isCancelledAtCycleEnd ? "Paid-Through Date" : "Next Billing Date"}</span>
+                            <span class="sub-mgmt-value">${escapeHTML(nextBillStr)}</span>
+                        </div>
+                        <div class="sub-mgmt-item">
+                            <span class="sub-mgmt-label">AutoPay Status</span>
+                            <span class="sub-mgmt-value ${isCancelledAtCycleEnd ? "cancelled-amber" : "active-green"}">${escapeHTML(autoPayText)}</span>
+                        </div>
+                    </div>
+                    ${errorHtml}
+                    ${confirmHtml}
+                    ${noticeHtml}
+                `;
+
+                const cancelTriggerBtn = document.getElementById("pricingCancelSubBtn");
+                const confirmBtn = document.getElementById("pricingConfirmCancelBtn");
+                const keepBtn = document.getElementById("pricingKeepSubBtn");
+
+                if (cancelTriggerBtn) {
+                    cancelTriggerBtn.onclick = () => {
+                        if (cancelInFlight) return;
+                        lastCancelError = "";
+                        cancelConfirmOpen = true;
+                        renderMemberStatus();
+                    };
+                }
+                if (keepBtn) {
+                    keepBtn.onclick = () => {
+                        if (cancelInFlight) return;
+                        cancelConfirmOpen = false;
+                        lastCancelError = "";
+                        renderMemberStatus();
+                    };
+                }
+                if (confirmBtn) {
+                    confirmBtn.onclick = () => {
+                        submitInlineSubscriptionCancel();
+                    };
+                }
+            }
             return;
+        }
+
+        if (subscriptionManagementDetails) {
+            subscriptionManagementDetails.style.display = "none";
+            subscriptionManagementDetails.innerHTML = "";
         }
 
         if (sub && sub.status === "authenticated" && !sub.hasActiveAccess) {
@@ -302,6 +484,19 @@
             memberStatusSub.textContent = `Your ${sub.planName || ""} AutoPay mandate is awaiting bank payment settlement.`;
             memberStatusActions.innerHTML = `
                 <button type="button" class="bar-btn primary" onclick="window.TakoraAuth.openAccountModal()">Check Status</button>
+            `;
+            return;
+        }
+
+        if (sub && !sub.hasActiveAccess && (sub.status === "expired" || sub.status === "completed" || sub.status === "cancelled")) {
+            memberStatusBar.classList.remove("has-plan");
+            memberStatusTitle.textContent = `${sub.planName || "Previous"} Subscription Ended`;
+            memberStatusSub.textContent = sub.currentEnd
+                ? `${contactDisplay}. Your previous billing period ended on ${formatDate(sub.currentEnd)}. Pick a plan below to restart monthly AutoPay anytime.`
+                : `${contactDisplay}. Your previous subscription has ended. Select a plan below to subscribe again.`;
+            memberStatusActions.innerHTML = `
+                <button type="button" class="bar-btn" onclick="window.TakoraAuth.openAccountModal()">Payment History</button>
+                <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             `;
             return;
         }

@@ -74,11 +74,16 @@ async function createRazorpayMonthlySubscription({
       ? String(existingSub.razorpay_subscription_id)
       : "";
 
-  const buildPayload = (planIdValue, customerIdValue = "") => {
+  // Razorpay Subscriptions + NPCI UPI AutoPay allow up to 30 years (360 monthly cycles)
+  // so subscriptions renew continuously every month until explicitly cancelled.
+  const MAX_MONTHLY_AUTOPAY_CYCLES = 360;
+  const FALLBACK_MONTHLY_AUTOPAY_CYCLES = 120;
+
+  const buildPayload = (planIdValue, customerIdValue = "", totalCount = MAX_MONTHLY_AUTOPAY_CYCLES) => {
     const payload = {
       plan_id: planIdValue,
       customer_notify: 1,
-      total_count: 120,
+      total_count: totalCount,
       notes: {
         userId: String(user.id),
         userEmail: String(user.email || ""),
@@ -130,7 +135,9 @@ async function createRazorpayMonthlySubscription({
 
   let rzpSub = null;
   try {
-    rzpSub = await rzp.subscriptions.create(buildPayload(rzpPlanId, rzpCustomerId));
+    rzpSub = await rzp.subscriptions.create(
+      buildPayload(rzpPlanId, rzpCustomerId, MAX_MONTHLY_AUTOPAY_CYCLES)
+    );
   } catch (firstErr) {
     console.warn(
       `[SubscriptionEngine] Primary subscription create failed (${cleanPlanCode}):`,
@@ -145,12 +152,24 @@ async function createRazorpayMonthlySubscription({
       throw authWrapped;
     }
 
-    // Retry cleanly: drop possibly-stale customer_id AND resolve/create fresh plan if plan_id failed
-    clearResolvedPlanCache(cleanPlanCode);
-    rzpCustomerId = "";
+    // Retry cleanly: if total_count triggered a limit error, fall back to 120 cycles (10 years);
+    // otherwise drop possibly-stale customer_id AND resolve/create fresh plan if plan_id failed.
+    const isTotalCountLimitErr = /total_count|end_at|cycle|duration|count/i.test(firstMsg);
+    if (!isTotalCountLimitErr) {
+      clearResolvedPlanCache(cleanPlanCode);
+      rzpCustomerId = "";
+    }
     try {
-      rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode, { forceCreate: true });
-      rzpSub = await rzp.subscriptions.create(buildPayload(rzpPlanId, ""));
+      if (!isTotalCountLimitErr) {
+        rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode, { forceCreate: true });
+      }
+      rzpSub = await rzp.subscriptions.create(
+        buildPayload(
+          rzpPlanId,
+          isTotalCountLimitErr ? rzpCustomerId : "",
+          isTotalCountLimitErr ? FALLBACK_MONTHLY_AUTOPAY_CYCLES : MAX_MONTHLY_AUTOPAY_CYCLES
+        )
+      );
     } catch (retryErr) {
       const msg = formatRazorpayError(retryErr, "Unable to create Razorpay subscription.");
       const wrapped = new Error(`Razorpay Subscription Creation Failed: ${msg}`);

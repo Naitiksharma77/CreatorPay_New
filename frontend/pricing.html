@@ -174,18 +174,16 @@
             line-height: 1.6;
         }
 
-        /* Member Status Banner */
+        /* Member Status & Subscription Management Area */
         .member-status-bar {
             background: var(--tk-surface);
             border: 1px solid var(--tk-border);
             border-radius: 18px;
-            padding: 16px 20px;
+            padding: 18px 22px;
             margin-bottom: 24px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 14px;
             box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
         }
 
@@ -194,9 +192,17 @@
             border-color: var(--tk-border-blue);
         }
 
+        .member-status-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
         .member-status-info strong {
             display: block;
-            font-size: 15px;
+            font-size: 15.5px;
             font-weight: 800;
             color: var(--tk-ink);
         }
@@ -224,12 +230,18 @@
             border: 1px solid var(--tk-border);
             background: var(--tk-surface);
             color: var(--tk-ink);
+            text-decoration: none;
             transition: all 0.15s ease;
         }
 
-        .bar-btn:hover {
+        .bar-btn:hover:not(:disabled) {
             border-color: var(--tk-blue);
             color: var(--tk-blue);
+        }
+
+        .bar-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .bar-btn.primary {
@@ -238,9 +250,119 @@
             color: #FFFFFF;
         }
 
-        .bar-btn.primary:hover {
+        .bar-btn.primary:hover:not(:disabled) {
             background: var(--tk-blue-dark);
             color: #FFFFFF;
+        }
+
+        .bar-btn.danger-outline {
+            background: #FFFFFF;
+            border-color: #FECACA;
+            color: #B91C1C;
+        }
+
+        .bar-btn.danger-outline:hover:not(:disabled) {
+            background: #FEF2F2;
+            border-color: #FCA5A5;
+            color: #991B1B;
+        }
+
+        .bar-btn.danger-solid {
+            background: #DC2626;
+            border-color: #DC2626;
+            color: #FFFFFF;
+        }
+
+        .bar-btn.danger-solid:hover:not(:disabled) {
+            background: #B91C1C;
+            border-color: #B91C1C;
+            color: #FFFFFF;
+        }
+
+        .sub-mgmt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(37, 99, 235, 0.14);
+        }
+
+        .sub-mgmt-item {
+            background: #FFFFFF;
+            border: 1px solid #DBEAFE;
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .sub-mgmt-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--tk-muted);
+            margin-bottom: 3px;
+        }
+
+        .sub-mgmt-value {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 800;
+            color: var(--tk-ink);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sub-mgmt-value.active-green {
+            color: #15803D;
+        }
+
+        .sub-mgmt-value.cancelled-amber {
+            color: #B45309;
+        }
+
+        .sub-cancel-confirm {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sub-cancel-confirm-text {
+            font-size: 13px;
+            color: #991B1B;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .sub-cancel-confirm-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sub-cancel-notice {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            color: #92400E;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .sub-cancel-error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #B91C1C;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
         }
 
         /* Status & Gateway Alert */
@@ -672,16 +794,19 @@
             </p>
         </section>
 
-        <!-- Member Account & Current Plan Summary -->
+        <!-- Member Account & Current Plan Management Area -->
         <section id="memberStatusBar" class="member-status-bar" aria-live="polite">
-            <div class="member-status-info">
-                <strong id="memberStatusTitle">Checking your membership status...</strong>
-                <span id="memberStatusSub">Sign in or create a free account to link your monthly membership to your profile.</span>
+            <div class="member-status-top">
+                <div class="member-status-info">
+                    <strong id="memberStatusTitle">Checking your membership status...</strong>
+                    <span id="memberStatusSub">Sign in or create a free account to link your monthly membership to your profile.</span>
+                </div>
+                <div class="member-status-actions" id="memberStatusActions">
+                    <button type="button" class="bar-btn primary" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
+                    <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
+                </div>
             </div>
-            <div class="member-status-actions" id="memberStatusActions">
-                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
-                <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
-            </div>
+            <div id="subscriptionManagementDetails" style="display: none;"></div>
         </section>
 
         <!-- Dynamic Inline Alert (Gateway missing / Pending mandate / Errors) -->

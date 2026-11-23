@@ -523,14 +523,41 @@ async function getUserSubscriptions(userId) {
 }
 
 async function getPrimaryUserSubscription(userId) {
-  const subs = await getUserSubscriptions(userId);
+  const cleanUserId = String(userId || "").trim();
+  const subs = await getUserSubscriptions(cleanUserId);
   if (subs.length === 0) return null;
+
+  // Automatically synchronize any cancelled subscription whose paid billing period has expired
+  const nowMs = Date.now();
+  let expiredAny = false;
+  for (let i = 0; i < subs.length; i++) {
+    const sub = subs[i];
+    if (
+      sub &&
+      sub.cancel_at_period_end &&
+      sub.current_end &&
+      new Date(sub.current_end).getTime() <= nowMs &&
+      (sub.has_access || sub.status === "cancelled" || sub.status === "active")
+    ) {
+      subs[i] = await saveSubscriptionRecord({
+        ...sub,
+        status: "expired",
+        has_access: false,
+        next_billing_date: null
+      });
+      expiredAny = true;
+    }
+  }
 
   // Prefer currently entitled active subscription first
   const entitled = subs.find((s) => computeEntitlements(s).hasActiveSubscription);
   if (entitled) return entitled;
 
-  // Otherwise return most recently updated subscription (e.g., authenticated/cancelled/halted)
+  if (expiredAny && cleanUserId) {
+    await syncUserAccessFlag(cleanUserId, false);
+  }
+
+  // Otherwise return most recently updated subscription (e.g., authenticated/cancelled/expired/halted)
   return subs[0];
 }
 
@@ -992,6 +1019,7 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
         id: rzpSub.id,
         plan_id: rzpPlanId,
         status: savedSub.status,
+        total_count: Number(rzpSub.total_count || 360),
         short_url: rzpSub.short_url || ""
       },
       prefill: {
@@ -1100,6 +1128,16 @@ async function activateVerifiedSubscription({
     }
   }
 
+  const isSameSub =
+    existingRow && existingRow.razorpay_subscription_id === rzpSub.id;
+  const rzpPaidCount = Math.max(1, Number(rzpSub.paid_count || 1));
+  const existingPaidCount = Number((existingRow && existingRow.paid_count) || 0);
+  const preserveScheduledCancel = Boolean(
+    isSameSub &&
+      (existingRow.cancel_at_period_end || rzpSub.has_scheduled_changes) &&
+      rzpPaidCount <= Math.max(1, existingPaidCount)
+  );
+
   const activeRow = await saveSubscriptionRecord({
     user_id: String(user.id),
     user_email: resolvedEmail,
@@ -1110,14 +1148,15 @@ async function activateVerifiedSubscription({
       (rzpSub && rzpSub.plan_id) || (existingRow && existingRow.razorpay_plan_id) || "",
     razorpay_subscription_id: rzpSub.id,
     razorpay_customer_id: rzpSub.customer_id || "",
-    status: "active",
+    status: preserveScheduledCancel ? "cancelled" : "active",
     payment_verification_status: "verified",
     has_access: true,
-    cancel_at_period_end: false,
+    cancel_at_period_end: preserveScheduledCancel,
+    cancelled_at: preserveScheduledCancel ? (existingRow.cancelled_at || nowIso) : (existingRow && existingRow.cancelled_at) || null,
     current_start: currentStartIso,
     current_end: currentEndIso,
-    next_billing_date: nextBillingIso,
-    paid_count: Math.max(1, Number(rzpSub.paid_count || 1))
+    next_billing_date: preserveScheduledCancel ? null : nextBillingIso,
+    paid_count: rzpPaidCount
   });
 
   const payRecord = await recordSubscriptionPayment({
@@ -1469,13 +1508,30 @@ app.post("/api/subscriptions/cancel", async (req, res) => {
     if (!currentSub || !currentSub.razorpay_subscription_id) {
       return sendError(res, 404, "No active subscription found on your account.");
     }
-    if (currentSub.cancel_at_period_end || currentSub.status === "cancelled") {
+
+    const currentEnt = computeEntitlements(currentSub);
+    if (
+      (currentSub.cancel_at_period_end || currentSub.status === "cancelled") &&
+      currentEnt.hasActiveSubscription
+    ) {
       return res.json({
         success: true,
-        message: "AutoPay is already scheduled to cancel at the end of your current billing period.",
+        alreadyCancelled: true,
+        message: "AutoPay is already scheduled to cancel at the end of your current paid billing period.",
+        paidThrough: currentSub.current_end || null,
         subscription: currentSub,
-        entitlements: computeEntitlements(currentSub)
+        entitlements: currentEnt
       });
+    }
+
+    if (!currentEnt.hasActiveSubscription) {
+      return sendError(
+        res,
+        400,
+        "Only an active paid subscription can be cancelled.",
+        null,
+        { code: "NO_ACTIVE_SUBSCRIPTION" }
+      );
     }
 
     const rzp = getRazorpayInstance();
@@ -1488,28 +1544,60 @@ app.post("/api/subscriptions/cancel", async (req, res) => {
     }
 
     // Razorpay Node SDK v2 signature: subscriptions.cancel(subId, cancelAtCycleEndBoolean)
-    const rzpCancelled = await rzp.subscriptions.cancel(
-      currentSub.razorpay_subscription_id,
-      true
-    );
+    // Sends POST /subscriptions/:id/cancel with { cancel_at_cycle_end: 1 }
+    let rzpCancelled = null;
+    try {
+      rzpCancelled = await rzp.subscriptions.cancel(
+        currentSub.razorpay_subscription_id,
+        true
+      );
+    } catch (cancelErr) {
+      const errDesc = String(
+        (cancelErr && cancelErr.error && cancelErr.error.description) ||
+          (cancelErr && cancelErr.message) ||
+          ""
+      );
+      if (/already\s+cancelled|cannot\s+cancel.*cancelled|scheduled\s+to\s+cancel/i.test(errDesc)) {
+        const fetchedRemote = await rzp.subscriptions.fetch(currentSub.razorpay_subscription_id);
+        if (
+          fetchedRemote &&
+          (fetchedRemote.status === "cancelled" || fetchedRemote.has_scheduled_changes)
+        ) {
+          rzpCancelled = fetchedRemote;
+        } else {
+          throw cancelErr;
+        }
+      } else {
+        throw cancelErr;
+      }
+    }
 
     const nowIso = new Date().toISOString();
+    const currentEndIso =
+      unixToIso(rzpCancelled && rzpCancelled.current_end) ||
+      currentSub.current_end ||
+      addOneMonthIso(nowIso);
+    const withinPaidPeriod = !currentEndIso || new Date(currentEndIso).getTime() > Date.now();
+
     const updated = await saveSubscriptionRecord({
       ...currentSub,
-      status: "cancelled",
+      status: withinPaidPeriod ? "cancelled" : "expired",
       cancel_at_period_end: true,
-      cancelled_at: nowIso,
-      current_end:
-        unixToIso(rzpCancelled && rzpCancelled.current_end) ||
-        currentSub.current_end ||
-        addOneMonthIso(nowIso),
-      next_billing_date: null
+      cancelled_at: currentSub.cancelled_at || nowIso,
+      current_end: currentEndIso,
+      next_billing_date: null,
+      has_access: Boolean(withinPaidPeriod)
     });
+
+    if (!withinPaidPeriod) {
+      await syncUserAccessFlag(user.id, false);
+    }
 
     return res.json({
       success: true,
       message:
-        "AutoPay cancelled. You will continue to enjoy your membership benefits until the end of your current billing cycle.",
+        "Subscription cancelled. Future automatic AutoPay renewals are stopped, and your access remains active until the end of your current paid billing period.",
+      paidThrough: currentEndIso,
       subscription: updated,
       entitlements: computeEntitlements(updated)
     });
@@ -1517,8 +1605,12 @@ app.post("/api/subscriptions/cancel", async (req, res) => {
     const rzpMsg =
       (error && error.error && error.error.description) ||
       error.message ||
-      "Unable to cancel subscription.";
-    return sendError(res, 500, rzpMsg, error);
+      "Unable to cancel subscription on Razorpay. Please try again.";
+    const httpStatus = Number(error && error.statusCode);
+    const safeStatus = httpStatus >= 400 && httpStatus < 600 ? httpStatus : 502;
+    return sendError(res, safeStatus, rzpMsg, error, {
+      code: "SUBSCRIPTION_CANCEL_FAILED"
+    });
   }
 });
 

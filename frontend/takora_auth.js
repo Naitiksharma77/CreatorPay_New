@@ -1038,11 +1038,11 @@
         const payments = authState.payments || [];
 
         const hasSub = Boolean(sub && sub.hasActiveAccess);
-        const canCancelAutoPay = Boolean(sub && sub.status === "active" && !sub.cancelAtPeriodEnd);
+        const canCancelAutoPay = Boolean(hasSub && !sub.cancelAtPeriodEnd && sub.status !== "cancelled");
         const statusLabel = !sub
             ? "Free Account"
             : sub.cancelAtPeriodEnd
-                ? `Cancels ${formatDate(sub.currentEnd)}`
+                ? `Cancelled · Paid through ${formatDate(sub.currentEnd)}`
                 : sub.status === "active"
                     ? "Active · AutoPay On"
                     : sub.status === "authenticated"
@@ -1071,10 +1071,10 @@
                         <span class="tk-status-text ${statusClass}">${escapeHTML(statusLabel)}</span>
                     </div>
                     <div class="tk-meta-line">
-                        ${sub && sub.currentEnd
+                        ${sub && sub.currentEnd && hasSub
                             ? (sub.cancelAtPeriodEnd
-                                ? `Access remains active until <strong>${formatDate(sub.currentEnd)}</strong>. AutoPay will not renew.`
-                                : `Next billing date: <strong>${formatDate(sub.currentEnd)}</strong> via Razorpay AutoPay`)
+                                ? `Cancellation confirmed. AutoPay will not renew, and your membership access stays active through <strong>${formatDate(sub.currentEnd)}</strong>.`
+                                : `Next billing date: <strong>${formatDate(sub.nextBillingDate || sub.currentEnd)}</strong> via Razorpay AutoPay (renews monthly until cancelled).`)
                             : "Subscribe to Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo) to unlock creator interactions."}
                     </div>
                     <div class="tk-cap-grid">
@@ -1089,14 +1089,14 @@
                         ${hasSub ? (sub.planCode === "premium" ? "View Plan Details" : "Upgrade Plan") : "Choose a Monthly Plan"}
                     </a>
                     ${canCancelAutoPay ? `
-                        <button type="button" id="tkCancelAutoPayBtn" class="tk-danger-btn">Cancel Monthly AutoPay</button>
+                        <button type="button" id="tkCancelAutoPayBtn" class="tk-danger-btn">Cancel Subscription</button>
                         <div id="tkCancelConfirmWrap" style="display:none; background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:12px;">
                             <div style="font-size:12.5px; color:#991B1B; font-weight:600; margin-bottom:10px;">
-                                Cancel AutoPay at the end of your current billing cycle? You keep access until ${formatDate(sub.currentEnd)}.
+                                Confirm cancellation of your ${escapeHTML(sub.planName)} Plan? Future automatic AutoPay renewals will stop after your current cycle, and you keep access until ${formatDate(sub.currentEnd)}.
                             </div>
                             <div style="display:flex; gap:8px;">
-                                <button type="button" id="tkConfirmCancelBtn" class="tk-danger-btn" style="background:#DC2626; color:#FFFFFF; border-color:#DC2626;">Confirm Cancel</button>
-                                <button type="button" id="tkAbortCancelBtn" class="tk-secondary-btn">Keep AutoPay</button>
+                                <button type="button" id="tkConfirmCancelBtn" class="tk-danger-btn" style="background:#DC2626; color:#FFFFFF; border-color:#DC2626;">Confirm Cancellation</button>
+                                <button type="button" id="tkAbortCancelBtn" class="tk-secondary-btn">Keep Subscription</button>
                             </div>
                         </div>
                     ` : ""}
@@ -1133,16 +1133,21 @@
         const abortBtn = document.getElementById("tkAbortCancelBtn");
 
         if (cancelBtn && confirmWrap) {
+            let cancelModalInFlight = false;
             cancelBtn.onclick = () => {
                 cancelBtn.style.display = "none";
                 confirmWrap.style.display = "block";
             };
             abortBtn.onclick = () => {
+                if (cancelModalInFlight) return;
                 confirmWrap.style.display = "none";
                 cancelBtn.style.display = "block";
             };
             confirmBtn.onclick = async () => {
+                if (cancelModalInFlight) return;
+                cancelModalInFlight = true;
                 confirmBtn.disabled = true;
+                abortBtn.disabled = true;
                 confirmBtn.textContent = "Cancelling...";
                 try {
                     const { res: cRes, data: cData } = await apiFetch("/api/subscriptions/cancel", {
@@ -1153,12 +1158,14 @@
                         throw new Error(cData.message || "Unable to cancel AutoPay");
                     }
                     await refreshSession();
-                    showToast("AutoPay cancelled. Access stays active until cycle end.");
+                    showToast("Subscription cancelled. Access stays active until cycle end.");
                     openAccountModal();
                 } catch (err) {
+                    cancelModalInFlight = false;
                     showToast(err.message || "Cancellation failed", true);
                     confirmBtn.disabled = false;
-                    confirmBtn.textContent = "Confirm Cancel";
+                    abortBtn.disabled = false;
+                    confirmBtn.textContent = "Confirm Cancellation";
                 }
             };
         }
