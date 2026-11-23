@@ -1361,5 +1361,40 @@
   "webhook_events": [],
   "interaction_sessions": [],
   "_runtime_session_secret": "11e6196ba40a4b08729e157290c754c86c0b3ebe8d3cff7b25131c2beb13a362",
-  "tracking_started": "2026-10-16T14:22:30.078Z"
+  "tracking_started": "2026-10-16T14:22:30.078Z",
+  "razorpay_plans": {
+    "basic": {
+      "plan_key": "basic",
+      "razorpay_plan_id": "plan_U3At0vWmdNWh2F",
+      "plan_name": "Basic",
+      "amount_paise": 900,
+      "period": "monthly",
+      "interval_count": 1,
+      "currency": "INR",
+      "updated_at": "2026-11-23T02:30:36.664Z",
+      "created_at": "2026-11-23T02:30:36.664Z"
+    },
+    "pro": {
+      "plan_key": "pro",
+      "razorpay_plan_id": "plan_U3Ad3Jt2Pt1DXB",
+      "plan_name": "Pro",
+      "amount_paise": 2900,
+      "period": "monthly",
+      "interval_count": 1,
+      "currency": "INR",
+      "updated_at": "2026-11-23T02:30:37.234Z",
+      "created_at": "2026-11-23T02:30:37.234Z"
+    },
+    "premium": {
+      "plan_key": "premium",
+      "razorpay_plan_id": "plan_U3BCE0P2VcVEp1",
+      "plan_name": "Premium",
+      "amount_paise": 9900,
+      "period": "monthly",
+      "interval_count": 1,
+      "currency": "INR",
+      "updated_at": "2026-11-23T02:30:38.033Z",
+      "created_at": "2026-11-23T02:30:38.033Z"
+    }
+  }
 }

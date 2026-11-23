@@ -50,20 +50,42 @@
         }
     }
 
-    async function apiFetch(url, options = {}) {
-        const headers = { ...(options.headers || {}) };
-        if (options.body && !headers["Content-Type"]) {
-            headers["Content-Type"] = "application/json";
+    const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
+    let resolvedApiBase = null;
+
+    function detectInitialApiBase() {
+        if (resolvedApiBase !== null) return resolvedApiBase;
+        if (typeof window.TAKORA_API_BASE === "string" && window.TAKORA_API_BASE.trim()) {
+            resolvedApiBase = window.TAKORA_API_BASE.trim().replace(/\/+$/, "");
+            return resolvedApiBase;
         }
-        headers["X-Requested-With"] = "Takora-Web";
-        if (memoryBearerToken && !headers["Authorization"]) {
-            headers["Authorization"] = `Bearer ${memoryBearerToken}`;
+        const metaEl = document.querySelector('meta[name="takora-api-base"]');
+        if (metaEl && metaEl.content && metaEl.content.trim()) {
+            resolvedApiBase = metaEl.content.trim().replace(/\/+$/, "");
+            return resolvedApiBase;
         }
-        const res = await fetch(url, {
-            ...options,
-            headers,
-            credentials: "include"
-        });
+        const host = (window.location && window.location.hostname || "").toLowerCase();
+        if (
+            host.endsWith(".vercel.app") ||
+            host.endsWith(".netlify.app") ||
+            host.endsWith(".pages.dev") ||
+            host.endsWith(".github.io")
+        ) {
+            resolvedApiBase = RENDER_BACKEND_URL;
+            return resolvedApiBase;
+        }
+        return "";
+    }
+
+    function resolveApiUrl(url, forceBase = null) {
+        if (!url || typeof url !== "string") return url;
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+        const path = url.startsWith("/") ? url : `/${url}`;
+        const base = forceBase !== null ? forceBase : detectInitialApiBase();
+        return base ? `${base}${path}` : path;
+    }
+
+    async function parseApiResponse(res) {
         let data = {};
         const rawText = await res.text();
         if (rawText) {
@@ -78,6 +100,63 @@
                 }
             }
         }
+        return data;
+    }
+
+    async function apiFetch(url, options = {}) {
+        const headers = { ...(options.headers || {}) };
+        if (options.body && !headers["Content-Type"]) {
+            headers["Content-Type"] = "application/json";
+        }
+        headers["X-Requested-With"] = "Takora-Web";
+        if (memoryBearerToken && !headers["Authorization"]) {
+            headers["Authorization"] = `Bearer ${memoryBearerToken}`;
+        }
+
+        const primaryBase = detectInitialApiBase();
+        const primaryUrl = resolveApiUrl(url, primaryBase);
+        let res = null;
+        let primaryErr = null;
+
+        try {
+            res = await fetch(primaryUrl, {
+                ...options,
+                headers,
+                credentials: "include"
+            });
+        } catch (err) {
+            primaryErr = err;
+        }
+
+        const isRelativeApiCall = typeof url === "string" && url.startsWith("/api/");
+        const shouldFallbackToRender =
+            isRelativeApiCall &&
+            primaryBase === "" &&
+            (
+                primaryErr ||
+                !res ||
+                res.status === 404 ||
+                res.status === 405 ||
+                (res.ok && !(res.headers.get("content-type") || "").includes("application/json"))
+            );
+
+        if (shouldFallbackToRender) {
+            const fallbackUrl = resolveApiUrl(url, RENDER_BACKEND_URL);
+            const fallbackRes = await fetch(fallbackUrl, {
+                ...options,
+                headers,
+                credentials: "include"
+            });
+            resolvedApiBase = RENDER_BACKEND_URL;
+            const fallbackData = await parseApiResponse(fallbackRes);
+            return { res: fallbackRes, data: fallbackData };
+        }
+
+        if (primaryErr) {
+            throw primaryErr;
+        }
+
+        const data = await parseApiResponse(res);
         return { res, data };
     }
 
@@ -742,12 +821,15 @@
             if (!authState.authenticated) {
                 sheetAuthSection.innerHTML = `
                     <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
-                        <a href="pricing.html" class="tk-primary-btn">
-                            Choose a Monthly Plan (from ₹9/mo)
-                        </a>
-                        <button type="button" class="tk-secondary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('login')">
-                            Already Subscribed? Sign In
+                        <button type="button" class="tk-primary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('register')">
+                            Create Free Account
                         </button>
+                        <button type="button" class="tk-secondary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('login')">
+                            Sign In to Account
+                        </button>
+                        <a href="pricing.html" class="tk-secondary-btn" style="color:#2563EB; border-color:#DBEAFE; background:#EFF6FF;">
+                            View Monthly Plans (from ₹9/mo)
+                        </a>
                     </div>
                 `;
             } else {
@@ -776,92 +858,139 @@
         }
     }
 
-    function openAuthModal(_initialMode = "login", onSuccessCallback = null) {
+    function openAuthModal(initialMode = "login", onSuccessCallback = null) {
         ensureContainers();
         pendingCallback = typeof onSuccessCallback === "function" ? onSuccessCallback : null;
+        let currentMode = initialMode === "register" ? "register" : "login";
 
         const backdrop = document.getElementById("tkModalBackdrop");
-        backdrop.innerHTML = `
-            <div class="tk-modal-card" role="dialog" aria-modal="true" aria-labelledby="tkAuthTitle">
-                <div class="tk-modal-head">
-                    <div>
-                        <h2 id="tkAuthTitle" class="tk-modal-title">Member Sign In</h2>
-                        <p class="tk-modal-sub">Sign in with your existing member email and password.</p>
+
+        function renderAuthForm() {
+            const isRegister = currentMode === "register";
+            backdrop.innerHTML = `
+                <div class="tk-modal-card" role="dialog" aria-modal="true" aria-labelledby="tkAuthTitle">
+                    <div class="tk-modal-head">
+                        <div>
+                            <h2 id="tkAuthTitle" class="tk-modal-title">${isRegister ? "Create Free Account" : "Member Sign In"}</h2>
+                            <p class="tk-modal-sub">${isRegister ? "Register free to link your monthly membership to your account." : "Sign in with your Takora email and password."}</p>
+                        </div>
+                        <button type="button" class="tk-close-btn" id="tkAuthCloseBtn" aria-label="Close">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
                     </div>
-                    <button type="button" class="tk-close-btn" id="tkAuthCloseBtn" aria-label="Close">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
+
+                    <div class="tk-tabs" role="tablist">
+                        <button type="button" class="tk-tab-btn ${!isRegister ? "active" : ""}" id="tkTabLogin">Sign In</button>
+                        <button type="button" class="tk-tab-btn ${isRegister ? "active" : ""}" id="tkTabRegister">Create Free Account</button>
+                    </div>
+
+                    ${isRegister ? `
+                        <div class="tk-free-notice">
+                            <span>✓</span>
+                            <span>Account creation is 100% free — no payment charged during registration.</span>
+                        </div>
+                    ` : ""}
+
+                    <div id="tkAuthError" class="tk-error-box"></div>
+
+                    <form id="tkAuthForm">
+                        ${isRegister ? `
+                            <div class="tk-field">
+                                <label for="tkAuthName">Full Name</label>
+                                <input type="text" id="tkAuthName" placeholder="Your full name" required minlength="2" autocomplete="name">
+                            </div>
+                        ` : ""}
+                        <div class="tk-field">
+                            <label for="tkAuthEmail">Email Address</label>
+                            <input type="email" id="tkAuthEmail" placeholder="you@example.com" required autocomplete="email">
+                        </div>
+                        ${isRegister ? `
+                            <div class="tk-field">
+                                <label for="tkAuthPhone">Mobile Number (Optional · Prefills UPI AutoPay)</label>
+                                <input type="tel" id="tkAuthPhone" placeholder="+91 9876543210" autocomplete="tel">
+                            </div>
+                        ` : ""}
+                        <div class="tk-field">
+                            <label for="tkAuthPassword">Password</label>
+                            <input type="password" id="tkAuthPassword" placeholder="${isRegister ? "Create a password (min 6 chars)" : "Enter password"}" required minlength="6" autocomplete="${isRegister ? "new-password" : "current-password"}">
+                        </div>
+                        <button type="submit" id="tkAuthSubmitBtn" class="tk-primary-btn">
+                            ${isRegister ? "Create Free Account &amp; Continue" : "Sign In"}
+                        </button>
+                    </form>
                 </div>
+            `;
 
-                <div id="tkAuthError" class="tk-error-box"></div>
+            backdrop.classList.add("open");
+            backdrop.setAttribute("aria-hidden", "false");
 
-                <form id="tkAuthForm">
-                    <div class="tk-field">
-                        <label for="tkAuthEmail">Email Address</label>
-                        <input type="email" id="tkAuthEmail" placeholder="you@example.com" required autocomplete="email">
-                    </div>
-                    <div class="tk-field">
-                        <label for="tkAuthPassword">Password</label>
-                        <input type="password" id="tkAuthPassword" placeholder="Enter password" required minlength="6" autocomplete="current-password">
-                    </div>
-                    <button type="submit" id="tkAuthSubmitBtn" class="tk-primary-btn">
-                        Sign In
-                    </button>
-                    <a href="pricing.html" class="tk-secondary-btn" style="margin-top:10px; color:#2563EB; border-color:#DBEAFE; background:#EFF6FF;">
-                        Or Subscribe Directly (from ₹9/mo)
-                    </a>
-                </form>
-            </div>
-        `;
+            document.getElementById("tkAuthCloseBtn").onclick = closeModal;
+            document.getElementById("tkTabLogin").onclick = () => {
+                if (currentMode !== "login") {
+                    currentMode = "login";
+                    renderAuthForm();
+                }
+            };
+            document.getElementById("tkTabRegister").onclick = () => {
+                if (currentMode !== "register") {
+                    currentMode = "register";
+                    renderAuthForm();
+                }
+            };
 
-        backdrop.classList.add("open");
-        backdrop.setAttribute("aria-hidden", "false");
+            document.getElementById("tkAuthForm").onsubmit = async (e) => {
+                e.preventDefault();
+                const errEl = document.getElementById("tkAuthError");
+                const submitBtn = document.getElementById("tkAuthSubmitBtn");
+                errEl.classList.remove("show");
+                errEl.textContent = "";
 
-        document.getElementById("tkAuthCloseBtn").onclick = closeModal;
+                const email = document.getElementById("tkAuthEmail").value.trim();
+                const password = document.getElementById("tkAuthPassword").value;
+                const payload = { email, password };
 
-        document.getElementById("tkAuthForm").onsubmit = async (e) => {
-            e.preventDefault();
-            const errEl = document.getElementById("tkAuthError");
-            const submitBtn = document.getElementById("tkAuthSubmitBtn");
-            errEl.classList.remove("show");
-            errEl.textContent = "";
-
-            const email = document.getElementById("tkAuthEmail").value.trim();
-            const password = document.getElementById("tkAuthPassword").value;
-
-            const origLabel = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Signing in...";
-
-            try {
-                const { res, data } = await apiFetch("/api/auth/login", {
-                    method: "POST",
-                    body: JSON.stringify({ email, password })
-                });
-
-                if (!res.ok || !data.success) {
-                    throw new Error(data.message || "Sign in failed.");
+                if (isRegister) {
+                    payload.name = document.getElementById("tkAuthName").value.trim();
+                    payload.phone = (document.getElementById("tkAuthPhone") && document.getElementById("tkAuthPhone").value.trim()) || "";
                 }
 
-                if (data.token) {
-                    memoryBearerToken = data.token;
-                }
+                const origLabel = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = isRegister ? "Creating free account..." : "Signing in...";
 
-                await refreshSession();
-                const cb = pendingCallback;
-                pendingCallback = null;
-                closeModal();
-                showToast("Signed in successfully.");
-                if (cb) {
-                    cb(authState);
+                try {
+                    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+                    const { res, data } = await apiFetch(endpoint, {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.message || (isRegister ? "Registration failed." : "Sign in failed."));
+                    }
+
+                    if (data.token) {
+                        memoryBearerToken = data.token;
+                    }
+
+                    await refreshSession();
+                    const cb = pendingCallback;
+                    pendingCallback = null;
+                    closeModal();
+                    showToast(isRegister ? "Free account created!" : "Signed in successfully.");
+                    if (cb) {
+                        cb(authState);
+                    }
+                } catch (err) {
+                    errEl.textContent = err.message || "Unable to continue.";
+                    errEl.classList.add("show");
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = origLabel;
                 }
-            } catch (err) {
-                errEl.textContent = err.message || "Unable to continue.";
-                errEl.classList.add("show");
-                submitBtn.disabled = false;
-                submitBtn.textContent = origLabel;
-            }
-        };
+            };
+        }
+
+        renderAuthForm();
     }
 
     async function openAccountModal() {
@@ -1263,6 +1392,9 @@
     }
 
     window.TakoraAuth = {
+        RENDER_BACKEND_URL,
+        getApiBase: () => detectInitialApiBase(),
+        resolveApiUrl,
         getState: () => ({ ...authState }),
         setSessionToken,
         refreshSession,

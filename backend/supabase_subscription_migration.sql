@@ -98,7 +98,23 @@ CREATE TABLE IF NOT EXISTS interaction_sessions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Extend messages table with optional user_id if present
+-- 6. Idempotent Razorpay Monthly Plans Registry (Basic / Pro / Premium)
+CREATE TABLE IF NOT EXISTS razorpay_plans (
+  plan_key TEXT PRIMARY KEY,
+  razorpay_plan_id TEXT NOT NULL,
+  plan_name TEXT NOT NULL,
+  amount_paise INTEGER NOT NULL,
+  period TEXT NOT NULL DEFAULT 'monthly',
+  interval_count INTEGER NOT NULL DEFAULT 1,
+  currency TEXT NOT NULL DEFAULT 'INR',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Safely ensure extra subscription columns exist
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS superseded_subscription_id TEXT DEFAULT '';
+
+-- 7. Extend messages table with optional user_id if present
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'messages') THEN

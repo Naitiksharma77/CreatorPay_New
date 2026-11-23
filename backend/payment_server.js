@@ -14,7 +14,9 @@ const {
   getRazorpayKeySecret,
   getRazorpayWebhookSecret,
   getRazorpayConfigStatus,
-  getRazorpayInstance
+  getRazorpayInstance,
+  initializeMonthlyPlans,
+  getResolvedPlansSnapshot
 } = require("./payment_config");
 const {
   createRazorpayMonthlySubscription,
@@ -34,9 +36,42 @@ const upload = multer({
   }
 });
 
+function isAllowedCorsOrigin(origin) {
+  if (!origin) return true; // Non-browser / server-to-server / same-origin without Origin header
+  if (origin === "null") return false;
+  const envAllowed = String(process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (envAllowed.length > 0 && envAllowed.includes(origin)) {
+    return true;
+  }
+  try {
+    const parsed = new URL(origin);
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host.endsWith(".vercel.app") ||
+      host.endsWith(".onrender.com") ||
+      host.endsWith(".run.app")
+    ) {
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    }
+    return parsed.protocol === "https:";
+  } catch (_) {
+    return false;
+  }
+}
+
 app.use(
   cors({
-    origin: (origin, callback) => callback(null, origin || true),
+    origin: (origin, callback) => {
+      if (isAllowedCorsOrigin(origin)) {
+        return callback(null, origin || true);
+      }
+      return callback(new Error("Origin not allowed by CORS policy"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -104,6 +139,10 @@ function loadAnalyticsStore() {
         interaction_sessions: Array.isArray(data.interaction_sessions)
           ? data.interaction_sessions
           : [],
+        razorpay_plans:
+          data.razorpay_plans && typeof data.razorpay_plans === "object"
+            ? data.razorpay_plans
+            : {},
         _runtime_session_secret:
           typeof data._runtime_session_secret === "string"
             ? data._runtime_session_secret
@@ -128,6 +167,7 @@ function loadAnalyticsStore() {
     subscription_payments: [],
     webhook_events: [],
     interaction_sessions: [],
+    razorpay_plans: {},
     _runtime_session_secret: "",
     tracking_started: new Date().toISOString()
   };
@@ -345,52 +385,15 @@ async function getAuthenticatedUser(req) {
 
 async function requireAuth(req, res) {
   const user = await getAuthenticatedUser(req);
-  if (!user) {
+  if (!user || String(user.email || "").endsWith("@member.takora.local")) {
     res.status(401).json({
       success: false,
       code: "AUTH_REQUIRED",
-      message: "Active membership required. Please select a plan to continue."
+      message: "Please sign in or create a free account before continuing."
     });
     return null;
   }
   return user;
-}
-
-async function createInstantMemberSession(req, res) {
-  const uniqueSuffix = `${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
-  const { salt, hash } = hashPassword(crypto.randomBytes(24).toString("hex"));
-  const nowIso = new Date().toISOString();
-  const newUser = {
-    id: `usr_${uniqueSuffix}`,
-    name: "Takora Member",
-    email: `member_${uniqueSuffix}@member.takora.local`,
-    phone: "",
-    password_hash: hash,
-    password_salt: salt,
-    role: "member",
-    has_access: false,
-    status: "active",
-    razorpay_customer_id: "",
-    created_at: nowIso,
-    updated_at: nowIso
-  };
-
-  const store = loadAnalyticsStore();
-  store.users = store.users || [];
-  store.users.unshift(newUser);
-  saveAnalyticsStore(store);
-
-  if (supabase.isSupabaseLive) {
-    try {
-      await supabase.from("users").insert([newUser]);
-    } catch (err) {
-      console.warn("[Supabase] Instant member insert warning:", err.message || err);
-    }
-  }
-
-  const token = signSessionToken(newUser);
-  setSessionCookie(req, res, token);
-  return { user: newUser, token };
 }
 
 // ======================================
@@ -837,7 +840,8 @@ app.get("/api/subscriptions/plans", (req, res) => {
       configured: rzpStatus.configured,
       webhookConfigured: rzpStatus.webhookConfigured,
       keyId: rzpStatus.keyId,
-      missingEnvVars: rzpStatus.missingEnvVars
+      missingEnvVars: rzpStatus.missingEnvVars,
+      planIds: getResolvedPlansSnapshot()
     }
   });
 });
@@ -865,18 +869,8 @@ app.get("/api/subscriptions/me", async (req, res) => {
 
 async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
   try {
-    let user = null;
-    let issuedToken = null;
-    try {
-      user = await getAuthenticatedUser(req);
-    } catch (_) {
-      user = null;
-    }
-    if (!user) {
-      const instantSession = await createInstantMemberSession(req, res);
-      user = instantSession.user;
-      issuedToken = instantSession.token;
-    }
+    const user = await requireAuth(req, res);
+    if (!user) return;
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
     const cleanPlanCode = String(body.planCode || "").trim().toLowerCase();
@@ -886,7 +880,9 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       return sendError(
         res,
         400,
-        "Please select a valid subscription plan: basic, pro, or premium."
+        "Please select a valid subscription plan: basic, pro, or premium.",
+        null,
+        { code: "INVALID_PLAN" }
       );
     }
 
@@ -915,7 +911,9 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
         return sendError(
           res,
           409,
-          `You already have an active ${targetPlan.name} subscription.`
+          `You already have an active ${targetPlan.name} subscription.`,
+          null,
+          { code: "ALREADY_SUBSCRIBED" }
         );
       }
       const currentTier = PLAN_TIER_ORDER[existingEntitlements.planCode] || 0;
@@ -924,14 +922,18 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
         return sendError(
           res,
           400,
-          `Please select a plan higher than your current ${existingEntitlements.planName} plan to upgrade.`
+          `Please select a plan higher than your current ${existingEntitlements.planName} plan to upgrade.`,
+          null,
+          { code: "INVALID_UPGRADE_TIER" }
         );
       }
       if (!isUpgrade && requestedTier <= currentTier) {
         return sendError(
           res,
           400,
-          `You already have ${existingEntitlements.planName} access. Cancel your current plan at cycle end if you wish to switch to a lower tier next month.`
+          `You already have ${existingEntitlements.planName} access. Cancel your current plan at cycle end if you wish to switch to a lower tier next month.`,
+          null,
+          { code: "DOWNGRADE_NOT_ALLOWED" }
         );
       }
     }
@@ -949,14 +951,13 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       existingEntitlements
     });
 
-    const isGuestPlaceholder = String(user.email || "").endsWith("@member.takora.local");
     if (rzpCustomerId && !user.razorpay_customer_id) {
       await syncUserAccessFlag(user.id, existingEntitlements.hasActiveSubscription, rzpCustomerId);
     }
 
     const savedSub = await saveSubscriptionRecord({
       user_id: String(user.id),
-      user_email: isGuestPlaceholder ? "" : String(user.email),
+      user_email: String(user.email || ""),
       plan_code: plan.code,
       plan_name: plan.name,
       amount_inr: plan.priceInr,
@@ -983,18 +984,9 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       creatorName: `${plan.name} Plan`
     });
 
-    const prefill = isGuestPlaceholder
-      ? {}
-      : {
-          name: user.name,
-          email: user.email,
-          contact: user.phone || ""
-        };
-
     return res.json({
       success: true,
       keyId,
-      sessionToken: issuedToken || undefined,
       plan,
       subscription: {
         id: rzpSub.id,
@@ -1002,7 +994,11 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
         status: savedSub.status,
         short_url: rzpSub.short_url || ""
       },
-      prefill
+      prefill: {
+        name: user.name,
+        email: user.email,
+        contact: user.phone || ""
+      }
     });
   } catch (err) {
     const statusCode = Number(err && err.statusCode) || 502;
@@ -1010,7 +1006,7 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       (err && err.message) ||
       "Unable to initialize Razorpay monthly subscription.";
     return sendError(res, statusCode, msg, err, {
-      code: err && err.code ? err.code : undefined,
+      code: (err && err.code) || "SUBSCRIPTION_CREATE_FAILED",
       missingEnvVars: err && err.missingEnvVars ? err.missingEnvVars : undefined
     });
   }
@@ -1198,7 +1194,9 @@ app.post("/api/subscriptions/verify", async (req, res) => {
       return sendError(
         res,
         400,
-        "Missing Razorpay subscription verification fields (payment ID, subscription ID, signature)."
+        "Missing Razorpay subscription verification fields (payment ID, subscription ID, signature).",
+        null,
+        { code: "MISSING_VERIFICATION_FIELDS" }
       );
     }
 
@@ -1208,20 +1206,40 @@ app.post("/api/subscriptions/verify", async (req, res) => {
       return sendError(
         res,
         503,
-        "Razorpay verification credentials are not configured on the server."
+        "Razorpay verification credentials are not configured on the server.",
+        null,
+        { code: "RAZORPAY_NOT_CONFIGURED" }
       );
     }
 
     // Razorpay Subscription signature: HMAC-SHA256(razorpay_payment_id + "|" + razorpay_subscription_id, key_secret)
     if (!verifySubscriptionHmacSignature(razorpay_payment_id, razorpay_subscription_id, razorpay_signature)) {
-      return sendError(res, 400, "Razorpay subscription signature verification failed.");
+      return sendError(
+        res,
+        400,
+        "Razorpay subscription signature verification failed. Please contact support if payment was debited.",
+        null,
+        { code: "SIGNATURE_VERIFICATION_FAILED" }
+      );
     }
 
     // Cross-check live subscription & payment entities with Razorpay API
-    const [rzpSub, rzpPay] = await Promise.all([
-      rzp.subscriptions.fetch(String(razorpay_subscription_id).trim()),
-      rzp.payments.fetch(String(razorpay_payment_id).trim())
-    ]);
+    let rzpSub;
+    let rzpPay;
+    try {
+      [rzpSub, rzpPay] = await Promise.all([
+        rzp.subscriptions.fetch(String(razorpay_subscription_id).trim()),
+        rzp.payments.fetch(String(razorpay_payment_id).trim())
+      ]);
+    } catch (fetchErr) {
+      return sendError(
+        res,
+        502,
+        "Unable to confirm payment status with Razorpay API. Please retry verification shortly.",
+        fetchErr,
+        { code: "RAZORPAY_FETCH_FAILED" }
+      );
+    }
 
     const store = loadAnalyticsStore();
     const existingRow = (store.subscriptions || []).find(
@@ -1233,7 +1251,13 @@ app.post("/api/subscriptions/verify", async (req, res) => {
       (existingRow && existingRow.user_id) ||
       "";
     if (String(ownerUserId) !== String(user.id)) {
-      return sendError(res, 403, "This subscription does not belong to your account.");
+      return sendError(
+        res,
+        403,
+        "This subscription does not belong to your account.",
+        null,
+        { code: "SUBSCRIPTION_OWNERSHIP_MISMATCH" }
+      );
     }
 
     const activation = await activateVerifiedSubscription({
@@ -1249,6 +1273,7 @@ app.post("/api/subscriptions/verify", async (req, res) => {
     if (!activation.settled) {
       return res.status(202).json({
         success: false,
+        code: "SUBSCRIPTION_NOT_ACTIVE",
         pendingConfirmation: true,
         subscription: activation.row,
         entitlements: computeEntitlements(activation.row),
@@ -1265,7 +1290,9 @@ app.post("/api/subscriptions/verify", async (req, res) => {
       payment: activation.payment
     });
   } catch (error) {
-    return sendError(res, 500, "Unable to verify subscription payment.", error);
+    return sendError(res, 500, "Unable to verify subscription payment.", error, {
+      code: "VERIFICATION_ERROR"
+    });
   }
 });
 
@@ -1507,12 +1534,14 @@ app.post("/api/razorpay-webhook", async (req, res) => {
     if (!webhookSecret) {
       return res.status(503).json({
         success: false,
+        code: "WEBHOOK_SECRET_NOT_CONFIGURED",
         message: "RAZORPAY_WEBHOOK_SECRET is not configured on the server."
       });
     }
     if (!signature) {
       return res.status(400).json({
         success: false,
+        code: "WEBHOOK_VERIFICATION_FAILED",
         message: "Missing x-razorpay-signature header."
       });
     }
@@ -1534,6 +1563,7 @@ app.post("/api/razorpay-webhook", async (req, res) => {
       console.warn("[Webhook] Invalid Razorpay webhook signature rejected");
       return res.status(400).json({
         success: false,
+        code: "WEBHOOK_VERIFICATION_FAILED",
         message: "Invalid webhook signature."
       });
     }
@@ -1542,26 +1572,51 @@ app.post("/api/razorpay-webhook", async (req, res) => {
     const eventType = String(eventData.event || "");
     const subEntity = eventData.payload?.subscription?.entity || null;
     const payEntity = eventData.payload?.payment?.entity || null;
+    const invEntity = eventData.payload?.invoice?.entity || null;
+
+    const rzpSubId =
+      (subEntity && subEntity.id) ||
+      (invEntity && invEntity.subscription_id) ||
+      (payEntity && payEntity.subscription_id) ||
+      "";
+    const resolvedPaymentId =
+      (payEntity && payEntity.id) ||
+      (invEntity && invEntity.payment_id) ||
+      "";
 
     const eventId =
       String(req.headers["x-razorpay-event-id"] || "").trim() ||
       crypto
         .createHash("sha256")
-        .update(`${eventType}:${subEntity?.id || ""}:${payEntity?.id || ""}:${eventData.created_at || ""}`)
+        .update(
+          `${eventType}:${rzpSubId}:${resolvedPaymentId}:${(invEntity && invEntity.id) || ""}:${eventData.created_at || ""}`
+        )
         .digest("hex");
 
-    // Idempotency check
+    // Idempotency check across local store + Supabase
     const store = loadAnalyticsStore();
     store.webhook_events = store.webhook_events || [];
     if (store.webhook_events.some((we) => we.event_id === eventId)) {
       return res.status(200).json({ status: "ok", deduplicated: true });
     }
+    if (supabase.isSupabaseLive) {
+      try {
+        const { data: existingSbEvt } = await supabase
+          .from("webhook_events")
+          .select("event_id")
+          .eq("event_id", eventId)
+          .maybeSingle();
+        if (existingSbEvt && existingSbEvt.event_id) {
+          return res.status(200).json({ status: "ok", deduplicated: true });
+        }
+      } catch (_) {}
+    }
 
     const webhookRecord = {
       event_id: eventId,
       event_type: eventType,
-      subscription_id: subEntity ? subEntity.id : "",
-      payment_id: payEntity ? payEntity.id : "",
+      subscription_id: rzpSubId,
+      payment_id: resolvedPaymentId,
       processed_at: new Date().toISOString()
     };
     store.webhook_events.unshift(webhookRecord);
@@ -1576,15 +1631,34 @@ app.post("/api/razorpay-webhook", async (req, res) => {
       } catch (_) {}
     }
 
-    const rzpSubId = (subEntity && subEntity.id) || (payEntity && payEntity.subscription_id) || "";
-    const existingSub = rzpSubId
+    let existingSub = rzpSubId
       ? (loadAnalyticsStore().subscriptions || []).find(
           (s) => s.razorpay_subscription_id === rzpSubId
         )
       : null;
-    const notes = (subEntity && subEntity.notes) || (payEntity && payEntity.notes) || {};
+    if (!existingSub && rzpSubId && supabase.isSupabaseLive) {
+      try {
+        const { data: sbSub } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("razorpay_subscription_id", rzpSubId)
+          .maybeSingle();
+        if (sbSub) existingSub = sbSub;
+      } catch (_) {}
+    }
+
+    const notes =
+      (subEntity && subEntity.notes) ||
+      (invEntity && invEntity.notes) ||
+      (payEntity && payEntity.notes) ||
+      {};
     const targetUserId = (existingSub && existingSub.user_id) || notes.userId || "";
-    const targetUserEmail = (existingSub && existingSub.user_email) || notes.userEmail || (payEntity && payEntity.email) || "";
+    const targetUserEmail =
+      (existingSub && existingSub.user_email) ||
+      notes.userEmail ||
+      (payEntity && payEntity.email) ||
+      (invEntity && invEntity.customer_details && invEntity.customer_details.email) ||
+      "";
     const targetPlanCode = (existingSub && existingSub.plan_code) || notes.planCode || "basic";
     const plan = SUBSCRIPTION_PLANS[targetPlanCode] || SUBSCRIPTION_PLANS.basic;
 
@@ -1592,6 +1666,15 @@ app.post("/api/razorpay-webhook", async (req, res) => {
 
     switch (eventType) {
       case "subscription.authenticated": {
+        // Delayed authenticated event must not downgrade an already verified active subscription
+        if (
+          existingSub &&
+          existingSub.status === "active" &&
+          existingSub.payment_verification_status === "verified" &&
+          existingSub.has_access
+        ) {
+          break;
+        }
         if (rzpSubId && targetUserId) {
           await saveSubscriptionRecord({
             user_id: targetUserId,
@@ -1599,18 +1682,20 @@ app.post("/api/razorpay-webhook", async (req, res) => {
             plan_code: plan.code,
             plan_name: plan.name,
             amount_inr: plan.priceInr,
-            razorpay_plan_id: (subEntity && subEntity.plan_id) || "",
+            razorpay_plan_id:
+              (subEntity && subEntity.plan_id) || (existingSub && existingSub.razorpay_plan_id) || "",
             razorpay_subscription_id: rzpSubId,
-            razorpay_customer_id: (subEntity && subEntity.customer_id) || "",
+            razorpay_customer_id:
+              (subEntity && subEntity.customer_id) || (existingSub && existingSub.razorpay_customer_id) || "",
             status: "authenticated",
             payment_verification_status:
               existingSub && existingSub.payment_verification_status === "verified"
                 ? "verified"
                 : "pending",
             has_access: Boolean(existingSub && existingSub.has_access),
-            current_start: unixToIso(subEntity && subEntity.current_start),
-            current_end: unixToIso(subEntity && subEntity.current_end),
-            next_billing_date: unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end))
+            current_start: unixToIso(subEntity && subEntity.current_start) || (existingSub && existingSub.current_start) || null,
+            current_end: unixToIso(subEntity && subEntity.current_end) || (existingSub && existingSub.current_end) || null,
+            next_billing_date: unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end)) || (existingSub && existingSub.next_billing_date) || null
           });
         }
         break;
@@ -1625,9 +1710,15 @@ app.post("/api/razorpay-webhook", async (req, res) => {
         );
         if (rzpSubId && targetUserId) {
           const nowIso = new Date().toISOString();
-          const currentStart = unixToIso(subEntity && subEntity.current_start) || nowIso;
-          const currentEnd = unixToIso(subEntity && subEntity.current_end) || addOneMonthIso(nowIso);
-          const nextCharge = unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end)) || currentEnd;
+          const currentStart =
+            unixToIso(subEntity && subEntity.current_start) ||
+            (existingSub && existingSub.current_start) ||
+            nowIso;
+          const currentEnd =
+            unixToIso(subEntity && subEntity.current_end) ||
+            addOneMonthIso(eventType === "subscription.charged" ? currentStart : nowIso);
+          const nextCharge =
+            unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end)) || currentEnd;
 
           const subSaved = await saveSubscriptionRecord({
             user_id: targetUserId,
@@ -1635,9 +1726,11 @@ app.post("/api/razorpay-webhook", async (req, res) => {
             plan_code: plan.code,
             plan_name: plan.name,
             amount_inr: plan.priceInr,
-            razorpay_plan_id: (subEntity && subEntity.plan_id) || "",
+            razorpay_plan_id:
+              (subEntity && subEntity.plan_id) || (existingSub && existingSub.razorpay_plan_id) || "",
             razorpay_subscription_id: rzpSubId,
-            razorpay_customer_id: (subEntity && subEntity.customer_id) || "",
+            razorpay_customer_id:
+              (subEntity && subEntity.customer_id) || (existingSub && existingSub.razorpay_customer_id) || "",
             status: "active",
             payment_verification_status: hasVerifiedCharge ? "verified" : "pending",
             has_access: hasVerifiedCharge,
@@ -1645,7 +1738,7 @@ app.post("/api/razorpay-webhook", async (req, res) => {
             current_start: currentStart,
             current_end: currentEnd,
             next_billing_date: nextCharge,
-            paid_count: Math.max(1, paidCount)
+            paid_count: Math.max(1, paidCount, Number((existingSub && existingSub.paid_count) || 0))
           });
 
           if (payEntity && payEntity.id) {
@@ -1678,18 +1771,107 @@ app.post("/api/razorpay-webhook", async (req, res) => {
         break;
       }
 
+      case "invoice.paid": {
+        if (invEntity && rzpSubId && targetUserId) {
+          const nowIso = new Date().toISOString();
+          const currentStart =
+            unixToIso(invEntity.billing_start) ||
+            (existingSub && existingSub.current_start) ||
+            nowIso;
+          const currentEnd =
+            unixToIso(invEntity.billing_end) ||
+            addOneMonthIso(currentStart);
+          const nextCharge = currentEnd;
+          const nextPaidCount = Math.max(1, Number((existingSub && existingSub.paid_count) || 0) + 1);
+
+          const subSaved = await saveSubscriptionRecord({
+            user_id: targetUserId,
+            user_email: targetUserEmail,
+            plan_code: plan.code,
+            plan_name: plan.name,
+            amount_inr: plan.priceInr,
+            razorpay_plan_id: (existingSub && existingSub.razorpay_plan_id) || "",
+            razorpay_subscription_id: rzpSubId,
+            razorpay_customer_id:
+              invEntity.customer_id || (existingSub && existingSub.razorpay_customer_id) || "",
+            status: "active",
+            payment_verification_status: "verified",
+            has_access: true,
+            cancel_at_period_end: false,
+            current_start: currentStart,
+            current_end: currentEnd,
+            next_billing_date: nextCharge,
+            paid_count: nextPaidCount
+          });
+
+          const invPayId = (payEntity && payEntity.id) || invEntity.payment_id || "";
+          if (invPayId) {
+            const rawAmt = (payEntity && payEntity.amount) || invEntity.amount_paid || invEntity.amount;
+            const amtInr = rawAmt ? Math.round(Number(rawAmt) / 100) : plan.priceInr;
+            await recordSubscriptionPayment({
+              subscription_id: subSaved.id,
+              razorpay_subscription_id: rzpSubId,
+              user_id: targetUserId,
+              user_email: targetUserEmail,
+              plan_code: plan.code,
+              razorpay_payment_id: invPayId,
+              amount_inr: amtInr,
+              status: (payEntity && payEntity.status) || "captured",
+              method: (payEntity && payEntity.method) || "autopay",
+              paid_at: unixToIso(invEntity.paid_at) || nowIso
+            });
+            logAnalyticsEvent("payment_success", {
+              page: "webhook",
+              amount: amtInr,
+              creatorName: `${plan.name} Invoice Paid`
+            });
+          }
+
+          await syncUserAccessFlag(targetUserId, true, invEntity.customer_id || "");
+        }
+        break;
+      }
+
       case "subscription.pending":
-      case "subscription.halted": {
+      case "subscription.halted":
+      case "subscription.paused": {
         if (existingSub) {
-          const revoked = eventType === "subscription.halted";
+          const nextStatus =
+            eventType === "subscription.halted"
+              ? "halted"
+              : eventType === "subscription.paused"
+              ? "paused"
+              : "pending";
+          const revokeAccess = eventType === "subscription.halted" || eventType === "subscription.paused";
           await saveSubscriptionRecord({
             ...existingSub,
-            status: revoked ? "halted" : "pending",
-            has_access: revoked ? false : existingSub.has_access
+            status: nextStatus,
+            has_access: revokeAccess ? false : existingSub.has_access
           });
-          if (revoked) {
+          if (revokeAccess) {
             await syncUserAccessFlag(existingSub.user_id, false);
           }
+        }
+        break;
+      }
+
+      case "subscription.resumed": {
+        if (existingSub) {
+          const hasPaid =
+            existingSub.payment_verification_status === "verified" ||
+            Number((subEntity && subEntity.paid_count) || existingSub.paid_count || 0) >= 1;
+          await saveSubscriptionRecord({
+            ...existingSub,
+            status: "active",
+            cancel_at_period_end: false,
+            has_access: hasPaid,
+            current_start: unixToIso(subEntity && subEntity.current_start) || existingSub.current_start,
+            current_end: unixToIso(subEntity && subEntity.current_end) || existingSub.current_end,
+            next_billing_date:
+              unixToIso(subEntity && (subEntity.charge_at || subEntity.current_end)) ||
+              existingSub.current_end
+          });
+          await syncUserAccessFlag(existingSub.user_id, hasPaid);
         }
         break;
       }
@@ -1729,31 +1911,37 @@ app.post("/api/razorpay-webhook", async (req, res) => {
         break;
       }
 
+      case "invoice.payment_failed":
       case "payment.failed": {
-        if (payEntity) {
-          const amtInr = payEntity.amount
-            ? Math.round(Number(payEntity.amount) / 100)
-            : plan.priceInr;
-          if (targetUserId) {
-            await recordSubscriptionPayment({
-              subscription_id: existingSub ? existingSub.id : "",
-              razorpay_subscription_id: rzpSubId,
-              user_id: targetUserId,
-              user_email: targetUserEmail,
-              plan_code: plan.code,
-              razorpay_payment_id: payEntity.id,
-              amount_inr: amtInr,
-              status: "failed",
-              method: payEntity.method || "autopay",
-              error_reason: payEntity.error_description || payEntity.error_reason || "Payment failed"
-            });
-          }
-          logAnalyticsEvent("payment_failed", {
-            page: "pricing.html",
-            amount: amtInr,
-            creatorName: plan.name
+        const failPayId = (payEntity && payEntity.id) || (invEntity && invEntity.payment_id) || "";
+        const rawFailAmt =
+          (payEntity && payEntity.amount) ||
+          (invEntity && (invEntity.amount_due || invEntity.amount)) ||
+          0;
+        const amtInr = rawFailAmt ? Math.round(Number(rawFailAmt) / 100) : plan.priceInr;
+        const reason =
+          (payEntity && (payEntity.error_description || payEntity.error_reason)) ||
+          (eventType === "invoice.payment_failed" ? "AutoPay invoice payment failed" : "Payment failed");
+
+        if (targetUserId && (failPayId || rzpSubId)) {
+          await recordSubscriptionPayment({
+            subscription_id: existingSub ? existingSub.id : "",
+            razorpay_subscription_id: rzpSubId,
+            user_id: targetUserId,
+            user_email: targetUserEmail,
+            plan_code: plan.code,
+            razorpay_payment_id: failPayId || `fail_${eventId.slice(0, 16)}`,
+            amount_inr: amtInr,
+            status: "failed",
+            method: (payEntity && payEntity.method) || "autopay",
+            error_reason: reason
           });
         }
+        logAnalyticsEvent("payment_failed", {
+          page: "webhook",
+          amount: amtInr,
+          creatorName: plan.name
+        });
         break;
       }
 
@@ -1761,7 +1949,7 @@ app.post("/api/razorpay-webhook", async (req, res) => {
         break;
     }
 
-    return res.status(200).json({ status: "ok" });
+    return res.status(200).json({ status: "ok", event: eventType });
   } catch (error) {
     console.error("[Webhook] Error processing webhook:", error);
     return res.status(500).json({
@@ -3016,4 +3204,13 @@ app.use((err, req, res, _next) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Takora backend running on http://0.0.0.0:${PORT}`);
+  initializeMonthlyPlans()
+    .then((res) => {
+      if (res.initialized) {
+        console.log("[Razorpay] Monthly plans synced idempotently:", res.plans);
+      }
+    })
+    .catch((err) => {
+      console.warn("[Razorpay] Startup plan sync warning:", err.message || err);
+    });
 });

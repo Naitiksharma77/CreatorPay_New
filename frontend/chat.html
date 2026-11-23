@@ -688,7 +688,10 @@
                 const apiFetcher = window.TakoraAuth
                     ? window.TakoraAuth.apiFetch
                     : async (url, opt) => {
-                        const r = await fetch(url, { ...opt, credentials: "include" });
+                        const base = /\.(vercel\.app|netlify\.app|pages\.dev|github\.io)$/i.test(window.location.hostname)
+                            ? "https://creatorpay-backend.onrender.com"
+                            : "";
+                        const r = await fetch(`${base}${url}`, { ...opt, credentials: "include" });
                         return { res: r, data: await r.json().catch(() => ({})) };
                     };
 
@@ -697,7 +700,25 @@
                     body: JSON.stringify({ creatorId })
                 });
 
-                if (res.status === 401 || res.status === 403 || !res.ok || !data.success || !data.authorized) {
+                if (res.status === 401) {
+                    showLockedState({
+                        badge: "Sign In Required",
+                        title: "Sign In to Access Chat",
+                        message: "Sign in to your Takora account (or create a free account and choose a monthly plan) to start 1-on-1 chat.",
+                        buttonHtml: `
+                            <button type="button" id="chatSignInBtn" class="locked-action-btn">Sign In / Create Free Account</button>
+                            <a href="pricing.html?plan=basic" style="display:block; margin-top:10px; font-size:13px; font-weight:700; color:#2563EB;">View Monthly Plans (from ₹9/mo)</a>
+                        `,
+                        backUrl: profileUrl
+                    });
+                    const signInBtn = document.getElementById("chatSignInBtn");
+                    if (signInBtn && window.TakoraAuth) {
+                        signInBtn.onclick = () => window.TakoraAuth.openAuthModal("login", () => initChat());
+                    }
+                    return;
+                }
+
+                if (res.status === 403 || !res.ok || !data.success || !data.authorized) {
                     showLockedState({
                         badge: "Membership Required",
                         title: "Monthly Membership Needed",

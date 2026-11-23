@@ -79,6 +79,7 @@ function createMockClient() {
     subscription_payments: [],
     webhook_events: [],
     interaction_sessions: [],
+    razorpay_plans: [],
     bookings: [],
     payments: [],
     messages: []

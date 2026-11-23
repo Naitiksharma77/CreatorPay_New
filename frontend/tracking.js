@@ -102,7 +102,19 @@
                 };
 
                 const body = JSON.stringify(payload);
-                const endpoint = "/api/analytics/event";
+                const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
+                const host = (window.location && window.location.hostname || "").toLowerCase();
+                const isStaticHost =
+                    host.endsWith(".vercel.app") ||
+                    host.endsWith(".netlify.app") ||
+                    host.endsWith(".pages.dev") ||
+                    host.endsWith(".github.io");
+                const endpoint =
+                    window.TakoraAuth && typeof window.TakoraAuth.resolveApiUrl === "function"
+                        ? window.TakoraAuth.resolveApiUrl("/api/analytics/event")
+                        : isStaticHost
+                            ? `${RENDER_BACKEND_URL}/api/analytics/event`
+                            : "/api/analytics/event";
 
                 // Prefer navigator.sendBeacon when available for reliable dispatch on unload
                 if (navigator.sendBeacon) {

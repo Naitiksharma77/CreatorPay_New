@@ -270,18 +270,18 @@
 
         if (!auth.authenticated || !auth.user) {
             memberStatusBar.classList.remove("has-plan");
-            memberStatusTitle.textContent = "Instant Monthly Membership";
-            memberStatusSub.textContent = "Select Basic, Pro, or Premium below to unlock creator interactions immediately — no account creation required.";
+            memberStatusTitle.textContent = "Sign In or Create a Free Account";
+            memberStatusSub.textContent = "Free account required so your monthly membership and Razorpay AutoPay stay linked to your profile.";
             memberStatusActions.innerHTML = `
+                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
+                <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
                 <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             `;
             return;
         }
 
         const sub = auth.subscription;
-        const contactDisplay = auth.user.email && !String(auth.user.email).endsWith("@member.takora.local")
-            ? auth.user.email
-            : (auth.user.phone || "Active Member");
+        const contactDisplay = auth.user.email || auth.user.phone || "Active Member";
 
         if (sub && sub.hasActiveAccess) {
             memberStatusBar.classList.add("has-plan");
@@ -403,7 +403,18 @@
             await window.TakoraAuth.refreshSession();
         }
 
-        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { subscription: null };
+        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, subscription: null };
+        if (!auth.authenticated || !auth.user) {
+            if (window.TakoraAuth && typeof window.TakoraAuth.openAuthModal === "function") {
+                window.TakoraAuth.openAuthModal("register", () => {
+                    startPlanCheckout(planCode);
+                });
+                return;
+            }
+            showAlert("warn", "<strong>Sign In Required:</strong> Please sign in or create a free account before purchasing a subscription.");
+            return;
+        }
+
         const sub = auth.subscription;
         if (sub && sub.hasActiveAccess && !sub.cancelAtPeriodEnd) {
             const currentRank = TIER_RANK[sub.planCode] || 0;
@@ -415,6 +426,42 @@
         }
 
         await startPlanCheckout(planCode);
+    }
+
+    async function fallbackApiFetch(url, opts) {
+        const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
+        const host = (window.location && window.location.hostname || "").toLowerCase();
+        const isStaticHost =
+            host.endsWith(".vercel.app") ||
+            host.endsWith(".netlify.app") ||
+            host.endsWith(".pages.dev") ||
+            host.endsWith(".github.io");
+        const fetchOpts = {
+            ...opts,
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "Takora-Web",
+                ...((opts && opts.headers) || {})
+            }
+        };
+        const parseResp = async (r) => {
+            const txt = await r.text();
+            let parsed = {};
+            try {
+                parsed = txt ? JSON.parse(txt) : {};
+            } catch (_) {
+                parsed = { success: false, message: `Server returned HTTP ${r.status} (${r.statusText || "Error"}).` };
+            }
+            return { res: r, data: parsed };
+        };
+
+        const targetUrl = isStaticHost && url.startsWith("/api/") ? `${RENDER_BACKEND_URL}${url}` : url;
+        let res = await fetch(targetUrl, fetchOpts);
+        if (!isStaticHost && url.startsWith("/api/") && (res.status === 404 || res.status === 405)) {
+            res = await fetch(`${RENDER_BACKEND_URL}${url}`, fetchOpts);
+        }
+        return parseResp(res);
     }
 
     async function startPlanCheckout(planCode) {
@@ -432,7 +479,16 @@
             return;
         }
 
-        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { subscription: null };
+        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, subscription: null };
+        if (!auth.authenticated || !auth.user) {
+            if (window.TakoraAuth && typeof window.TakoraAuth.openAuthModal === "function") {
+                window.TakoraAuth.openAuthModal("register", () => startPlanCheckout(planCode));
+                return;
+            }
+            showAlert("warn", "<strong>Sign In Required:</strong> Please sign in or create a free account before subscribing.");
+            return;
+        }
+
         const sub = auth.subscription;
         const isUpgrade = Boolean(sub && sub.hasActiveAccess && !sub.cancelAtPeriodEnd);
         const endpoint = isUpgrade ? "/api/subscriptions/upgrade" : "/api/subscriptions/create";
@@ -444,24 +500,7 @@
             if (window.TakoraAuth && typeof window.TakoraAuth.apiFetch === "function") {
                 return window.TakoraAuth.apiFetch(url, opts);
             }
-            return fetch(url, {
-                ...opts,
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Requested-With": "Takora-Web",
-                    ...((opts && opts.headers) || {})
-                }
-            }).then(async (r) => {
-                const txt = await r.text();
-                let parsed = {};
-                try {
-                    parsed = txt ? JSON.parse(txt) : {};
-                } catch (_) {
-                    parsed = { success: false, message: `Server returned HTTP ${r.status}` };
-                }
-                return { res: r, data: parsed };
-            });
+            return fallbackApiFetch(url, opts);
         };
 
         try {
@@ -470,8 +509,14 @@
                 body: JSON.stringify({ planCode })
             });
 
-            if (data && data.sessionToken && window.TakoraAuth && window.TakoraAuth.setSessionToken) {
-                window.TakoraAuth.setSessionToken(data.sessionToken);
+            if (res.status === 401 || (data && data.code === "AUTH_REQUIRED")) {
+                checkoutBusyPlan = null;
+                renderPlanCards();
+                if (window.TakoraAuth && typeof window.TakoraAuth.openAuthModal === "function") {
+                    window.TakoraAuth.openAuthModal("login", () => startPlanCheckout(planCode));
+                    return;
+                }
+                throw new Error(data.message || "Please sign in or create a free account before continuing.");
             }
 
             if (res.status === 503 || data.code === "RAZORPAY_NOT_CONFIGURED") {
@@ -528,9 +573,11 @@
                 key: data.keyId,
                 subscription_id: subscriptionId,
                 name: "Takora",
-                description: `${data.plan.name} Monthly Membership (₹${data.plan.priceInr}/month)`,
+                description: `${data.plan.name} Plan · ₹${data.plan.priceInr}/month (Monthly AutoPay Mandate · Cancel Anytime)`,
                 notes: {
-                    planCode: data.plan.code
+                    planCode: data.plan.code,
+                    billingCycle: "monthly",
+                    amountInr: String(data.plan.priceInr)
                 },
                 theme: {
                     color: "#2563EB"
@@ -551,13 +598,13 @@
                             showCheckoutHelperPanel({
                                 kind: "info",
                                 headline: "Checkout Window Closed:",
-                                detail: `You can still complete your ${data.plan.name} (₹${data.plan.priceInr}/mo) payment anytime using the official Razorpay link below, or click a plan card to reopen Checkout.`,
+                                detail: `Your ${data.plan.name} (₹${data.plan.priceInr}/month · AutoPay) subscription was not completed yet. Open the official Razorpay link below or select a plan card to retry.`,
                                 subscriptionId,
                                 plan: data.plan,
                                 shortUrl
                             });
                         } else if (window.TakoraAuth) {
-                            window.TakoraAuth.showToast("Subscription checkout closed before completion.");
+                            window.TakoraAuth.showToast("Subscription checkout closed before payment.");
                         }
                     }
                 },
@@ -577,11 +624,12 @@
                 stopFrameCheck();
                 checkoutBusyPlan = null;
                 renderPlanCards();
-                const desc = (resp && resp.error && resp.error.description) || "Payment authorization failed.";
+                const errObj = (resp && resp.error) || {};
+                const desc = errObj.description || errObj.reason || "Payment authorization failed on Razorpay.";
                 showCheckoutHelperPanel({
                     kind: "error",
                     headline: "Subscription Payment Failed:",
-                    detail: `${desc} You can retry below or open the official Razorpay payment page directly.`,
+                    detail: `${desc}${errObj.code ? ` (${errObj.code})` : ""} Please retry with UPI AutoPay or Card below.`,
                     subscriptionId,
                     plan: data.plan,
                     shortUrl
@@ -595,7 +643,7 @@
                 showCheckoutHelperPanel({
                     kind: "warn",
                     headline: "Embedded Checkout Unavailable:",
-                    detail: `Your browser or preview frame closed the embedded Razorpay popup. Click "Open Official Razorpay Payment Page ↗" below to pay securely on Razorpay.`,
+                    detail: `Your browser or preview frame closed the embedded Razorpay popup. Click "Open Official Razorpay Payment Page ↗" below to authorize your ${data.plan.name} (₹${data.plan.priceInr}/month) AutoPay mandate securely on Razorpay.`,
                     subscriptionId,
                     plan: data.plan,
                     shortUrl
@@ -606,8 +654,8 @@
             startSyncPolling(subscriptionId, data.plan);
             showCheckoutHelperPanel({
                 kind: "info",
-                headline: `Razorpay Checkout Initiated (${data.plan.name} · ₹${data.plan.priceInr}/mo):`,
-                detail: "Complete your payment in the Razorpay window. If the popup does not appear inside this browser frame, use the direct Razorpay link below.",
+                headline: `Razorpay AutoPay Ready — ${data.plan.name} (₹${data.plan.priceInr}/month):`,
+                detail: "Billed monthly via Razorpay AutoPay (UPI AutoPay / Card, cancel anytime). Complete authorization in the Razorpay window or use the official link below.",
                 subscriptionId,
                 plan: data.plan,
                 shortUrl
@@ -699,7 +747,9 @@
         }
 
         try {
-            const fetcher = window.TakoraAuth ? window.TakoraAuth.apiFetch : (u) => fetch(u).then(async (r) => ({ res: r, data: await r.json() }));
+            const fetcher = window.TakoraAuth && window.TakoraAuth.apiFetch
+                ? window.TakoraAuth.apiFetch
+                : (u, o) => fallbackApiFetch(u, o);
             const { res, data } = await fetcher("/api/subscriptions/plans", { method: "GET" });
             if (res.ok && data && data.success) {
                 if (Array.isArray(data.plans) && data.plans.length > 0) {

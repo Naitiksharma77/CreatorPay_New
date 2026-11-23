@@ -59,7 +59,13 @@ async function createRazorpayMonthlySubscription({
     throw err;
   }
 
-  const isGuestPlaceholder = String((user && user.email) || "").endsWith("@member.takora.local");
+  if (!user || !user.id || String(user.email || "").endsWith("@member.takora.local")) {
+    const err = new Error("Please sign in or create a free account before starting a subscription.");
+    err.statusCode = 401;
+    err.code = "AUTH_REQUIRED";
+    throw err;
+  }
+
   const upgradeFromId =
     existingSub &&
     existingEntitlements &&
@@ -75,7 +81,7 @@ async function createRazorpayMonthlySubscription({
       total_count: 120,
       notes: {
         userId: String(user.id),
-        userEmail: isGuestPlaceholder ? "" : String(user.email || ""),
+        userEmail: String(user.email || ""),
         planCode: targetPlan.code,
         app: "takora",
         upgradeFromSubscriptionId: upgradeFromId
@@ -87,9 +93,8 @@ async function createRazorpayMonthlySubscription({
     return payload;
   };
 
-  // Optional Razorpay customer creation only for real named/emailed accounts
   let rzpCustomerId = String((user && user.razorpay_customer_id) || "").trim();
-  if (!rzpCustomerId && !isGuestPlaceholder && user && user.email) {
+  if (!rzpCustomerId && user.email) {
     try {
       const custReq = {
         name: user.name || "Takora Member",
@@ -111,10 +116,19 @@ async function createRazorpayMonthlySubscription({
     }
   }
 
-  // Resolve or auto-create the Razorpay monthly plan via Key ID & Key Secret
-  let rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode);
-  let rzpSub = null;
+  let rzpPlanId;
+  try {
+    rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode);
+  } catch (planErr) {
+    const msg = formatRazorpayError(planErr, `Unable to resolve Razorpay monthly plan for ${targetPlan.name}.`);
+    const isAuthErr = Number(planErr && planErr.statusCode) === 401 || /auth/i.test(msg);
+    const wrapped = new Error(isAuthErr ? `Razorpay Authentication Error: ${msg}` : `Razorpay Plan Error: ${msg}`);
+    wrapped.statusCode = isAuthErr ? 502 : (Number(planErr && planErr.statusCode) || 502);
+    wrapped.code = isAuthErr ? "RAZORPAY_AUTH_FAILED" : "PLAN_ID_NOT_FOUND";
+    throw wrapped;
+  }
 
+  let rzpSub = null;
   try {
     rzpSub = await rzp.subscriptions.create(buildPayload(rzpPlanId, rzpCustomerId));
   } catch (firstErr) {
@@ -123,17 +137,25 @@ async function createRazorpayMonthlySubscription({
       formatRazorpayError(firstErr)
     );
 
-    // Retry cleanly: drop possibly-stale customer_id AND force-create a fresh monthly plan
+    const firstMsg = formatRazorpayError(firstErr, "");
+    if (Number(firstErr && firstErr.statusCode) === 401 || /authentication/i.test(firstMsg)) {
+      const authWrapped = new Error(`Razorpay Authentication Failed: ${firstMsg || "Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET."}`);
+      authWrapped.statusCode = 502;
+      authWrapped.code = "RAZORPAY_AUTH_FAILED";
+      throw authWrapped;
+    }
+
+    // Retry cleanly: drop possibly-stale customer_id AND resolve/create fresh plan if plan_id failed
     clearResolvedPlanCache(cleanPlanCode);
     rzpCustomerId = "";
     try {
-      // First try existing resolved plan without customer_id if customer_id might have been invalid
       rzpPlanId = await resolveRazorpayPlanId(cleanPlanCode, { forceCreate: true });
       rzpSub = await rzp.subscriptions.create(buildPayload(rzpPlanId, ""));
     } catch (retryErr) {
       const msg = formatRazorpayError(retryErr, "Unable to create Razorpay subscription.");
-      const wrapped = new Error(`Razorpay Subscription Error: ${msg}`);
+      const wrapped = new Error(`Razorpay Subscription Creation Failed: ${msg}`);
       wrapped.statusCode = 502;
+      wrapped.code = "SUBSCRIPTION_CREATE_FAILED";
       throw wrapped;
     }
   }
@@ -141,6 +163,7 @@ async function createRazorpayMonthlySubscription({
   if (!rzpSub || !rzpSub.id) {
     const err = new Error("Razorpay did not return a valid subscription ID.");
     err.statusCode = 502;
+    err.code = "SUBSCRIPTION_CREATE_FAILED";
     throw err;
   }
 

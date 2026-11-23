@@ -89,11 +89,13 @@
                 if (!auth.authenticated) {
                     statusIcon.className = "success-icon pending";
                     statusIcon.textContent = "!";
-                    statusEyebrow.textContent = "NO ACTIVE SESSION";
+                    statusEyebrow.textContent = "SIGN IN TO VERIFY";
                     statusHeading.textContent = "Check Your Membership";
-                    statusMessage.textContent = "No active subscription session was found in this browser. Choose a monthly plan below or sign in if you subscribed from another device.";
-                    manageBtn.textContent = "Choose a Monthly Plan";
-                    manageBtn.onclick = () => { window.location.href = "pricing.html"; };
+                    statusMessage.textContent = "Sign in to view and verify your active subscription status, or choose a monthly plan to get started.";
+                    manageBtn.textContent = "Sign In to Check Membership";
+                    manageBtn.onclick = () => {
+                        window.TakoraAuth.openAuthModal("login", () => loadConfirmation());
+                    };
                     return;
                 }
 
