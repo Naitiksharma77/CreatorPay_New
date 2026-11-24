@@ -702,19 +702,12 @@
 
                 if (res.status === 401) {
                     showLockedState({
-                        badge: "Sign In Required",
-                        title: "Sign In to Access Chat",
-                        message: "Sign in to your Takora account (or create a free account and choose a monthly plan) to start 1-on-1 chat.",
-                        buttonHtml: `
-                            <button type="button" id="chatSignInBtn" class="locked-action-btn">Sign In / Create Free Account</button>
-                            <a href="pricing.html?plan=basic" style="display:block; margin-top:10px; font-size:13px; font-weight:700; color:#2563EB;">View Monthly Plans (from ₹9/mo)</a>
-                        `,
+                        badge: "Membership Required",
+                        title: "Monthly Membership Needed",
+                        message: "Chat access requires an active Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo) plan. Select a plan to start chatting right away.",
+                        buttonHtml: `<a href="pricing.html?plan=basic" class="locked-action-btn">View Monthly Plans (from ₹9/mo)</a>`,
                         backUrl: profileUrl
                     });
-                    const signInBtn = document.getElementById("chatSignInBtn");
-                    if (signInBtn && window.TakoraAuth) {
-                        signInBtn.onclick = () => window.TakoraAuth.openAuthModal("login", () => initChat());
-                    }
                     return;
                 }
 

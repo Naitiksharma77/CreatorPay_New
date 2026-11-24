@@ -158,17 +158,29 @@ function createProfileCardHTML(creator, index) {
                     <a class="btn-view-profile" href="${profileLink}" onclick="event.stopPropagation();" aria-label="View Profile of ${escapeHTML(name)}">
                         View Profile
                     </a>
-                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openConnectForCreator('${escapeHTML(creator.id)}');" aria-label="Say Hi to ${escapeHTML(name)}">
+                    <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openVideoCallForCreator('${escapeHTML(creator.id)}');" aria-label="Video Call ${escapeHTML(name)}">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; flex-shrink: 0;" aria-hidden="true">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
                         </svg>
-                        Say Hi
+                        Video Call
                     </button>
                 </div>
             </div>
         </article>
     `;
 }
+
+window.openVideoCallForCreator = function (creatorId) {
+    const creator = allCreators.find((c) => String(c.id) === String(creatorId));
+    if (creator && window.TakoraAuth && typeof window.TakoraAuth.checkAndStartInteraction === "function") {
+        window.TakoraAuth.checkAndStartInteraction(creator, "video");
+    } else if (creator && window.openInteractionModal) {
+        window.openInteractionModal(creator, "video");
+    } else {
+        window.location.href = `friend_profile.html?id=${encodeURIComponent(creatorId)}&action=video`;
+    }
+};
 
 window.openConnectForCreator = function (creatorId) {
     const creator = allCreators.find((c) => String(c.id) === String(creatorId));
@@ -346,7 +358,7 @@ function renderChatsFeed() {
                     </svg>
                 </div>
                 <h3 class="empty-title">Your membership is active</h3>
-                <p class="empty-desc">Say hi to any creator from Explore to start your first private conversation.</p>
+                <p class="empty-desc">Connect with any creator from Explore to start your first private conversation.</p>
                 <button type="button" class="empty-action-btn" onclick="switchTab('explore')">Explore Creators</button>
             </div>
         `;

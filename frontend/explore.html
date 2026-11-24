@@ -47,7 +47,7 @@
                 </nav>
 
                 <div class="header-actions-group">
-                    <button type="button" id="headerAuthButton" class="tk-header-auth-btn solid" onclick="window.TakoraAuth && window.TakoraAuth.openAccountModal()">
+                    <button type="button" id="headerAuthButton" class="tk-header-auth-btn solid" onclick="const a=window.TakoraAuth && window.TakoraAuth.getState(); if(a && a.subscription && a.subscription.hasActiveAccess){ window.TakoraAuth.openAccountModal(); } else { window.location.href='pricing.html'; }">
                         Plans · ₹9/mo
                     </button>
                     <button type="button" class="header-avatar-btn" onclick="toggleProfileSheet()" aria-label="My Account" title="My Profile &amp; Membership">

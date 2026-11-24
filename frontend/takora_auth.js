@@ -764,35 +764,74 @@
         }
     }
 
+    async function ensureGuestSession() {
+        if (authState.loaded && authState.authenticated && authState.user) {
+            return authState;
+        }
+        try {
+            const { res, data } = await apiFetch("/api/auth/guest", {
+                method: "POST",
+                body: JSON.stringify({})
+            });
+            if (res.ok && data && data.authenticated && data.user) {
+                if (data.token) {
+                    memoryBearerToken = data.token;
+                }
+                const ent = normalizeEntitlements(data.entitlements);
+                authState.loaded = true;
+                authState.authenticated = true;
+                authState.user = data.user;
+                authState.entitlements = ent;
+                authState.subscription = data.subscription ? normalizeSubscription(data.subscription, ent) : null;
+                authState.payments = Array.isArray(data.paymentHistory) ? data.paymentHistory : [];
+                emitAuthChanged();
+                return authState;
+            }
+        } catch (_) {}
+        return authState;
+    }
+
+    function isGuestAccount(user) {
+        if (!user) return true;
+        const email = String(user.email || "");
+        return !email || email.endsWith("@member.takora.local");
+    }
+
     function displayUserLabel(user) {
         if (!user) return "";
         const email = String(user.email || "");
         if (email && !email.endsWith("@member.takora.local")) return email;
         if (user.phone) return String(user.phone);
-        return "Takora Member";
+        return "Takora Membership";
     }
 
     function syncHeaderAndSheetUI() {
         const headerBtn = document.getElementById("headerAuthButton");
         const headerPlanBadge = document.getElementById("headerPlanBadge");
+        const sub = authState.subscription;
+        const hasActivePlan = Boolean(authState.authenticated && sub && sub.hasActiveAccess);
+
         if (headerBtn) {
-            if (authState.authenticated && authState.user) {
-                const sub = authState.subscription;
-                if (sub && sub.hasActiveAccess) {
-                    headerBtn.textContent = `${sub.planName} Plan`;
-                    headerBtn.className = "tk-header-auth-btn";
-                } else {
-                    headerBtn.textContent = "Membership";
-                    headerBtn.className = "tk-header-auth-btn";
-                }
+            if (hasActivePlan) {
+                headerBtn.textContent = `${sub.planName} Plan`;
+                headerBtn.className = "tk-header-auth-btn";
+                headerBtn.onclick = () => openAccountModal();
             } else {
                 headerBtn.textContent = headerBtn.dataset.guestLabel || "Plans · ₹9/mo";
                 headerBtn.className = "tk-header-auth-btn solid";
+                headerBtn.onclick = () => {
+                    if (window.location.pathname && window.location.pathname.endsWith("pricing.html")) {
+                        const grid = document.getElementById("plansGrid");
+                        if (grid) grid.scrollIntoView({ behavior: "smooth" });
+                    } else {
+                        window.location.href = "pricing.html";
+                    }
+                };
             }
         }
         if (headerPlanBadge) {
-            if (authState.authenticated && authState.subscription && authState.subscription.hasActiveAccess) {
-                headerPlanBadge.textContent = `${authState.subscription.planName} · ₹${authState.subscription.priceInr}/mo`;
+            if (hasActivePlan) {
+                headerPlanBadge.textContent = `${sub.planName} · ₹${sub.priceInr}/mo`;
                 headerPlanBadge.style.display = "inline-flex";
             } else {
                 headerPlanBadge.style.display = "none";
@@ -804,39 +843,45 @@
         const sheetSubEl = document.getElementById("sheetUserSubtitle");
         const sheetAuthSection = document.getElementById("sheetAuthSection");
         if (sheetNameEl) {
-            sheetNameEl.textContent = authState.authenticated && authState.user
-                ? (authState.user.name || "Takora Member")
-                : "Takora Visitor";
+            if (authState.authenticated && authState.user && !isGuestAccount(authState.user)) {
+                sheetNameEl.textContent = authState.user.name || "Takora Member";
+            } else if (hasActivePlan) {
+                sheetNameEl.textContent = `${sub.planName} Member`;
+            } else {
+                sheetNameEl.textContent = "Takora Visitor";
+            }
         }
         if (sheetSubEl) {
-            if (authState.authenticated && authState.subscription && authState.subscription.hasActiveAccess) {
-                sheetSubEl.textContent = `${authState.subscription.planName} Member · Active`;
-            } else if (authState.authenticated) {
-                sheetSubEl.textContent = `${displayUserLabel(authState.user)} · No Active Plan`;
+            if (hasActivePlan) {
+                sheetSubEl.textContent = `${sub.planName} Plan · ₹${sub.priceInr}/month`;
             } else {
                 sheetSubEl.textContent = "Choose a monthly plan to unlock Chat & Calls";
             }
         }
         if (sheetAuthSection) {
-            if (!authState.authenticated) {
+            if (!authState.authenticated || !hasActivePlan) {
+                const statusText = sub && sub.status === "authenticated"
+                    ? `${escapeHTML(sub.planName || "")} AutoPay Mandate Pending`
+                    : "No active monthly membership yet";
                 sheetAuthSection.innerHTML = `
-                    <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
-                        <button type="button" class="tk-primary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('register')">
-                            Create Free Account
-                        </button>
-                        <button type="button" class="tk-secondary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAuthModal('login')">
-                            Sign In to Account
-                        </button>
-                        <a href="pricing.html" class="tk-secondary-btn" style="color:#2563EB; border-color:#DBEAFE; background:#EFF6FF;">
+                    <div style="margin-top:16px; padding:14px; border-radius:14px; background:#F8FAFC; border:1px solid #E2E8F0;">
+                        <div style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:4px;">Membership Status</div>
+                        <div style="font-size:14px; font-weight:700; color:#0F172A;">${statusText}</div>
+                    </div>
+                    <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px;">
+                        <a href="pricing.html" class="tk-primary-btn">
                             View Monthly Plans (from ₹9/mo)
                         </a>
+                        ${authState.authenticated && (authState.payments || []).length > 0 ? `
+                            <button type="button" class="tk-secondary-btn" onclick="if(window.toggleProfileSheet)toggleProfileSheet(); window.TakoraAuth.openAccountModal()">
+                                Manage Membership &amp; AutoPay
+                            </button>
+                        ` : ""}
                     </div>
                 `;
             } else {
-                const sub = authState.subscription;
-                const planLine = sub && sub.hasActiveAccess
-                    ? `${escapeHTML(sub.planName)} Plan (₹${escapeHTML(sub.priceInr)}/month)${sub.cancelAtPeriodEnd ? " · Cancels " + formatDate(sub.currentEnd) : ""}`
-                    : "No active monthly membership yet";
+                const planLine = `${escapeHTML(sub.planName)} Plan (₹${escapeHTML(sub.priceInr)}/month)${sub.cancelAtPeriodEnd ? " · Cancels " + formatDate(sub.currentEnd) : ""}`;
+                const showSignOut = !isGuestAccount(authState.user);
                 sheetAuthSection.innerHTML = `
                     <div style="margin-top:16px; padding:14px; border-radius:14px; background:#EFF6FF; border:1px solid #DBEAFE;">
                         <div style="font-size:12px; font-weight:700; color:#1D4ED8; margin-bottom:4px;">Membership Status</div>
@@ -847,150 +892,24 @@
                             Manage Membership &amp; AutoPay
                         </button>
                         <a href="pricing.html" class="tk-secondary-btn">
-                            ${sub && sub.hasActiveAccess ? "Upgrade or Compare Plans" : "Choose a Monthly Plan"}
+                            Upgrade or Compare Plans
                         </a>
-                        <button type="button" class="tk-secondary-btn" style="color:#64748B;" onclick="window.TakoraAuth.logout()">
-                            Sign Out
-                        </button>
+                        ${showSignOut ? `
+                            <button type="button" class="tk-secondary-btn" style="color:#64748B;" onclick="window.TakoraAuth.logout()">
+                                Sign Out
+                            </button>
+                        ` : ""}
                     </div>
                 `;
             }
         }
     }
 
-    function openAuthModal(initialMode = "login", onSuccessCallback = null) {
-        ensureContainers();
-        pendingCallback = typeof onSuccessCallback === "function" ? onSuccessCallback : null;
-        let currentMode = initialMode === "register" ? "register" : "login";
-
-        const backdrop = document.getElementById("tkModalBackdrop");
-
-        function renderAuthForm() {
-            const isRegister = currentMode === "register";
-            backdrop.innerHTML = `
-                <div class="tk-modal-card" role="dialog" aria-modal="true" aria-labelledby="tkAuthTitle">
-                    <div class="tk-modal-head">
-                        <div>
-                            <h2 id="tkAuthTitle" class="tk-modal-title">${isRegister ? "Create Free Account" : "Member Sign In"}</h2>
-                            <p class="tk-modal-sub">${isRegister ? "Register free to link your monthly membership to your account." : "Sign in with your Takora email and password."}</p>
-                        </div>
-                        <button type="button" class="tk-close-btn" id="tkAuthCloseBtn" aria-label="Close">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-
-                    <div class="tk-tabs" role="tablist">
-                        <button type="button" class="tk-tab-btn ${!isRegister ? "active" : ""}" id="tkTabLogin">Sign In</button>
-                        <button type="button" class="tk-tab-btn ${isRegister ? "active" : ""}" id="tkTabRegister">Create Free Account</button>
-                    </div>
-
-                    ${isRegister ? `
-                        <div class="tk-free-notice">
-                            <span>✓</span>
-                            <span>Account creation is 100% free — no payment charged during registration.</span>
-                        </div>
-                    ` : ""}
-
-                    <div id="tkAuthError" class="tk-error-box"></div>
-
-                    <form id="tkAuthForm">
-                        ${isRegister ? `
-                            <div class="tk-field">
-                                <label for="tkAuthName">Full Name</label>
-                                <input type="text" id="tkAuthName" placeholder="Your full name" required minlength="2" autocomplete="name">
-                            </div>
-                        ` : ""}
-                        <div class="tk-field">
-                            <label for="tkAuthEmail">Email Address</label>
-                            <input type="email" id="tkAuthEmail" placeholder="you@example.com" required autocomplete="email">
-                        </div>
-                        ${isRegister ? `
-                            <div class="tk-field">
-                                <label for="tkAuthPhone">Mobile Number (Optional · Prefills UPI AutoPay)</label>
-                                <input type="tel" id="tkAuthPhone" placeholder="+91 9876543210" autocomplete="tel">
-                            </div>
-                        ` : ""}
-                        <div class="tk-field">
-                            <label for="tkAuthPassword">Password</label>
-                            <input type="password" id="tkAuthPassword" placeholder="${isRegister ? "Create a password (min 6 chars)" : "Enter password"}" required minlength="6" autocomplete="${isRegister ? "new-password" : "current-password"}">
-                        </div>
-                        <button type="submit" id="tkAuthSubmitBtn" class="tk-primary-btn">
-                            ${isRegister ? "Create Free Account &amp; Continue" : "Sign In"}
-                        </button>
-                    </form>
-                </div>
-            `;
-
-            backdrop.classList.add("open");
-            backdrop.setAttribute("aria-hidden", "false");
-
-            document.getElementById("tkAuthCloseBtn").onclick = closeModal;
-            document.getElementById("tkTabLogin").onclick = () => {
-                if (currentMode !== "login") {
-                    currentMode = "login";
-                    renderAuthForm();
-                }
-            };
-            document.getElementById("tkTabRegister").onclick = () => {
-                if (currentMode !== "register") {
-                    currentMode = "register";
-                    renderAuthForm();
-                }
-            };
-
-            document.getElementById("tkAuthForm").onsubmit = async (e) => {
-                e.preventDefault();
-                const errEl = document.getElementById("tkAuthError");
-                const submitBtn = document.getElementById("tkAuthSubmitBtn");
-                errEl.classList.remove("show");
-                errEl.textContent = "";
-
-                const email = document.getElementById("tkAuthEmail").value.trim();
-                const password = document.getElementById("tkAuthPassword").value;
-                const payload = { email, password };
-
-                if (isRegister) {
-                    payload.name = document.getElementById("tkAuthName").value.trim();
-                    payload.phone = (document.getElementById("tkAuthPhone") && document.getElementById("tkAuthPhone").value.trim()) || "";
-                }
-
-                const origLabel = submitBtn.textContent;
-                submitBtn.disabled = true;
-                submitBtn.textContent = isRegister ? "Creating free account..." : "Signing in...";
-
-                try {
-                    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-                    const { res, data } = await apiFetch(endpoint, {
-                        method: "POST",
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!res.ok || !data.success) {
-                        throw new Error(data.message || (isRegister ? "Registration failed." : "Sign in failed."));
-                    }
-
-                    if (data.token) {
-                        memoryBearerToken = data.token;
-                    }
-
-                    await refreshSession();
-                    const cb = pendingCallback;
-                    pendingCallback = null;
-                    closeModal();
-                    showToast(isRegister ? "Free account created!" : "Signed in successfully.");
-                    if (cb) {
-                        cb(authState);
-                    }
-                } catch (err) {
-                    errEl.textContent = err.message || "Unable to continue.";
-                    errEl.classList.add("show");
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = origLabel;
-                }
-            };
+    async function openAuthModal(_initialMode = "login", onSuccessCallback = null) {
+        await ensureGuestSession();
+        if (typeof onSuccessCallback === "function") {
+            onSuccessCallback(authState);
         }
-
-        renderAuthForm();
     }
 
     async function openAccountModal() {
@@ -998,18 +917,48 @@
         if (!authState.loaded) {
             await refreshSession();
         }
-        if (!authState.authenticated) {
-            window.location.href = "pricing.html";
+
+        const backdrop = document.getElementById("tkModalBackdrop");
+        if (!authState.authenticated || !authState.user) {
+            backdrop.innerHTML = `
+                <div class="tk-modal-card wide" role="dialog" aria-modal="true" aria-labelledby="tkAccTitle">
+                    <div class="tk-modal-head">
+                        <div>
+                            <h2 id="tkAccTitle" class="tk-modal-title">Membership &amp; AutoPay</h2>
+                            <p class="tk-modal-sub">Takora Monthly Membership</p>
+                        </div>
+                        <button type="button" class="tk-close-btn" id="tkAccCloseBtn" aria-label="Close">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    <div class="tk-sub-panel">
+                        <div class="tk-sub-top">
+                            <span class="tk-plan-name">No Active Membership</span>
+                            <span class="tk-status-text muted">Visitor</span>
+                        </div>
+                        <div class="tk-meta-line">
+                            Subscribe to Basic (₹9/mo), Pro (₹29/mo), or Premium (₹99/mo) to unlock creator interactions.
+                        </div>
+                    </div>
+                    <a href="pricing.html" class="tk-primary-btn">Choose a Monthly Plan</a>
+                </div>
+            `;
+            backdrop.classList.add("open");
+            backdrop.setAttribute("aria-hidden", "false");
+            document.getElementById("tkAccCloseBtn").onclick = closeModal;
             return;
         }
 
-        const backdrop = document.getElementById("tkModalBackdrop");
+        const modalSubTitle = !isGuestAccount(authState.user)
+            ? `${escapeHTML(authState.user.name || "Takora Member")} · ${escapeHTML(displayUserLabel(authState.user))}`
+            : escapeHTML(displayUserLabel(authState.user));
+
         backdrop.innerHTML = `
             <div class="tk-modal-card wide" role="dialog" aria-modal="true" aria-labelledby="tkAccTitle">
                 <div class="tk-modal-head">
                     <div>
                         <h2 id="tkAccTitle" class="tk-modal-title">Membership &amp; AutoPay</h2>
-                        <p class="tk-modal-sub">${escapeHTML(authState.user.name || "Takora Member")} · ${escapeHTML(displayUserLabel(authState.user))}</p>
+                        <p class="tk-modal-sub">${modalSubTitle}</p>
                     </div>
                     <button type="button" class="tk-close-btn" id="tkAccCloseBtn" aria-label="Close">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1058,7 +1007,7 @@
                 <div class="tk-modal-head">
                     <div>
                         <h2 id="tkAccTitle" class="tk-modal-title">Membership &amp; AutoPay</h2>
-                        <p class="tk-modal-sub">${escapeHTML(authState.user.name || "Takora Member")} · ${escapeHTML(displayUserLabel(authState.user))}</p>
+                        <p class="tk-modal-sub">${modalSubTitle}</p>
                     </div>
                     <button type="button" class="tk-close-btn" id="tkAccCloseBtn" aria-label="Close">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1120,12 +1069,13 @@
                     }
                 </div>
 
-                <button type="button" id="tkLogoutBtn" class="tk-secondary-btn" style="color:#64748B;">Sign Out</button>
+                ${!isGuestAccount(authState.user) ? `<button type="button" id="tkLogoutBtn" class="tk-secondary-btn" style="color:#64748B;">Sign Out</button>` : ""}
             </div>
         `;
 
         document.getElementById("tkAccCloseBtn").onclick = closeModal;
-        document.getElementById("tkLogoutBtn").onclick = () => logout();
+        const logoutBtnEl = document.getElementById("tkLogoutBtn");
+        if (logoutBtnEl) logoutBtnEl.onclick = () => logout();
 
         const cancelBtn = document.getElementById("tkCancelAutoPayBtn");
         const confirmWrap = document.getElementById("tkCancelConfirmWrap");
@@ -1405,6 +1355,7 @@
         getState: () => ({ ...authState }),
         setSessionToken,
         refreshSession,
+        ensureGuestSession,
         loadPlans,
         openAuthModal,
         openAccountModal,

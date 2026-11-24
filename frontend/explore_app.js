@@ -2,6 +2,7 @@ const RENDER_BACKEND_URL = "https://creatorpay-backend.onrender.com";
 
 const creatorList = document.getElementById("creatorList");
 const creatorCount = document.getElementById("creatorCount");
+let exploreCreatorsList = [];
 
 function escapeHTML(value) {
     return String(value ?? "")
@@ -83,8 +84,18 @@ async function loadCreators() {
     }
 }
 
+window.openExploreVideoCall = function (creatorId) {
+    const creator = exploreCreatorsList.find((c) => String(c.id) === String(creatorId));
+    if (creator && window.TakoraAuth && typeof window.TakoraAuth.checkAndStartInteraction === "function") {
+        window.TakoraAuth.checkAndStartInteraction(creator, "video");
+    } else {
+        window.location.href = `friend_profile.html?id=${encodeURIComponent(creatorId)}&action=video`;
+    }
+};
+
 function displayCreators(creators) {
     if (!creatorList) return;
+    exploreCreatorsList = Array.isArray(creators) ? creators : [];
     const favIds = getFavorites();
 
     if (creatorCount) {
@@ -114,8 +125,14 @@ function displayCreators(creators) {
                     </div>
                     <p class="person-bio card-bio">${escapeHTML(bio)}</p>
                     <div class="card-footer-row card-bottom-row" style="display:flex; gap:8px;">
-                        <a class="say-hi-btn" href="${profileLink}" onclick="event.stopPropagation();" style="flex:1; text-align:center; background:#F8FAFC; border:1px solid #E2E8F0; color:#0F172A; font-weight:600; padding:8px 12px; border-radius:10px;">View Profile</a>
-                        <a class="say-hi-btn" href="${profileLink}&action=chat" onclick="event.stopPropagation();" style="flex:1; text-align:center; background:#2563EB; color:#FFFFFF; font-weight:700; padding:8px 12px; border-radius:10px;">Say Hi</a>
+                        <a class="btn-view-profile" href="${profileLink}" onclick="event.stopPropagation();" style="flex:1; display:inline-flex; align-items:center; justify-content:center; text-align:center; background:#F8FAFC; border:1px solid #E2E8F0; color:#0F172A; font-weight:600; padding:8px 12px; border-radius:10px;">View Profile</a>
+                        <button type="button" class="btn-book-date" onclick="event.stopPropagation(); window.openExploreVideoCall('${escapeHTML(creator.id)}');" aria-label="Video Call ${escapeHTML(name)}" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:#2563EB; color:#FFFFFF; font-weight:700; padding:8px 12px; border:none; border-radius:10px; cursor:pointer;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                            </svg>
+                            Video Call
+                        </button>
                     </div>
                 </article>
             `;

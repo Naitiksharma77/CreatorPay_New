@@ -86,21 +86,23 @@
                 await window.TakoraAuth.refreshSession();
                 const auth = window.TakoraAuth.getState();
 
-                if (!auth.authenticated) {
-                    statusIcon.className = "success-icon pending";
-                    statusIcon.textContent = "!";
-                    statusEyebrow.textContent = "SIGN IN TO VERIFY";
-                    statusHeading.textContent = "Check Your Membership";
-                    statusMessage.textContent = "Sign in to view and verify your active subscription status, or choose a monthly plan to get started.";
-                    manageBtn.textContent = "Sign In to Check Membership";
-                    manageBtn.onclick = () => {
-                        window.TakoraAuth.openAuthModal("login", () => loadConfirmation());
-                    };
-                    return;
-                }
-
                 const params = new URLSearchParams(window.location.search);
                 const querySubId = String(params.get("subscription_id") || "").trim();
+
+                if (!auth.authenticated) {
+                    if (querySubId && typeof window.TakoraAuth.ensureGuestSession === "function") {
+                        await window.TakoraAuth.ensureGuestSession();
+                    } else {
+                        statusIcon.className = "success-icon pending";
+                        statusIcon.textContent = "!";
+                        statusEyebrow.textContent = "NO ACTIVE SUBSCRIPTION";
+                        statusHeading.textContent = "Plan Not Yet Active";
+                        statusMessage.textContent = "No active monthly membership was found in this browser yet. Choose a monthly plan to get started right away.";
+                        manageBtn.textContent = "Choose a Monthly Plan";
+                        manageBtn.onclick = () => { window.location.href = "pricing.html"; };
+                        return;
+                    }
+                }
 
                 let { res, data } = await window.TakoraAuth.apiFetch("/api/subscriptions/me", { method: "GET" });
                 let sub = res.ok && data ? data.subscription : auth.subscription;

@@ -383,13 +383,62 @@ async function getAuthenticatedUser(req) {
   return user || null;
 }
 
+async function createGuestUserRecord() {
+  const nowIso = new Date().toISOString();
+  const suffix = `${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+  const randomSecret = crypto.randomBytes(32).toString("hex");
+  const { salt, hash } = hashPassword(randomSecret);
+  const guestUser = {
+    id: `usr_${suffix}`,
+    name: "Takora Visitor",
+    email: `guest_${suffix}@member.takora.local`,
+    phone: "",
+    password_hash: hash,
+    password_salt: salt,
+    role: "user",
+    has_access: false,
+    status: "active",
+    razorpay_customer_id: "",
+    created_at: nowIso,
+    updated_at: nowIso
+  };
+
+  const store = loadAnalyticsStore();
+  store.users = store.users || [];
+  store.users.unshift(guestUser);
+  saveAnalyticsStore(store);
+
+  if (supabase.isSupabaseLive) {
+    try {
+      await supabase.from("users").insert([guestUser]);
+    } catch (err) {
+      console.warn("[Supabase] Guest user insert warning:", err.message || err);
+    }
+  }
+
+  return guestUser;
+}
+
+async function createGuestSessionForRequest(req, res) {
+  const existing = await getAuthenticatedUser(req);
+  if (existing) {
+    const existingToken = signSessionToken(existing);
+    setSessionCookie(req, res, existingToken);
+    return { user: existing, token: existingToken, created: false };
+  }
+  const guestUser = await createGuestUserRecord();
+  const token = signSessionToken(guestUser);
+  setSessionCookie(req, res, token);
+  return { user: guestUser, token, created: true };
+}
+
 async function requireAuth(req, res) {
   const user = await getAuthenticatedUser(req);
-  if (!user || String(user.email || "").endsWith("@member.takora.local")) {
+  if (!user) {
     res.status(401).json({
       success: false,
       code: "AUTH_REQUIRED",
-      message: "Please sign in or create a free account before continuing."
+      message: "Visitor session unavailable. Please refresh the page and try again."
     });
     return null;
   }
@@ -815,6 +864,27 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+app.post("/api/auth/guest", async (req, res) => {
+  try {
+    const { user, token } = await createGuestSessionForRequest(req, res);
+    const subscription = await getPrimaryUserSubscription(user.id);
+    const entitlements = computeEntitlements(subscription);
+    const paymentHistory = await getUserPaymentHistory(user.id);
+
+    return res.json({
+      success: true,
+      authenticated: true,
+      user: sanitizeUser(user),
+      subscription,
+      entitlements,
+      paymentHistory,
+      token
+    });
+  } catch (error) {
+    return sendError(res, 500, "Unable to initialize visitor session.", error);
+  }
+});
+
 app.post("/api/auth/logout", (req, res) => {
   clearSessionCookie(req, res);
   return res.json({
@@ -896,8 +966,13 @@ app.get("/api/subscriptions/me", async (req, res) => {
 
 async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
   try {
-    const user = await requireAuth(req, res);
-    if (!user) return;
+    let user = await getAuthenticatedUser(req);
+    let newlyIssuedToken = null;
+    if (!user) {
+      const guestSession = await createGuestSessionForRequest(req, res);
+      user = guestSession.user;
+      newlyIssuedToken = guestSession.token;
+    }
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
     const cleanPlanCode = String(body.planCode || "").trim().toLowerCase();
@@ -1011,6 +1086,11 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
       creatorName: `${plan.name} Plan`
     });
 
+    const hasRealEmail = Boolean(
+      user.email && !String(user.email).endsWith("@member.takora.local")
+    );
+    const hasRealName = Boolean(user.name && user.name !== "Takora Visitor");
+
     return res.json({
       success: true,
       keyId,
@@ -1023,10 +1103,11 @@ async function createSubscriptionCheckout({ req, res, isUpgrade = false }) {
         short_url: rzpSub.short_url || ""
       },
       prefill: {
-        name: user.name,
-        email: user.email,
+        name: hasRealName ? user.name : "",
+        email: hasRealEmail ? user.email : "",
         contact: user.phone || ""
-      }
+      },
+      sessionToken: newlyIssuedToken || undefined
     });
   } catch (err) {
     const statusCode = Number(err && err.statusCode) || 502;
@@ -1125,6 +1206,14 @@ async function activateVerifiedSubscription({
       if (payerContact) uStore.users[uIdx].phone = payerContact;
       uStore.users[uIdx].updated_at = nowIso;
       saveAnalyticsStore(uStore);
+    }
+    if (supabase.isSupabaseLive) {
+      try {
+        const sbUpdates = { updated_at: nowIso };
+        if (payerEmail) sbUpdates.email = payerEmail;
+        if (payerContact) sbUpdates.phone = payerContact;
+        await supabase.from("users").update(sbUpdates).eq("id", String(user.id));
+      } catch (_) {}
     }
   }
 

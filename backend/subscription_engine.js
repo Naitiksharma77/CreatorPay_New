@@ -59,12 +59,17 @@ async function createRazorpayMonthlySubscription({
     throw err;
   }
 
-  if (!user || !user.id || String(user.email || "").endsWith("@member.takora.local")) {
-    const err = new Error("Please sign in or create a free account before starting a subscription.");
+  if (!user || !user.id) {
+    const err = new Error("Unable to initialize visitor session for subscription checkout.");
     err.statusCode = 401;
     err.code = "AUTH_REQUIRED";
     throw err;
   }
+
+  const hasRealEmail = Boolean(
+    user.email && !String(user.email).endsWith("@member.takora.local")
+  );
+  const safeUserEmail = hasRealEmail ? String(user.email) : "";
 
   const upgradeFromId =
     existingSub &&
@@ -86,7 +91,7 @@ async function createRazorpayMonthlySubscription({
       total_count: totalCount,
       notes: {
         userId: String(user.id),
-        userEmail: String(user.email || ""),
+        userEmail: safeUserEmail,
         planCode: targetPlan.code,
         app: "takora",
         upgradeFromSubscriptionId: upgradeFromId
@@ -99,11 +104,11 @@ async function createRazorpayMonthlySubscription({
   };
 
   let rzpCustomerId = String((user && user.razorpay_customer_id) || "").trim();
-  if (!rzpCustomerId && user.email) {
+  if (!rzpCustomerId && hasRealEmail) {
     try {
       const custReq = {
-        name: user.name || "Takora Member",
-        email: user.email,
+        name: user.name && user.name !== "Takora Visitor" ? user.name : "Takora Member",
+        email: safeUserEmail,
         fail_existing: 0,
         notes: {
           userId: String(user.id),

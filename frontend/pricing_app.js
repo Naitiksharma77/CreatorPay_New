@@ -333,11 +333,9 @@
             lastCancelMessage = "";
             lastCancelError = "";
             memberStatusBar.classList.remove("has-plan");
-            memberStatusTitle.textContent = "Sign In or Create a Free Account";
-            memberStatusSub.textContent = "Free account required so your monthly membership and Razorpay AutoPay stay linked to your profile.";
+            memberStatusTitle.textContent = "Ready to Subscribe";
+            memberStatusSub.textContent = "No active monthly plan yet. Select a plan below to unlock Chat, Voice Calls, or HD Video Calls.";
             memberStatusActions.innerHTML = `
-                <button type="button" class="bar-btn primary" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
-                <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
                 <a href="creator_home.html" class="bar-btn">Explore Creators</a>
             `;
             if (subscriptionManagementDetails) {
@@ -348,7 +346,10 @@
         }
 
         const sub = auth.subscription;
-        const contactDisplay = auth.user.email || auth.user.phone || "Active Member";
+        const rawEmail = auth.user.email ? String(auth.user.email) : "";
+        const contactDisplay = (rawEmail && !rawEmail.endsWith("@member.takora.local"))
+            ? rawEmail
+            : (auth.user.phone || "Takora Membership");
 
         if (sub && sub.hasActiveAccess) {
             const isCancelledAtCycleEnd = Boolean(sub.cancelAtPeriodEnd || sub.status === "cancelled");
@@ -599,17 +600,6 @@
         }
 
         const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, subscription: null };
-        if (!auth.authenticated || !auth.user) {
-            if (window.TakoraAuth && typeof window.TakoraAuth.openAuthModal === "function") {
-                window.TakoraAuth.openAuthModal("register", () => {
-                    startPlanCheckout(planCode);
-                });
-                return;
-            }
-            showAlert("warn", "<strong>Sign In Required:</strong> Please sign in or create a free account before purchasing a subscription.");
-            return;
-        }
-
         const sub = auth.subscription;
         if (sub && sub.hasActiveAccess && !sub.cancelAtPeriodEnd) {
             const currentRank = TIER_RANK[sub.planCode] || 0;
@@ -674,16 +664,14 @@
             return;
         }
 
-        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, subscription: null };
-        if (!auth.authenticated || !auth.user) {
-            if (window.TakoraAuth && typeof window.TakoraAuth.openAuthModal === "function") {
-                window.TakoraAuth.openAuthModal("register", () => startPlanCheckout(planCode));
-                return;
+        if (window.TakoraAuth) {
+            const cur = window.TakoraAuth.getState();
+            if ((!cur.authenticated || !cur.user) && typeof window.TakoraAuth.ensureGuestSession === "function") {
+                await window.TakoraAuth.ensureGuestSession();
             }
-            showAlert("warn", "<strong>Sign In Required:</strong> Please sign in or create a free account before subscribing.");
-            return;
         }
 
+        const auth = window.TakoraAuth ? window.TakoraAuth.getState() : { authenticated: false, subscription: null };
         const sub = auth.subscription;
         const isUpgrade = Boolean(sub && sub.hasActiveAccess && !sub.cancelAtPeriodEnd);
         const endpoint = isUpgrade ? "/api/subscriptions/upgrade" : "/api/subscriptions/create";
@@ -699,22 +687,22 @@
         };
 
         try {
-            const { res, data } = await safeApiFetch(endpoint, {
+            let { res, data } = await safeApiFetch(endpoint, {
                 method: "POST",
                 body: JSON.stringify({ planCode })
             });
 
             if (res.status === 401 || (data && data.code === "AUTH_REQUIRED")) {
-                checkoutBusyPlan = null;
-                renderPlanCards();
-                if (window.TakoraAuth && typeof window.TakoraAuth.openAuthModal === "function") {
-                    window.TakoraAuth.openAuthModal("login", () => startPlanCheckout(planCode));
-                    return;
+                if (window.TakoraAuth && typeof window.TakoraAuth.ensureGuestSession === "function") {
+                    await window.TakoraAuth.ensureGuestSession();
+                    ({ res, data } = await safeApiFetch(endpoint, {
+                        method: "POST",
+                        body: JSON.stringify({ planCode })
+                    }));
                 }
-                throw new Error(data.message || "Please sign in or create a free account before continuing.");
             }
 
-            if (res.status === 503 || data.code === "RAZORPAY_NOT_CONFIGURED") {
+            if (res.status === 503 || (data && data.code === "RAZORPAY_NOT_CONFIGURED")) {
                 const missing = (data.missingEnvVars || []).join(", ") || "RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET";
                 showAlert(
                     "warn",
@@ -727,8 +715,12 @@
 
             if (!res.ok || !data.success || !data.subscription || !data.subscription.id) {
                 throw new Error(
-                    data.message || `Unable to create Razorpay subscription (HTTP ${res.status}).`
+                    (data && data.message) || `Unable to create Razorpay subscription (HTTP ${res.status}).`
                 );
+            }
+
+            if (data.sessionToken && window.TakoraAuth && typeof window.TakoraAuth.setSessionToken === "function") {
+                window.TakoraAuth.setSessionToken(data.sessionToken);
             }
 
             const subscriptionId = data.subscription.id;

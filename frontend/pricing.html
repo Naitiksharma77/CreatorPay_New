@@ -778,8 +778,8 @@
                 <a href="creator_home.html" class="tk-nav-link">Home</a>
                 <a href="explore.html" class="tk-nav-link hide-xs">Explore</a>
                 <a href="pricing.html" class="tk-nav-link active">Plans</a>
-                <button type="button" id="headerAuthButton" data-guest-label="Member Sign In" class="tk-header-auth-btn solid" onclick="window.TakoraAuth && (window.TakoraAuth.getState().authenticated ? window.TakoraAuth.openAccountModal() : window.TakoraAuth.openAuthModal('login'))">
-                    Member Sign In
+                <button type="button" id="headerAuthButton" data-guest-label="Plans · ₹9/mo" class="tk-header-auth-btn solid" onclick="const grid=document.getElementById('plansGrid'); if(grid) grid.scrollIntoView({behavior:'smooth'});">
+                    Plans · ₹9/mo
                 </button>
             </nav>
         </div>
@@ -799,11 +799,10 @@
             <div class="member-status-top">
                 <div class="member-status-info">
                     <strong id="memberStatusTitle">Checking your membership status...</strong>
-                    <span id="memberStatusSub">Sign in or create a free account to link your monthly membership to your profile.</span>
+                    <span id="memberStatusSub">Select a monthly plan below to unlock Chat, Voice Calls, or HD Video Calls across Takora.</span>
                 </div>
                 <div class="member-status-actions" id="memberStatusActions">
-                    <button type="button" class="bar-btn primary" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('register')">Create Free Account</button>
-                    <button type="button" class="bar-btn" onclick="window.TakoraAuth && window.TakoraAuth.openAuthModal('login')">Sign In</button>
+                    <a href="creator_home.html" class="bar-btn">Explore Creators</a>
                 </div>
             </div>
             <div id="subscriptionManagementDetails" style="display: none;"></div>
@@ -867,8 +866,8 @@
         <!-- AutoPay & Cancellation Disclosure -->
         <section class="autopay-note-card" aria-label="Razorpay AutoPay billing details">
             <div class="autopay-item">
-                <h3>Free Account &amp; Instant Access</h3>
-                <p>Register or sign in for free, select your monthly plan, and unlock your membership immediately once Razorpay payment settles.</p>
+                <h3>Instant Access · No Sign-Up Required</h3>
+                <p>Select your monthly plan directly, authorize via Razorpay AutoPay, and unlock your membership immediately once payment settles.</p>
             </div>
             <div class="autopay-item">
                 <h3>Razorpay AutoPay Mandate</h3>
@@ -876,7 +875,7 @@
             </div>
             <div class="autopay-item">
                 <h3>Cancel AutoPay Anytime</h3>
-                <p>Stop automatic monthly renewals anytime inside Account Settings. Your paid benefits remain active until the end of your current cycle.</p>
+                <p>Stop automatic monthly renewals anytime right here on the Plans page. Your paid benefits remain active until the end of your current cycle.</p>
             </div>
         </section>
     </main>
